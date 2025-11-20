@@ -50,7 +50,29 @@ export default function AdminLayout({
         }
     };
 
-    const profileUrl = subdomain ? `http://${subdomain}.localhost:3000` : '#';
+    // Determine the base domain based on environment
+    const getProfileUrl = () => {
+        if (!subdomain) return '#';
+
+        // Check if we're in production
+        if (typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+
+            // If on Vercel or production domain
+            if (hostname.includes('vercel.app')) {
+                return `https://${subdomain}.biztree.bio`;
+            } else if (hostname.includes('biztree.bio')) {
+                return `https://${subdomain}.biztree.bio`;
+            } else if (hostname.includes('biztree.sk')) {
+                return `https://${subdomain}.biztree.sk`;
+            }
+        }
+
+        // Default to localhost for development
+        return `http://${subdomain}.localhost:3000`;
+    };
+
+    const profileUrl = getProfileUrl();
 
     return (
         <div className={cn("min-h-screen bg-gray-50 dark:bg-gray-950 flex", inter.className)}>
