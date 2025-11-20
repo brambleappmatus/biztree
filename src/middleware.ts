@@ -10,8 +10,8 @@ export function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    // Define allowed domains (localhost, biztree.sk, etc.)
-    const allowedDomains = ["localhost", "biztree.sk"];
+    // Define allowed domains (localhost, biztree.sk, biztree.bio, etc.)
+    const allowedDomains = ["localhost", "biztree.sk", "biztree.bio"];
 
     // Remove port from hostname for domain check
     const hostnameWithoutPort = hostname.split(":")[0];
