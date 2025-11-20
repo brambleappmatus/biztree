@@ -1,0 +1,495 @@
+"use client";
+
+import React, { useState } from "react";
+import { Profile, WorkingHours } from "@prisma/client";
+import { updateProfile, updateWorkingHours } from "@/app/actions";
+import { Loader2, Save, User, Phone, Mail, MapPin, Globe, Image as ImageIcon, Palette, Type } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { LANGUAGES } from "@/lib/i18n";
+import { MuiInput } from "@/components/ui/mui-input";
+import { MuiTextArea } from "@/components/ui/mui-textarea";
+import { MuiButton } from "@/components/ui/mui-button";
+import { MuiCard } from "@/components/ui/mui-card";
+import SocialLinksManager from "./social-links-manager";
+
+interface ProfileFormProps {
+    profile: Profile & { socialLinks: any[], hours: WorkingHours[] };
+}
+
+const THEMES = [
+    { id: "blue", name: "Blue Pulse", color: "#007AFF" },
+    { id: "emerald", name: "Emerald", color: "#34C759" },
+    { id: "coral", name: "Coral", color: "#FF2D55" },
+    { id: "graphite", name: "Graphite", color: "#8E8E93" },
+    { id: "lavender", name: "Lavender", color: "#AF52DE" },
+    { id: "amber", name: "Amber", color: "#FF9500" },
+];
+
+const BACKGROUNDS = [
+    { id: "none", name: "None", gradient: "transparent" },
+    { id: "black", name: "Black", gradient: "linear-gradient(to bottom, #000000, #1a1a1a)" },
+    { id: "dark", name: "Dark Gray", gradient: "linear-gradient(to bottom, #1a1a1a, #2d2d2d)" },
+    { id: "white", name: "White", gradient: "linear-gradient(to bottom, #ffffff, #f5f5f5)" },
+    { id: "blue-purple", name: "Blue Purple", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+    { id: "pink-orange", name: "Pink Orange", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
+    { id: "green-blue", name: "Green Blue", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
+    { id: "sunset", name: "Sunset", gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" },
+    { id: "ocean", name: "Ocean", gradient: "linear-gradient(135deg, #2e3192 0%, #1bffff 100%)" },
+    { id: "forest", name: "Forest", gradient: "linear-gradient(135deg, #0ba360 0%, #3cba92 100%)" },
+    { id: "yellow", name: "Golden", gradient: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" },
+    { id: "red", name: "Fire Red", gradient: "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)" },
+    { id: "navy", name: "Navy Blue", gradient: "linear-gradient(135deg, #134e5e 0%, #71b280 100%)" },
+    { id: "charcoal", name: "Charcoal", gradient: "linear-gradient(135deg, #232526 0%, #414345 100%)" },
+    { id: "burgundy", name: "Burgundy", gradient: "linear-gradient(135deg, #7b4397 0%, #dc2430 100%)" },
+    { id: "teal", name: "Teal", gradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)" },
+];
+
+const DAYS = [
+    { id: 1, name: "Pondelok" },
+    { id: 2, name: "Utorok" },
+    { id: 3, name: "Streda" },
+    { id: 4, name: "Štvrtok" },
+    { id: 5, name: "Piatok" },
+    { id: 6, name: "Sobota" },
+    { id: 0, name: "Nedeľa" },
+];
+
+export default function ProfileForm({ profile }: ProfileFormProps) {
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: profile.name,
+        about: profile.about || "",
+        phone: profile.phone || "",
+        email: profile.email || "",
+        address: profile.address || "",
+        mapEmbed: profile.mapEmbed || "",
+        theme: profile.theme,
+        language: profile.language || "sk",
+        bgImage: profile.bgImage || "none",
+        bgBlur: profile.bgBlur || false,
+    });
+
+    // Working Hours State
+    const [hours, setHours] = useState(() => {
+        return DAYS.map((day) => {
+            const existing = profile.hours.find((h) => h.dayOfWeek === day.id);
+            return {
+                dayOfWeek: day.id,
+                openTime: existing?.openTime || "09:00",
+                closeTime: existing?.closeTime || "17:00",
+                isClosed: existing ? existing.isClosed : false,
+            };
+        });
+    });
+
+    // Unsplash search state
+    const [bgType, setBgType] = useState<"gradient" | "image">("gradient");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searching, setSearching] = useState(false);
+
+    // Auto-search as user types (debounced)
+    React.useEffect(() => {
+        if (bgType === "image") {
+            const timer = setTimeout(() => {
+                searchImages(searchQuery);
+            }, 500); // Wait 500ms after user stops typing
+
+            return () => clearTimeout(timer);
+        }
+    }, [searchQuery, bgType]);
+
+    // Load trending images when switching to image tab
+    React.useEffect(() => {
+        if (bgType === "image" && searchResults.length === 0) {
+            loadTrendingImages();
+        }
+    }, [bgType]);
+
+    const searchImages = async (query: string) => {
+        setSearching(true);
+        try {
+            const url = query.trim()
+                ? `/api/unsplash/search?query=${encodeURIComponent(query)}`
+                : `/api/unsplash/search`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.photos) {
+                setSearchResults(data.photos);
+            } else if (data.error) {
+                console.error("Unsplash error:", data.error, data.details);
+            }
+        } catch (error) {
+            console.error("Error searching images:", error);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const loadTrendingImages = async () => {
+        setSearching(true);
+        try {
+            const response = await fetch(`/api/unsplash/search`);
+            const data = await response.json();
+            if (data.photos) {
+                setSearchResults(data.photos);
+            } else if (data.error) {
+                console.error("Unsplash error:", data.error, data.details);
+            }
+        } catch (error) {
+            console.error("Error loading trending images:", error);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleTimeChange = (dayId: number, field: "openTime" | "closeTime", value: string) => {
+        setHours((prev) =>
+            prev.map((h) => (h.dayOfWeek === dayId ? { ...h, [field]: value } : h))
+        );
+    };
+
+    const toggleClosed = (dayId: number) => {
+        setHours((prev) =>
+            prev.map((h) => (h.dayOfWeek === dayId ? { ...h, isClosed: !h.isClosed } : h))
+        );
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            // Update profile and working hours in parallel
+            await Promise.all([
+                updateProfile(profile.id, formData),
+                updateWorkingHours(profile.id, hours)
+            ]);
+            router.refresh();
+            // Optional: Show success toast
+        } catch (error) {
+            console.error(error);
+            alert("Chyba pri ukladaní");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const selectImage = (imageUrl: string) => {
+        setFormData({ ...formData, bgImage: imageUrl });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto pb-20">
+
+            {/* Identity Card */}
+            <MuiCard
+                title="Identita"
+                subtitle="Základné informácie o vašej firme"
+            >
+                <div className="grid gap-2 mt-2">
+                    <MuiInput
+                        label="Názov firmy / Meno"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        startIcon={<User className="w-5 h-5" />}
+                        required
+                    />
+                    <MuiTextArea
+                        label="O mne / firme"
+                        value={formData.about}
+                        onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                        rows={3}
+                    />
+                </div>
+            </MuiCard>
+
+            {/* Contact Card */}
+            <MuiCard
+                title="Kontakt"
+                subtitle="Ako vás môžu zákazníci kontaktovať"
+            >
+                <div className="grid gap-2 mt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <MuiInput
+                            label="Telefón"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            startIcon={<Phone className="w-5 h-5" />}
+                        />
+                        <MuiInput
+                            label="Email"
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            startIcon={<Mail className="w-5 h-5" />}
+                        />
+                    </div>
+                    <MuiInput
+                        label="Adresa"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Ulica 123, Mesto"
+                        startIcon={<MapPin className="w-5 h-5" />}
+                    />
+                    <MuiTextArea
+                        label="Google Maps Iframe"
+                        value={formData.mapEmbed}
+                        onChange={(e) => setFormData({ ...formData, mapEmbed: e.target.value })}
+                        placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'
+                        rows={3}
+                        className="font-mono text-xs"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                        Vložte iframe kód z Google Maps (Zdieľať → Vložiť mapu)
+                    </p>
+                </div>
+            </MuiCard>
+
+            {/* Social Media Manager */}
+            <SocialLinksManager profile={profile} />
+
+            {/* Working Hours Card */}
+            <MuiCard
+                title="Otváracie hodiny"
+                subtitle="Nastavte si, kedy ste k dispozícii pre zákazníkov"
+            >
+                <div className="space-y-1 mt-2">
+                    {hours.map((day) => {
+                        const dayName = DAYS.find((d) => d.id === day.dayOfWeek)?.name;
+
+                        return (
+                            <div
+                                key={day.dayOfWeek}
+                                className={cn(
+                                    "flex items-center justify-between p-2 rounded-lg transition-colors",
+                                    day.isClosed ? "bg-gray-50 dark:bg-gray-900/50 opacity-70" : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                                )}
+                            >
+                                <div className="font-medium text-sm text-gray-900 dark:text-gray-100 w-24">
+                                    {dayName}
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-1 justify-center">
+                                    {!day.isClosed ? (
+                                        <>
+                                            <input
+                                                type="time"
+                                                value={day.openTime}
+                                                onChange={(e) => handleTimeChange(day.dayOfWeek, "openTime", e.target.value)}
+                                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
+                                            />
+                                            <span className="text-gray-400 text-sm">–</span>
+                                            <input
+                                                type="time"
+                                                value={day.closeTime}
+                                                onChange={(e) => handleTimeChange(day.dayOfWeek, "closeTime", e.target.value)}
+                                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
+                                            />
+                                        </>
+                                    ) : (
+                                        <span className="text-sm text-gray-400 italic">
+                                            Zatvorené
+                                        </span>
+                                    )}
+                                </div>
+
+                                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={!day.isClosed}
+                                        onChange={() => toggleClosed(day.dayOfWeek)}
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        );
+                    })}
+                </div>
+            </MuiCard>
+
+            {/* Appearance Card */}
+            <MuiCard
+                title="Vzhľad"
+                subtitle="Prispôsobte si dizajn profilu"
+            >
+                <div className="space-y-6 mt-2">
+                    {/* Language */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2">
+                            <Globe className="w-4 h-4" /> Jazyk profilu
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {LANGUAGES.map((lang) => (
+                                <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, language: lang.code })}
+                                    className={cn(
+                                        "px-4 py-2 rounded-full border transition-all text-sm font-medium flex items-center gap-2",
+                                        formData.language === lang.code
+                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                            : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                    )}
+                                >
+                                    <span>{lang.flag}</span>
+                                    {lang.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Theme */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2">
+                            <Palette className="w-4 h-4" /> Farebná téma
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {THEMES.map((theme) => (
+                                <button
+                                    key={theme.id}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, theme: theme.id })}
+                                    className={cn(
+                                        "p-3 rounded-xl border transition-all flex items-center gap-3",
+                                        formData.theme === theme.id
+                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500"
+                                            : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    )}
+                                >
+                                    <div
+                                        className="w-6 h-6 rounded-full shadow-sm"
+                                        style={{ backgroundColor: theme.color }}
+                                    />
+                                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{theme.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Background */}
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4" /> Pozadie
+                        </label>
+
+                        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-4 w-fit">
+                            <button
+                                type="button"
+                                onClick={() => setBgType("gradient")}
+                                className={cn(
+                                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                                    bgType === "gradient"
+                                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100"
+                                        : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                )}
+                            >
+                                Gradienty
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setBgType("image")}
+                                className={cn(
+                                    "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                                    bgType === "image"
+                                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100"
+                                        : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                )}
+                            >
+                                Obrázky (Unsplash)
+                            </button>
+                        </div>
+
+                        {bgType === "gradient" && (
+                            <div className="grid grid-cols-4 gap-3">
+                                {BACKGROUNDS.map((bg) => (
+                                    <button
+                                        key={bg.id}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, bgImage: bg.id })}
+                                        className={cn(
+                                            "relative h-16 rounded-xl border-2 transition-all overflow-hidden hover:scale-105 active:scale-95",
+                                            formData.bgImage === bg.id
+                                                ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
+                                                : "border-transparent"
+                                        )}
+                                        style={{ background: bg.gradient }}
+                                        title={bg.name}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {bgType === "image" && (
+                            <div className="space-y-4">
+                                <MuiInput
+                                    label="Hľadať obrázky"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="napr. nature, office, abstract..."
+                                />
+
+                                {formData.bgImage?.startsWith("http") && (
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <input
+                                            type="checkbox"
+                                            id="bgBlur"
+                                            checked={formData.bgBlur}
+                                            onChange={(e) => setFormData({ ...formData, bgBlur: e.target.checked })}
+                                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                        />
+                                        <label htmlFor="bgBlur" className="text-sm text-gray-700 dark:text-gray-300">
+                                            Rozmazať pozadie (pre lepšiu čitateľnosť textu)
+                                        </label>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
+                                    {searchResults.map((photo) => (
+                                        <button
+                                            key={photo.id}
+                                            type="button"
+                                            onClick={() => selectImage(photo.urls.regular)}
+                                            className={cn(
+                                                "relative h-24 rounded-xl border-2 transition-all overflow-hidden group hover:shadow-md",
+                                                formData.bgImage === photo.urls.regular
+                                                    ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
+                                                    : "border-transparent"
+                                            )}
+                                        >
+                                            <img
+                                                src={photo.urls.thumb}
+                                                alt={photo.alt}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                                        </button>
+                                    ))}
+                                </div>
+                                {searchResults.length === 0 && !searching && (
+                                    <p className="text-center text-sm text-gray-500 py-4">Žiadne obrázky sa nenašli.</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </MuiCard>
+
+            {/* Floating Action Button for Save */}
+            <div className="fixed bottom-6 right-6 z-50">
+                <MuiButton
+                    type="submit"
+                    disabled={loading}
+                    className="shadow-xl h-14 px-8 rounded-full text-base"
+                    startIcon={!loading && <Save className="w-5 h-5" />}
+                    loading={loading}
+                >
+                    {loading ? "Ukladám..." : "Uložiť zmeny"}
+                </MuiButton>
+            </div>
+        </form>
+    );
+}
