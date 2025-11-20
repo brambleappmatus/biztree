@@ -5,8 +5,13 @@ export function middleware(req: NextRequest) {
     const url = req.nextUrl;
     const hostname = req.headers.get("host") || "";
 
-    // Define allowed domains (localhost, vercel.app, etc.)
-    const allowedDomains = ["localhost", "biztree.sk", "vercel.app"];
+    // Skip subdomain routing for Vercel deployment URLs
+    if (hostname.includes("vercel.app")) {
+        return NextResponse.next();
+    }
+
+    // Define allowed domains (localhost, biztree.sk, etc.)
+    const allowedDomains = ["localhost", "biztree.sk"];
 
     // Remove port from hostname for domain check
     const hostnameWithoutPort = hostname.split(":")[0];
