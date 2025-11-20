@@ -14,15 +14,15 @@ export default async function BookingsPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profile: true }
+        include: { profiles: true }
     });
 
-    if (!user || !user.profile) {
+    if (!user || !user.profiles || user.profiles.length === 0) {
         redirect("/onboarding");
     }
 
     const bookings = await prisma.booking.findMany({
-        where: { profileId: user.profile.id },
+        where: { profileId: user.profiles[0].id },
         include: { service: true },
         orderBy: { startTime: "desc" },
     });

@@ -21,10 +21,11 @@ export default function ServicesManager({ profileId, services }: ServicesManager
         name: "",
         duration: 30,
         price: 0,
+        bookingEnabled: true,
     });
 
     const resetForm = () => {
-        setFormData({ name: "", duration: 30, price: 0 });
+        setFormData({ name: "", duration: 30, price: 0, bookingEnabled: true });
         setEditingId(null);
         setIsCreating(false);
     };
@@ -34,6 +35,7 @@ export default function ServicesManager({ profileId, services }: ServicesManager
             name: service.name,
             duration: service.duration,
             price: Number(service.price),
+            bookingEnabled: service.bookingEnabled ?? true,
         });
         setEditingId(service.id);
         setIsCreating(false);
@@ -77,7 +79,7 @@ export default function ServicesManager({ profileId, services }: ServicesManager
             <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Zoznam služieb</h2>
                 <button
-                    onClick={() => { setIsCreating(true); setEditingId(null); setFormData({ name: "", duration: 30, price: 0 }); }}
+                    onClick={() => { setIsCreating(true); setEditingId(null); setFormData({ name: "", duration: 30, price: 0, bookingEnabled: true }); }}
                     disabled={isCreating || !!editingId}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                 >
@@ -106,7 +108,7 @@ export default function ServicesManager({ profileId, services }: ServicesManager
                             <input
                                 required
                                 type="number"
-                                min="5"
+                                min="0"
                                 step="5"
                                 value={formData.duration}
                                 onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
@@ -124,6 +126,18 @@ export default function ServicesManager({ profileId, services }: ServicesManager
                                 onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
                                 className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
                             />
+                        </div>
+                        <div className="flex items-center gap-2 pt-6">
+                            <input
+                                type="checkbox"
+                                id="bookingEnabled"
+                                checked={formData.bookingEnabled}
+                                onChange={(e) => setFormData({ ...formData, bookingEnabled: e.target.checked })}
+                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                            />
+                            <label htmlFor="bookingEnabled" className="text-sm font-medium text-gray-700">
+                                Povoliť rezervácie
+                            </label>
                         </div>
                     </div>
                     <div className="flex justify-end gap-2">
@@ -158,9 +172,16 @@ export default function ServicesManager({ profileId, services }: ServicesManager
                             className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center hover:border-blue-100 transition-colors"
                         >
                             <div>
-                                <h3 className="font-medium">{service.name}</h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-medium">{service.name}</h3>
+                                    {!service.bookingEnabled && (
+                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
+                                            Rezervácie vypnuté
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-gray-500">
-                                    {service.duration} min • {Number(service.price)} €
+                                    {service.duration > 0 && `${service.duration} min • `}{Number(service.price)} €
                                 </p>
                             </div>
                             <div className="flex gap-2">

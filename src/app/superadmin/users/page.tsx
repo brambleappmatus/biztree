@@ -11,11 +11,11 @@ interface User {
     email: string;
     role: string;
     createdAt: Date;
-    profile: {
+    profiles: {
         id: string;
         name: string;
         subdomain: string;
-    } | null;
+    }[];
 }
 
 export default function UsersPage() {
@@ -92,7 +92,7 @@ export default function UsersPage() {
             }
 
             // Update company if changed
-            if (selectedCompany && selectedCompany !== selectedUser.profile?.id) {
+            if (selectedCompany && (!selectedUser.profiles || selectedUser.profiles.length === 0 || selectedCompany !== selectedUser.profiles[0].id)) {
                 const companyResult = await changeUserCompany(selectedUser.id, selectedCompany);
                 if (companyResult.error) {
                     alert(companyResult.error);
@@ -113,7 +113,7 @@ export default function UsersPage() {
     const openEditModal = (user: User) => {
         setSelectedUser(user);
         setSelectedRole(user.role);
-        setSelectedCompany(user.profile?.id || "");
+        setSelectedCompany(user.profiles && user.profiles.length > 0 ? user.profiles[0].id : "");
         setShowEditModal(true);
     };
 
@@ -141,14 +141,14 @@ export default function UsersPage() {
                                 <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{user.email}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.role === "SUPERADMIN"
-                                            ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
-                                            : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                        ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
+                                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                                         }`}>
                                         {user.role}
                                     </span>
                                 </td>
                                 <td className="p-4 text-gray-700 dark:text-gray-300">
-                                    {user.profile ? user.profile.name : "No company"}
+                                    {user.profiles && user.profiles.length > 0 ? user.profiles[0].name : "No company"}
                                 </td>
                                 <td className="p-4">
                                     <div className="flex gap-2">
@@ -159,7 +159,7 @@ export default function UsersPage() {
                                         >
                                             <Edit size={18} />
                                         </button>
-                                        {!user.profile && user.role !== "SUPERADMIN" && (
+                                        {(!user.profiles || user.profiles.length === 0) && user.role !== "SUPERADMIN" && (
                                             <button
                                                 onClick={() => {
                                                     setSelectedUser(user);

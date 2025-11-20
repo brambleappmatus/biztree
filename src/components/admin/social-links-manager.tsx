@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Profile, SocialLink } from "@prisma/client";
-import { Plus, Trash2, Instagram, Facebook, Twitter, Linkedin, Youtube } from "lucide-react";
+import { Plus, Trash2, Instagram, Facebook, Twitter, Linkedin, Youtube, Link, Phone, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { MuiCard } from "@/components/ui/mui-card";
@@ -20,35 +20,63 @@ const PLATFORMS = [
     { id: "twitter", name: "Twitter", icon: Twitter, color: "text-sky-500" },
     { id: "linkedin", name: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
     { id: "youtube", name: "YouTube", icon: Youtube, color: "text-red-600" },
-    { id: "whatsapp", name: "WhatsApp", icon: Plus, color: "text-green-600" },
+    { id: "whatsapp", name: "WhatsApp", icon: MessageCircle, color: "text-green-600" },
 ];
 
 export default function SocialLinksManager({ profile }: SocialLinksManagerProps) {
     const router = useRouter();
     const [newLink, setNewLink] = useState({ platform: "instagram", url: "" });
     const [saving, setSaving] = useState(false);
+    const [isPending, startTransition] = React.useTransition();
+    const [optimisticLinks, setOptimisticLinks] = useState(profile.socialLinks);
+
+    // Sync with server state when it updates
+    React.useEffect(() => {
+        setOptimisticLinks(profile.socialLinks);
+    }, [profile.socialLinks]);
 
     const addLink = async () => {
         if (!newLink.url.trim()) return;
 
         setSaving(true);
+
+        // Optimistic update
+        const tempId = "temp-" + Date.now();
+        const tempLink = {
+            id: tempId,
+            profileId: profile.id,
+            platform: newLink.platform,
+            url: newLink.url,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        setOptimisticLinks(prev => [...prev, tempLink]);
+        setNewLink({ platform: "instagram", url: "" });
+
         try {
             const response = await fetch("/api/social-links", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     profileId: profile.id,
-                    platform: newLink.platform,
-                    url: newLink.url,
+                    platform: tempLink.platform,
+                    url: tempLink.url,
                 }),
             });
 
             if (response.ok) {
-                setNewLink({ platform: "instagram", url: "" });
-                router.refresh();
+                startTransition(() => {
+                    router.refresh();
+                });
+            } else {
+                // Revert on error
+                setOptimisticLinks(prev => prev.filter(l => l.id !== tempId));
+                alert("Chyba pri pridávaní odkazu");
             }
         } catch (error) {
             console.error("Error adding social link:", error);
+            setOptimisticLinks(prev => prev.filter(l => l.id !== tempId));
             alert("Chyba pri pridávaní odkazu");
         } finally {
             setSaving(false);
@@ -58,16 +86,27 @@ export default function SocialLinksManager({ profile }: SocialLinksManagerProps)
     const deleteLink = async (linkId: string) => {
         if (!confirm("Naozaj chcete odstrániť tento odkaz?")) return;
 
+        // Optimistic update
+        const previousLinks = optimisticLinks;
+        setOptimisticLinks(prev => prev.filter(l => l.id !== linkId));
+
         try {
             const response = await fetch(`/api/social-links/${linkId}`, {
                 method: "DELETE",
             });
 
             if (response.ok) {
-                router.refresh();
+                startTransition(() => {
+                    router.refresh();
+                });
+            } else {
+                // Revert on error
+                setOptimisticLinks(previousLinks);
+                alert("Chyba pri odstraňovaní odkazu");
             }
         } catch (error) {
             console.error("Error deleting social link:", error);
+            setOptimisticLinks(previousLinks);
             alert("Chyba pri odstraňovaní odkazu");
         }
     };
@@ -79,16 +118,20 @@ export default function SocialLinksManager({ profile }: SocialLinksManagerProps)
             className="mt-8"
         >
             {/* Existing Links */}
-            {profile.socialLinks && profile.socialLinks.length > 0 && (
+            {optimisticLinks && optimisticLinks.length > 0 && (
                 <div className="space-y-3 mb-6 mt-2">
-                    {profile.socialLinks.map((link) => {
+                    {optimisticLinks.map((link) => {
                         const platform = PLATFORMS.find((p) => p.id === link.platform.toLowerCase());
-                        const Icon = platform?.icon || Instagram;
+                        const Icon = platform?.icon || Link;
+                        const isTemp = link.id.startsWith("temp-");
 
                         return (
                             <div
                                 key={link.id}
-                                className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800"
+                                className={cn(
+                                    "flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 transition-opacity",
+                                    isTemp && "opacity-70"
+                                )}
                             >
                                 <div className={cn("p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm", platform?.color)}>
                                     <Icon className="w-5 h-5" />
@@ -104,7 +147,8 @@ export default function SocialLinksManager({ profile }: SocialLinksManagerProps)
                                 <button
                                     type="button"
                                     onClick={() => deleteLink(link.id)}
-                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    disabled={isTemp}
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>

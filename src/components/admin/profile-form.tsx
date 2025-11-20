@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Profile, WorkingHours } from "@prisma/client";
 import { updateProfile, updateWorkingHours } from "@/app/actions";
-import { Loader2, Save, User, Phone, Mail, MapPin, Globe, Image as ImageIcon, Palette, Type } from "lucide-react";
+import { Loader2, Save, User, Phone, Mail, MapPin, Globe, Image as ImageIcon, Palette, Type, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LANGUAGES } from "@/lib/i18n";
@@ -11,10 +11,11 @@ import { MuiInput } from "@/components/ui/mui-input";
 import { MuiTextArea } from "@/components/ui/mui-textarea";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiCard } from "@/components/ui/mui-card";
+import LinksManager from "./links-manager";
 import SocialLinksManager from "./social-links-manager";
 
 interface ProfileFormProps {
-    profile: Profile & { socialLinks: any[], hours: WorkingHours[] };
+    profile: Profile & { socialLinks: any[], hours: WorkingHours[], links: any[] };
 }
 
 const THEMES = [
@@ -69,7 +70,54 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         language: profile.language || "sk",
         bgImage: profile.bgImage || "none",
         bgBlur: profile.bgBlur || false,
+        avatarUrl: profile.avatarUrl || "",
     });
+
+    // Avatar upload handler
+    // Avatar upload handler
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Obrázok je príliš veľký. Maximálna veľkosť je 2MB.");
+            return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            alert("Prosím nahrajte obrázok.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Create FormData for upload
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("bucket", "avatars");
+
+            // Upload via API route to keep secrets on server
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Upload failed");
+            }
+
+            const data = await response.json();
+            setFormData(prev => ({ ...prev, avatarUrl: data.url }));
+        } catch (error) {
+            console.error("Error uploading avatar:", error);
+            alert("Nepodarilo sa nahrať obrázok. Skúste to prosím znova.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Working Hours State
     const [hours, setHours] = useState(() => {
@@ -109,20 +157,25 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     }, [bgType]);
 
     const searchImages = async (query: string) => {
+        if (!query) return;
         setSearching(true);
         try {
-            const url = query.trim()
-                ? `/api/unsplash/search?query=${encodeURIComponent(query)}`
-                : `/api/unsplash/search`;
-            const response = await fetch(url);
-            const data = await response.json();
+            const res = await fetch(`/api/unsplash/search?query=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
             if (data.photos) {
                 setSearchResults(data.photos);
-            } else if (data.error) {
-                console.error("Unsplash error:", data.error, data.details);
+            } else {
+                // Fallback if API fails or limit reached
+                console.warn("Using fallback images due to API error");
+                setSearchResults([
+                    { id: 1, urls: { regular: "https://images.unsplash.com/photo-1497366216548-37526070297c", thumb: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=200" }, alt: "Office" },
+                    { id: 2, urls: { regular: "https://images.unsplash.com/photo-1497215728101-856f4ea42174", thumb: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=200" }, alt: "Work" },
+                    { id: 3, urls: { regular: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0", thumb: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=200" }, alt: "Meeting" },
+                ]);
             }
         } catch (error) {
-            console.error("Error searching images:", error);
+            console.error("Failed to search images", error);
         } finally {
             setSearching(false);
         }
@@ -161,16 +214,17 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         e.preventDefault();
         setLoading(true);
         try {
-            // Update profile and working hours in parallel
-            await Promise.all([
-                updateProfile(profile.id, formData),
-                updateWorkingHours(profile.id, hours)
-            ]);
+            // Update profile
+            await updateProfile(profile.id, formData);
+
+            // Update hours
+            await updateWorkingHours(profile.id, hours);
+
             router.refresh();
-            // Optional: Show success toast
+            alert("Profil bol úspešne aktualizovaný");
         } catch (error) {
             console.error(error);
-            alert("Chyba pri ukladaní");
+            alert("Nastala chyba pri ukladaní");
         } finally {
             setLoading(false);
         }
@@ -181,19 +235,54 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto pb-20">
+        <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold">Nastavenia profilu</h1>
+            </div>
 
-            {/* Identity Card */}
-            <MuiCard
-                title="Identita"
-                subtitle="Základné informácie o vašej firme"
-            >
-                <div className="grid gap-2 mt-2">
+            {/* Identity Section */}
+            <MuiCard title="Identita" subtitle="Základné informácie o vašej firme">
+                <div className="space-y-4">
+                    {/* Avatar Upload */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0">
+                            {formData.avatarUrl ? (
+                                <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                    <ImageIcon size={32} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Logo / Profilová fotka</label>
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAvatarUpload}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                />
+                                {formData.avatarUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, avatarUrl: "" }))}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Odstrániť fotku"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Odporúčame štvorcový obrázok (PNG, JPG)</p>
+                        </div>
+                    </div>
+
                     <MuiInput
                         label="Názov firmy / Meno"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        startIcon={<User className="w-5 h-5" />}
+                        startIcon={<User size={18} />}
                         required
                     />
                     <MuiTextArea
@@ -247,6 +336,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                     </p>
                 </div>
             </MuiCard>
+
+            {/* Links Manager (Linktree style) */}
+            <LinksManager profile={profile} />
 
             {/* Social Media Manager */}
             <SocialLinksManager profile={profile} />

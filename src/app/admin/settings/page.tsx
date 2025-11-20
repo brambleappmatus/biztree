@@ -15,23 +15,24 @@ export default async function SettingsPage() {
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         include: {
-            profile: {
+            profiles: {
                 include: {
                     socialLinks: true,
-                    hours: true
+                    hours: true,
+                    links: true
                 }
             }
         }
     });
 
-    if (!user || !user.profile) {
+    if (!user || !user.profiles || user.profiles.length === 0) {
         redirect("/onboarding");
     }
 
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">Nastavenia profilu</h1>
-            <ProfileForm profile={user.profile} />
+            <ProfileForm profile={user.profiles[0]} />
         </div>
     );
 }

@@ -37,16 +37,7 @@ export default function ContactButtonsBlock({ profile, lang, bgImage }: ContactB
         });
     }
 
-    const whatsappLink = profile.socialLinks?.find(link => link.platform === "whatsapp");
-    if (whatsappLink) {
-        buttons.push({
-            label: t.common.whatsapp,
-            icon: MessageCircle,
-            href: whatsappLink.url.startsWith("http") ? whatsappLink.url : `https://wa.me/${whatsappLink.url.replace(/[^0-9]/g, '')}`,
-            color: "text-green-600 dark:text-green-400",
-            bgColor: "bg-green-50 dark:bg-green-900/20"
-        });
-    }
+
 
     if (buttons.length === 0) return null;
 

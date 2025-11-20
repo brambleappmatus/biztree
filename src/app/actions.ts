@@ -46,7 +46,8 @@ export async function getAvailability(serviceId: string, date: string) {
     });
 
     while (currentTime < endTime) {
-        const slotEnd = new Date(currentTime.getTime() + service.duration * 60000);
+        const durationInMinutes = service.duration > 0 ? service.duration : 30;
+        const slotEnd = new Date(currentTime.getTime() + durationInMinutes * 60000);
 
         if (slotEnd > endTime) break;
 
@@ -64,10 +65,7 @@ export async function getAvailability(serviceId: string, date: string) {
         }
 
         // Increment by duration or fixed interval (e.g. 30 mins)
-        // Let's increment by duration for simplicity, or 30 mins if duration is long?
-        // Usually standard is 30 or 60 min slots, or exactly duration.
-        // Let's use duration step.
-        currentTime = new Date(currentTime.getTime() + service.duration * 60000);
+        currentTime = new Date(currentTime.getTime() + durationInMinutes * 60000);
     }
 
     return slots;
@@ -89,7 +87,8 @@ export async function createBooking(data: {
     if (!service) throw new Error("Service not found");
 
     const startTime = parseISO(`${data.date}T${data.time}`);
-    const endTime = new Date(startTime.getTime() + service.duration * 60000);
+    const durationInMinutes = service.duration > 0 ? service.duration : 30;
+    const endTime = new Date(startTime.getTime() + durationInMinutes * 60000);
 
     // Double check availability (race condition possible, but skipping lock for MVP)
     const existing = await prisma.booking.findFirst({
@@ -135,6 +134,7 @@ export async function updateProfile(profileId: string, data: {
     language?: string;
     bgImage?: string;
     bgBlur?: boolean;
+    avatarUrl?: string;
 }) {
     await prisma.profile.update({
         where: { id: profileId },
@@ -149,6 +149,7 @@ export async function updateProfile(profileId: string, data: {
             language: data.language,
             bgImage: data.bgImage,
             bgBlur: data.bgBlur,
+            avatarUrl: data.avatarUrl,
         },
     });
 
@@ -160,6 +161,7 @@ export async function createService(profileId: string, data: {
     name: string;
     duration: number;
     price: number;
+    bookingEnabled?: boolean;
 }) {
     await prisma.service.create({
         data: {
@@ -167,6 +169,7 @@ export async function createService(profileId: string, data: {
             name: data.name,
             duration: data.duration,
             price: data.price,
+            bookingEnabled: data.bookingEnabled ?? true,
         },
     });
     return { success: true };
@@ -176,6 +179,7 @@ export async function updateService(serviceId: string, data: {
     name: string;
     duration: number;
     price: number;
+    bookingEnabled?: boolean;
 }) {
     await prisma.service.update({
         where: { id: serviceId },
@@ -183,6 +187,7 @@ export async function updateService(serviceId: string, data: {
             name: data.name,
             duration: data.duration,
             price: data.price,
+            bookingEnabled: data.bookingEnabled,
         },
     });
     return { success: true };

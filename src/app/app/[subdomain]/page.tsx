@@ -6,6 +6,7 @@ import ServicesBlock from "@/components/blocks/services-block";
 import HoursBlock from "@/components/blocks/hours-block";
 import ContactButtonsBlock from "@/components/blocks/contact-buttons-block";
 import SocialLinksBlock from "@/components/blocks/social-links-block";
+import LinksBlock from "@/components/blocks/links-block";
 import LocationBlock from "@/components/blocks/location-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
@@ -48,6 +49,7 @@ export default async function ProfilePage({
             services: true,
             socialLinks: true,
             hours: true,
+            links: true,
         },
     }) as ProfileCore | null;
 
@@ -66,6 +68,11 @@ export default async function ProfilePage({
 
             {/* Contact Buttons */}
             <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+            {/* Custom Links */}
+            {profileData.links && profileData.links.length > 0 && (
+                <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
+            )}
 
             {/* Services */}
             {profileData.services && profileData.services.length > 0 && (

@@ -2,21 +2,32 @@
 
 import React, { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
-import { sk } from "date-fns/locale";
+import { sk, cs, enUS, pl, hu } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock, User, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAvailability, createBooking } from "@/app/actions";
 import { ProfileCore } from "@/types";
 
+import { getTranslation, Language } from "@/lib/i18n";
+
+const locales: Record<Language, any> = {
+    sk: sk,
+    cz: cs,
+    en: enUS,
+    pl: pl,
+    hu: hu,
+};
+
 interface BookingFlowProps {
     service: ProfileCore["services"][0];
     onClose: () => void;
+    lang: Language;
 }
 
 type Step = "date" | "time" | "details" | "confirmation";
 
-export default function BookingFlow({ service, onClose }: BookingFlowProps) {
+export default function BookingFlow({ service, onClose, lang }: BookingFlowProps) {
     const [step, setStep] = useState<Step>("date");
     const [date, setDate] = useState<Date | null>(null);
     const [time, setTime] = useState<string | null>(null);
@@ -108,7 +119,7 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                 <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">
                     <div>
                         <h2 className="font-semibold text-lg">{service.name}</h2>
-                        <p className="text-xs text-gray-500">{service.duration} min • {Number(service.price)} €</p>
+                        <p className="text-xs text-gray-500">{service.duration > 0 && `${service.duration} min • `}{Number(service.price)} €</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                         <X size={20} />
@@ -127,7 +138,7 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                             >
                                 <div className="flex justify-between items-center mb-4">
                                     <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft size={20} /></button>
-                                    <span className="font-medium capitalize">{format(currentMonth, "MMMM yyyy", { locale: sk })}</span>
+                                    <span className="font-medium capitalize">{format(currentMonth, "MMMM yyyy", { locale: locales[lang] })}</span>
                                     <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full"><ChevronRight size={20} /></button>
                                 </div>
 
@@ -173,10 +184,10 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                             >
                                 <div className="flex items-center gap-2 mb-4">
                                     <button onClick={() => setStep("date")} className="text-sm text-[var(--primary)] flex items-center">
-                                        <ChevronLeft size={16} /> Späť
+                                        <ChevronLeft size={16} /> {getTranslation(lang).booking.back}
                                     </button>
                                     <span className="font-medium flex-1 text-center pr-12">
-                                        {date && format(date, "d. MMMM", { locale: sk })}
+                                        {date && format(date, "d. MMMM", { locale: locales[lang] })}
                                     </span>
                                 </div>
 
@@ -198,7 +209,7 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                                     </div>
                                 ) : (
                                     <div className="text-center py-12 text-gray-500">
-                                        Žiadne voľné termíny na tento deň.
+                                        {getTranslation(lang).booking.noSlots}
                                     </div>
                                 )}
                             </motion.div>
@@ -213,10 +224,10 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                             >
                                 <div className="flex items-center gap-2 mb-6">
                                     <button onClick={() => setStep("time")} className="text-sm text-[var(--primary)] flex items-center">
-                                        <ChevronLeft size={16} /> Späť
+                                        <ChevronLeft size={16} /> {getTranslation(lang).booking.back}
                                     </button>
                                     <span className="font-medium flex-1 text-center pr-12">
-                                        Údaje
+                                        {getTranslation(lang).booking.details}
                                     </span>
                                 </div>
 
@@ -228,7 +239,7 @@ export default function BookingFlow({ service, onClose }: BookingFlowProps) {
                                         </div>
                                         <div className="flex justify-between mb-1">
                                             <span className="text-gray-500">Dátum:</span>
-                                            <span className="font-medium">{date && format(date, "d. MMMM yyyy", { locale: sk })}</span>
+                                            <span className="font-medium">{date && format(date, "d. MMMM yyyy", { locale: locales[lang] })}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-500">Čas:</span>

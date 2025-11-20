@@ -1,6 +1,6 @@
 import React from "react";
 import { ProfileCore } from "@/types";
-import { Instagram, Facebook, Twitter, Linkedin, Youtube } from "lucide-react";
+import { Instagram, Facebook, Twitter, Linkedin, Youtube, Phone, Link } from "lucide-react";
 import { getTranslation, Language } from "@/lib/i18n";
 import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
 
@@ -16,6 +16,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     twitter: Twitter,
     linkedin: Linkedin,
     youtube: Youtube,
+    whatsapp: Phone,
 };
 
 export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinksBlockProps) {
@@ -30,7 +31,7 @@ export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinks
             <h2 className={`font-semibold mb-3 ${isLight ? "text-white" : "text-gray-900"}`}>Social Links</h2>
             <div className="flex gap-3 justify-center">
                 {profile.socialLinks.map((link) => {
-                    const Icon = ICON_MAP[link.platform.toLowerCase()] || Instagram;
+                    const Icon = ICON_MAP[link.platform.toLowerCase()] || Link;
                     return (
                         <a
                             key={link.id}
@@ -38,8 +39,8 @@ export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinks
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`p-3 rounded-full transition-colors ${isLight
-                                    ? "bg-white/10 hover:bg-white/20"
-                                    : "bg-gray-100 hover:bg-gray-200"
+                                ? "bg-white/10 hover:bg-white/20"
+                                : "bg-gray-100 hover:bg-gray-200"
                                 }`}
                         >
                             <Icon className={`w-5 h-5 ${isLight ? "text-white" : "text-gray-700"}`} />

@@ -13,14 +13,14 @@ export default async function AdminDashboard() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profile: { include: { bookings: true } } }
+        include: { profiles: { include: { bookings: true } } }
     });
 
-    if (!user || !user.profile) {
+    if (!user || !user.profiles || user.profiles.length === 0) {
         redirect("/onboarding");
     }
 
-    const { profile } = user;
+    const profile = user.profiles[0];
     const recentBookings = await prisma.booking.findMany({
         where: { profileId: profile.id },
         orderBy: { createdAt: "desc" },

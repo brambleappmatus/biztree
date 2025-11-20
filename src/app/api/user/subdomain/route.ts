@@ -12,12 +12,12 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profile: { select: { subdomain: true } } }
+        include: { profiles: { select: { subdomain: true } } }
     });
 
-    if (!user?.profile) {
+    if (!user?.profiles || user.profiles.length === 0) {
         return NextResponse.json({ subdomain: null });
     }
 
-    return NextResponse.json({ subdomain: user.profile.subdomain });
+    return NextResponse.json({ subdomain: user.profiles[0]?.subdomain });
 }

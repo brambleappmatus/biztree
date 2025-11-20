@@ -68,6 +68,19 @@ export default function CompaniesPage() {
         setCreateLoading(true);
         setError("");
 
+        // Validate: if email is provided, password must also be provided
+        if (formData.email && !formData.password) {
+            setError("Password is required when email is provided");
+            setCreateLoading(false);
+            return;
+        }
+
+        if (!formData.email && formData.password) {
+            setError("Email is required when password is provided");
+            setCreateLoading(false);
+            return;
+        }
+
         try {
             const result = await createCompany(formData);
             if (result.error) {
@@ -157,18 +170,18 @@ export default function CompaniesPage() {
                                 required
                             />
                             <MuiInput
-                                label="Owner Email"
+                                label="Owner Email (Optional)"
                                 type="email"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                required
+                                placeholder="Leave empty to create company without owner"
                             />
                             <MuiInput
-                                label="Password"
+                                label="Password (Optional)"
                                 type="password"
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                required
+                                placeholder="Required only if email is provided"
                             />
 
                             <div className="flex gap-3 pt-4">

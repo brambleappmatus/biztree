@@ -7,29 +7,34 @@ export async function registerUser(data: {
     email: string;
     password: string;
 }) {
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-        where: { email: data.email }
-    });
+    try {
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email: data.email }
+        });
 
-    if (existingUser) {
-        return { error: "Používateľ s týmto emailom už existuje" };
-    }
-
-    // Hash password
-    const hashedPassword = await hashPassword(data.password);
-
-    // Create user
-    const user = await prisma.user.create({
-        data: {
-            email: data.email,
-            password: hashedPassword,
-            role: "USER",
-            onboardingCompleted: false
+        if (existingUser) {
+            return { error: "Používateľ s týmto emailom už existuje" };
         }
-    });
 
-    return { success: true, userId: user.id };
+        // Hash password
+        const hashedPassword = await hashPassword(data.password);
+
+        // Create user
+        const user = await prisma.user.create({
+            data: {
+                email: data.email,
+                password: hashedPassword,
+                role: "USER",
+                onboardingCompleted: false
+            }
+        });
+
+        return { success: true, userId: user.id };
+    } catch (error) {
+        console.error("Registration error:", error);
+        throw error; // Re-throw to let Next.js handle it as 500, but now we have logs
+    }
 }
 
 export async function checkSubdomainAvailability(subdomain: string) {

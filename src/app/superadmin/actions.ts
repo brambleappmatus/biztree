@@ -44,7 +44,7 @@ export async function getAllUsers() {
 
     return await prisma.user.findMany({
         include: {
-            profile: {
+            profiles: {
                 select: {
                     id: true,
                     name: true,
@@ -58,8 +58,8 @@ export async function getAllUsers() {
 
 // Create a new company
 export async function createCompany(data: {
-    email: string;
-    password: string;
+    email?: string;
+    password?: string;
     subdomain: string;
     name: string;
 }) {
@@ -74,38 +74,53 @@ export async function createCompany(data: {
         return { error: "Subdoména už existuje" };
     }
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-        where: { email: data.email }
-    });
+    // If email/password provided, create with user
+    if (data.email && data.password) {
+        // Check if user exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email: data.email }
+        });
 
-    if (existingUser) {
-        return { error: "Používateľ s týmto emailom už existuje" };
-    }
+        if (existingUser) {
+            return { error: "Používateľ s týmto emailom už existuje" };
+        }
 
-    // Create user and profile
-    const bcrypt = require("bcryptjs");
-    const hashedPassword = await bcrypt.hash(data.password, 12);
+        // Create user and profile
+        const bcrypt = require("bcryptjs");
+        const hashedPassword = await bcrypt.hash(data.password, 12);
 
-    const user = await prisma.user.create({
-        data: {
-            email: data.email,
-            password: hashedPassword,
-            role: "USER",
-            onboardingCompleted: true,
-            profile: {
-                create: {
-                    subdomain: data.subdomain,
-                    name: data.name,
-                    language: "sk",
-                    theme: "blue"
+        const user = await prisma.user.create({
+            data: {
+                email: data.email,
+                password: hashedPassword,
+                role: "USER",
+                onboardingCompleted: true,
+                profiles: {
+                    create: {
+                        subdomain: data.subdomain,
+                        name: data.name,
+                        language: "sk",
+                        theme: "blue"
+                    }
                 }
-            }
-        },
-        include: { profile: true }
-    });
+            },
+            include: { profiles: true }
+        });
 
-    return { success: true, user };
+        return { success: true, user };
+    } else {
+        // Create profile without user
+        const profile = await prisma.profile.create({
+            data: {
+                subdomain: data.subdomain,
+                name: data.name,
+                language: "sk",
+                theme: "blue"
+            }
+        });
+
+        return { success: true, profile };
+    }
 }
 
 // Delete company
@@ -169,14 +184,14 @@ export async function assignUserToCompany(userId: string, profileId: string) {
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { profile: true }
+        include: { profiles: true }
     });
 
     if (!user) {
         return { error: "Používateľ neexistuje" };
     }
 
-    if (user.profile) {
+    if (user.profiles && user.profiles.length > 0) {
         return { error: "Používateľ už má priradenú firmu" };
     }
 
@@ -242,16 +257,27 @@ export async function updateUserRole(userId: string, newRole: string) {
 }
 
 // Change user's company (reassign profile to different user)
-export async function changeUserCompany(userId: string, newProfileId: string) {
+export async function changeUserCompany(userId: string, newProfileId: string | null) {
     await checkSuperAdmin();
 
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { profile: true }
+        include: { profiles: true }
     });
 
     if (!user) {
         return { error: "Používateľ neexistuje" };
+    }
+
+    // If newProfileId is null or empty, unassign user from current profile
+    if (!newProfileId) {
+        if (user.profiles && user.profiles.length > 0) {
+            await prisma.profile.update({
+                where: { id: user.profiles[0].id },
+                data: { userId: null }
+            });
+        }
+        return { success: true };
     }
 
     const newProfile = await prisma.profile.findUnique({
@@ -263,32 +289,30 @@ export async function changeUserCompany(userId: string, newProfileId: string) {
         return { error: "Firma neexistuje" };
     }
 
-    // Swap the profiles between users if new profile has a user
-    if (newProfile.userId && user.profile) {
-        // Swap profiles
-        await prisma.$transaction([
-            prisma.profile.update({
-                where: { id: user.profile.id },
-                data: { userId: newProfile.userId }
-            }),
-            prisma.profile.update({
+    // Use transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+        // If user has a current profile, unlink it
+        if (user.profiles && user.profiles.length > 0) {
+            await tx.profile.update({
+                where: { id: user.profiles[0].id },
+                data: { userId: null }
+            });
+        }
+
+        // If new profile has a current user, unlink it
+        if (newProfile.userId) {
+            await tx.profile.update({
                 where: { id: newProfileId },
-                data: { userId: userId }
-            })
-        ]);
-    } else if (user.profile) {
-        // Just reassign user's current profile and take the new one
-        await prisma.profile.update({
+                data: { userId: null }
+            });
+        }
+
+        // Assign user to new profile
+        await tx.profile.update({
             where: { id: newProfileId },
             data: { userId: userId }
         });
-    } else {
-        // User has no profile, just assign them to the new one
-        await prisma.profile.update({
-            where: { id: newProfileId },
-            data: { userId: userId }
-        });
-    }
+    });
 
     return { success: true };
 }

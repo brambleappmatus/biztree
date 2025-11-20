@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sk">
-      <body className={cn(inter.variable, "antialiased bg-gray-50 text-gray-900 font-sans")}>
+      <body suppressHydrationWarning className={cn(inter.variable, "antialiased bg-gray-50 text-gray-900 font-sans")}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

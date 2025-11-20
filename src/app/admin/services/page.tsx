@@ -14,17 +14,17 @@ export default async function ServicesPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profile: { include: { services: true } } }
+        include: { profiles: { include: { services: true } } }
     });
 
-    if (!user || !user.profile) {
+    if (!user || !user.profiles || user.profiles.length === 0) {
         redirect("/onboarding");
     }
 
     return (
         <div>
             <h1 className="text-2xl font-bold mb-6">Správa služieb</h1>
-            <ServicesManager profileId={user.profile.id} services={user.profile.services} />
+            <ServicesManager profileId={user.profiles[0].id} services={user.profiles[0].services} />
         </div>
     );
 }

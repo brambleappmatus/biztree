@@ -29,27 +29,31 @@ export default function ServicesBlock({ profile, lang, bgImage }: { profile: Pro
                         <div>
                             <h3 className={`font-semibold ${isLight ? "text-white" : "text-gray-900"}`}>{service.name}</h3>
                             <p className={`text-sm ${isLight ? "text-gray-300" : "text-gray-600"}`}>
-                                {service.duration} min • {Number(service.price)} {service.currency}
+                                {service.duration > 0 && `${service.duration} min • `}{Number(service.price)} {service.currency}
                             </p>
                         </div>
-                        <button
-                            onClick={() => setSelectedService(service)}
-                            className="ios-btn px-4 py-2 text-sm font-semibold"
-                        >
-                            {t.common.book}
-                        </button>
+                        {
+                            service.bookingEnabled !== false && (
+                                <button
+                                    onClick={() => setSelectedService(service)}
+                                    className="ios-btn px-4 py-2 text-sm font-semibold"
+                                >
+                                    {t.common.book}
+                                </button>
+                            )
+                        }
                     </div>
                 ))}
-            </div>
+            </div >
 
             {selectedService && (
                 <BookingFlow
                     service={selectedService}
-                    profile={profile}
                     onClose={() => setSelectedService(null)}
                     lang={lang}
                 />
-            )}
+            )
+            }
         </>
     );
 }
