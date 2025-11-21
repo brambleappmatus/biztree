@@ -136,6 +136,23 @@ export default function AdminLayout({
                         <Calendar size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/bookings" && "text-blue-600")} />
                         <span className="relative group-hover:translate-x-1 transition-transform duration-200">Rezervácie</span>
                     </Link>
+
+                    <Link
+                        href="/admin/seo"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
+                            pathname === "/admin/seo"
+                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
+                            pathname === "/admin/seo" ? "translate-x-0" : "-translate-x-full"
+                        )} />
+                        <Settings size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/seo" && "text-blue-600")} />
+                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">SEO</span>
+                    </Link>
                 </nav>
 
                 <div className="p-4 border-t border-gray-100 space-y-2">
@@ -158,8 +175,8 @@ export default function AdminLayout({
 
                 {/* Right Preview Sidebar - Only visible on settings page (now root /admin) */}
                 {pathname === "/admin" && (
-                    <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
-                        <div className="flex flex-col items-center gap-6">
+                    <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:block p-8">
+                        <div className="sticky top-8 flex flex-col items-center gap-6">
                             {/* Visit Site Link (Moved here) */}
                             <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
                                 <div className="flex flex-col">

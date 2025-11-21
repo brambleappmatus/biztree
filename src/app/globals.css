@@ -93,3 +93,31 @@ body {
 .animate-scale-in {
   animation: scale-in 0.2s ease-out forwards;
 }
+
+/* Carousel Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-280px * 5 - 1.5rem * 5));
+  }
+}
+
+.animate-scroll-slow {
+  animation: scroll 30s linear infinite;
+}
+
+.pause-animation:hover {
+  animation-play-state: paused;
+}
+
+/* Hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

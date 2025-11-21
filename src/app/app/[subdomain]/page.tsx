@@ -17,6 +17,14 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
     const { subdomain } = await params;
     const profile = await prisma.profile.findUnique({
         where: { subdomain },
+        select: {
+            name: true,
+            about: true,
+            avatarUrl: true,
+            logo: true,
+            seoTitle: true,
+            seoDesc: true,
+        },
     });
 
     if (!profile) {
@@ -25,18 +33,44 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
         };
     }
 
+    const title = profile.seoTitle || `${profile.name} | BizTree`;
+    const description = profile.seoDesc || profile.about || `Rezervujte si služby u ${profile.name} online.`;
+    const ogImage = profile.avatarUrl || profile.logo || 'https://biztree.bio/logo.svg';
+    const url = `https://${subdomain}.biztree.bio`;
+
     return {
-        title: `${profile.name} | BizTree`,
-        description: profile.about || `Rezervujte si služby u ${profile.name} online.`,
-        openGraph: {
-            title: profile.name,
-            description: profile.about || `Rezervujte si služby u ${profile.name} online.`,
-            type: "website",
+        title,
+        description,
+        keywords: `${profile.name}, rezervácie, služby, online booking`,
+        metadataBase: new URL(url),
+        alternates: {
+            canonical: url,
         },
-        icons: {
-            icon: profile.avatarUrl || '/favicon.ico',
-            shortcut: profile.avatarUrl || '/favicon.ico',
-            apple: profile.avatarUrl || '/favicon.ico',
+        openGraph: {
+            title,
+            description,
+            url,
+            siteName: 'BizTree',
+            images: [
+                {
+                    url: ogImage,
+                    width: 1200,
+                    height: 630,
+                    alt: profile.name,
+                },
+            ],
+            locale: 'sk_SK',
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [ogImage],
+        },
+        robots: {
+            index: true,
+            follow: true,
         },
     };
 }
@@ -66,59 +100,103 @@ export default async function ProfilePage({
     const lang = (profileData.language || "sk") as "sk" | "cz" | "en" | "pl" | "hu";
     const textColorClass = getTextColorClass(profileData.bgImage);
 
+    // Helper function to convert day number to day name
+    const getDayName = (dayOfWeek: number): string => {
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        return days[dayOfWeek] || "Monday";
+    };
+
+    // Generate JSON-LD structured data
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": profileData.name,
+        "description": profileData.about || `Rezervujte si služby u ${profileData.name} online.`,
+        "url": `https://${subdomain}.biztree.bio`,
+        "logo": profileData.avatarUrl || profileData.logo,
+        "image": profileData.avatarUrl || profileData.logo,
+        "telephone": profileData.phone,
+        "email": profileData.email,
+        ...(profileData.address && {
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": profileData.address,
+                "addressCountry": "SK"
+            }
+        }),
+        ...(profileData.locationLat && profileData.locationLng && {
+            "geo": {
+                "@type": "GeoCoordinates",
+                "latitude": profileData.locationLat,
+                "longitude": profileData.locationLng
+            }
+        }),
+        ...(profileData.hours && profileData.hours.length > 0 && {
+            "openingHoursSpecification": profileData.hours
+                .filter(h => !h.isClosed)
+                .map(hour => ({
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": getDayName(hour.dayOfWeek),
+                    "opens": hour.openTime,
+                    "closes": hour.closeTime
+                }))
+        }),
+        ...(profileData.services && profileData.services.length > 0 && {
+            "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Služby",
+                "itemListElement": profileData.services.map(service => ({
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": service.name,
+                        "description": service.description
+                    }
+                }))
+            }
+        }),
+    };
+
     return (
-        <div className="flex flex-col gap-4 p-4">
-            {/* Header */}
-            <HeaderBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-
-            {/* Contact Buttons */}
-            <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-
-            {/* Custom Links */}
-            {profileData.links && profileData.links.length > 0 && (
-                <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
-            )}
-
-            {/* Services */}
-            {profileData.services && profileData.services.length > 0 && (
-                <div>
-                    <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Služby</h2>
-                    <ServicesBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-                </div>
-            )}
-
-            {/* Hours */}
-            <HoursBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-
-            {/* Social Links */}
-            <SocialLinksBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-
-            {/* Location */}
-            <LocationBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
-
-            {/* Footer */}
-            <FooterBlock lang={lang} bgImage={profileData.bgImage} />
-
+        <>
             {/* JSON-LD Structured Data for SEO */}
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "LocalBusiness",
-                        name: profileData.name,
-                        description: profileData.about,
-                        telephone: profileData.phone,
-                        email: profileData.email,
-                        address: profileData.address
-                            ? {
-                                "@type": "PostalAddress",
-                                streetAddress: profileData.address,
-                            }
-                            : undefined,
-                    }),
-                }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-        </div>
+
+            <div className="flex flex-col gap-4 p-4">
+                {/* Header */}
+                <HeaderBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+                {/* Contact Buttons */}
+                <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+                {/* Custom Links */}
+                {profileData.links && profileData.links.length > 0 && (
+                    <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
+                )}
+
+                {/* Services */}
+                {profileData.services && profileData.services.length > 0 && (
+                    <div>
+                        <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Služby</h2>
+                        <ServicesBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
+
+                {/* Hours */}
+                <HoursBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+                {/* Social Links */}
+                <SocialLinksBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+                {/* Location */}
+                <LocationBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+
+                {/* Footer */}
+                <FooterBlock lang={lang} bgImage={profileData.bgImage} />
+            </div>
+        </>
     );
 }

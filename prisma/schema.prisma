@@ -162,3 +162,16 @@ model Booking {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Showcase {
+  id          String   @id @default(cuid())
+  name        String   // Display name for the showcase
+  imageUrl    String   // URL to the phone screenshot
+  profileUrl  String   // Link to the demo profile
+  order       Int      @default(0) // For ordering showcases
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([order])
+}
