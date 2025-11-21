@@ -8,6 +8,12 @@ export function CookieConsent() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        // Check if we are in preview mode
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.get("preview") === "true") {
+            return;
+        }
+
         // Check if user has already consented
         const consent = localStorage.getItem("biztree-cookie-consent");
         if (!consent) {

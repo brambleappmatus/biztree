@@ -37,6 +37,9 @@ export default function LoginPage() {
                 const response = await fetch("/api/auth/session");
                 const session = await response.json();
 
+                // Refresh session first to update server components
+                router.refresh();
+
                 // Redirect based on role
                 if (session?.user?.role === "SUPERADMIN") {
                     router.push("/superadmin");
@@ -45,7 +48,6 @@ export default function LoginPage() {
                 } else {
                     router.push("/admin");
                 }
-                router.refresh();
                 // Don't set loading to false here - keep it showing until page changes
             }
         } catch (err) {

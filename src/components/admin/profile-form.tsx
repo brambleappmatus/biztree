@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Profile, WorkingHours } from "@prisma/client";
 import { updateProfile, updateWorkingHours } from "@/app/actions";
-import { Loader2, Save, User, Phone, Mail, MapPin, Globe, Image as ImageIcon, Palette, Type, Trash2 } from "lucide-react";
+import { Loader2, Save, User, Phone, Mail, MapPin, Globe, Image as ImageIcon, Palette, Type, Trash2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LANGUAGES } from "@/lib/i18n";
@@ -28,10 +28,8 @@ const THEMES = [
 ];
 
 const BACKGROUNDS = [
-    { id: "none", name: "None", gradient: "transparent" },
     { id: "black", name: "Black", gradient: "linear-gradient(to bottom, #000000, #1a1a1a)" },
     { id: "dark", name: "Dark Gray", gradient: "linear-gradient(to bottom, #1a1a1a, #2d2d2d)" },
-    { id: "white", name: "White", gradient: "linear-gradient(to bottom, #ffffff, #f5f5f5)" },
     { id: "blue-purple", name: "Blue Purple", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
     { id: "pink-orange", name: "Pink Orange", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
     { id: "green-blue", name: "Green Blue", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
@@ -68,7 +66,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         mapEmbed: profile.mapEmbed || "",
         theme: profile.theme,
         language: profile.language || "sk",
-        bgImage: profile.bgImage || "none",
+        bgImage: profile.bgImage === "none" ? "black" : (profile.bgImage || "black"),
         bgBlur: profile.bgBlur || false,
         avatarUrl: profile.avatarUrl || "",
     });
@@ -510,21 +508,36 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                         </div>
 
                         {bgType === "gradient" && (
-                            <div className="grid grid-cols-4 gap-3">
+                            <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
                                 {BACKGROUNDS.map((bg) => (
                                     <button
                                         key={bg.id}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, bgImage: bg.id })}
                                         className={cn(
-                                            "relative h-16 rounded-xl border-2 transition-all overflow-hidden hover:scale-105 active:scale-95",
+                                            "h-24 w-32 flex-shrink-0 rounded-lg border-2 transition-all relative overflow-hidden snap-start",
                                             formData.bgImage === bg.id
-                                                ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
-                                                : "border-transparent"
+                                                ? "border-blue-500 ring-2 ring-blue-200"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                         )}
-                                        style={{ background: bg.gradient }}
-                                        title={bg.name}
-                                    />
+                                    >
+                                        <div
+                                            className="w-full h-full"
+                                            style={{
+                                                background: bg.gradient,
+                                                backgroundSize: "cover",
+                                                backgroundPosition: "center"
+                                            }}
+                                        />
+                                        {formData.bgImage === bg.id && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-blue-600/20">
+                                                <Check className="text-white" size={24} />
+                                            </div>
+                                        )}
+                                        <span className="absolute bottom-1 left-1 text-[10px] font-medium text-white drop-shadow-md bg-black/20 px-1.5 py-0.5 rounded">
+                                            {bg.name}
+                                        </span>
+                                    </button>
                                 ))}
                             </div>
                         )}

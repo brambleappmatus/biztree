@@ -48,7 +48,7 @@ export function PhonePreview({ url }: PhonePreviewProps) {
                     {/* Iframe */}
                     <iframe
                         ref={iframeRef}
-                        src={url}
+                        src={`${url}${url.includes('?') ? '&' : '?'}preview=true`}
                         className={cn(
                             "w-full h-full border-0 transition-opacity duration-300",
                             isInitialLoad ? "opacity-0" : "opacity-100"

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { LayoutDashboard, Calendar, Users, Settings, ExternalLink, LogOut } from "lucide-react";
@@ -17,6 +18,7 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const { data: session } = useSession();
+    const pathname = usePathname();
     const [subdomain, setSubdomain] = useState<string | null>(null);
 
     useEffect(() => {
@@ -66,29 +68,80 @@ export default function AdminLayout({
                     </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
-                    <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <Settings size={20} />
-                        Vaše Biztree
+                <nav className="flex-1 p-4 space-y-2">
+                    <Link
+                        href="/admin"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
+                            pathname === "/admin"
+                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
+                            pathname === "/admin" ? "translate-x-0" : "-translate-x-full"
+                        )} />
+                        <Settings size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin" && "text-blue-600")} />
+                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Vaše Biztree</span>
                     </Link>
-                    <Link href="/admin" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <LayoutDashboard size={20} />
-                        Prehľad
+
+                    <Link
+                        href="/admin/dashboard"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
+                            pathname === "/admin/dashboard"
+                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
+                            pathname === "/admin/dashboard" ? "translate-x-0" : "-translate-x-full"
+                        )} />
+                        <LayoutDashboard size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/dashboard" && "text-blue-600")} />
+                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Prehľad</span>
                     </Link>
-                    <Link href="/admin/services" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <Users size={20} />
-                        Služby
+
+                    <Link
+                        href="/admin/services"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
+                            pathname === "/admin/services"
+                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
+                            pathname === "/admin/services" ? "translate-x-0" : "-translate-x-full"
+                        )} />
+                        <Users size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/services" && "text-blue-600")} />
+                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Služby</span>
                     </Link>
-                    <Link href="/admin/bookings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <Calendar size={20} />
-                        Rezervácie
+
+                    <Link
+                        href="/admin/bookings"
+                        className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
+                            pathname === "/admin/bookings"
+                                ? "bg-blue-50 text-blue-600 shadow-sm"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        )}
+                    >
+                        <div className={cn(
+                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
+                            pathname === "/admin/bookings" ? "translate-x-0" : "-translate-x-full"
+                        )} />
+                        <Calendar size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/bookings" && "text-blue-600")} />
+                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Rezervácie</span>
                     </Link>
                 </nav>
 
                 <div className="p-4 border-t border-gray-100 space-y-2">
                     <button
                         onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors active:scale-95 transition-transform"
                     >
                         <LogOut size={18} />
                         <span>Odhlásiť sa</span>
@@ -103,38 +156,40 @@ export default function AdminLayout({
                     {children}
                 </div>
 
-                {/* Right Preview Sidebar */}
-                <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
-                    <div className="flex flex-col items-center gap-6">
-                        {/* Visit Site Link (Moved here) */}
-                        <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                {/* Right Preview Sidebar - Only visible on settings page (now root /admin) */}
+                {pathname === "/admin" && (
+                    <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
+                        <div className="flex flex-col items-center gap-6">
+                            {/* Visit Site Link (Moved here) */}
+                            <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                                    <a
+                                        href={profileUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                    >
+                                        {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                    </a>
+                                </div>
                                 <a
                                     href={profileUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                    className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
                                 >
-                                    {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                    <ExternalLink size={14} />
                                 </a>
                             </div>
-                            <a
-                                href={profileUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
-                            >
-                                <ExternalLink size={14} />
-                            </a>
-                        </div>
 
-                        {/* Phone Preview */}
-                        <div className="w-full">
-                            <PhonePreview url={profileUrl} />
+                            {/* Phone Preview */}
+                            <div className="w-full">
+                                <PhonePreview url={profileUrl} />
+                            </div>
                         </div>
-                    </div>
-                </aside>
+                    </aside>
+                )}
             </main>
         </div>
     );

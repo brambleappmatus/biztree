@@ -20,10 +20,8 @@ const THEMES = [
 ];
 
 const BACKGROUNDS = [
-    { id: "none", name: "None", gradient: "transparent" },
     { id: "black", name: "Black", gradient: "linear-gradient(to bottom, #000000, #1a1a1a)" },
     { id: "dark", name: "Dark Gray", gradient: "linear-gradient(to bottom, #1a1a1a, #2d2d2d)" },
-    { id: "white", name: "White", gradient: "linear-gradient(to bottom, #ffffff, #f5f5f5)" },
     { id: "blue-purple", name: "Blue Purple", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
     { id: "pink-orange", name: "Pink Orange", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
     { id: "green-blue", name: "Green Blue", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
@@ -54,7 +52,7 @@ export default function OnboardingForm() {
         phone: "",
         email: "",
         theme: "blue",
-        bgImage: "none"
+        bgImage: "black"
     });
 
     const checkSubdomain = async (subdomain: string) => {
