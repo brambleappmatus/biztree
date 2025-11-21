@@ -66,21 +66,21 @@ export default function AdminLayout({
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
+                    <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                        <Settings size={20} />
+                        Vaše Biztree
+                    </Link>
                     <Link href="/admin" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
                         <LayoutDashboard size={20} />
                         Prehľad
-                    </Link>
-                    <Link href="/admin/bookings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <Calendar size={20} />
-                        Rezervácie
                     </Link>
                     <Link href="/admin/services" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
                         <Users size={20} />
                         Služby
                     </Link>
-                    <Link href="/admin/settings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        <Settings size={20} />
-                        Nastavenia
+                    <Link href="/admin/bookings" className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                        <Calendar size={20} />
+                        Rezervácie
                     </Link>
                 </nav>
 
