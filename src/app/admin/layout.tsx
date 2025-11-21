@@ -167,45 +167,46 @@ export default function AdminLayout({
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 md:ml-64 flex min-h-screen">
+            <main className="flex-1 flex flex-col md:flex-row md:ml-64 min-h-screen">
                 {/* Center Content */}
-                <div className="flex-1 p-8 overflow-y-auto">
-                    {children}
+                <div className="flex-1 p-8 overflow-y-auto overflow-x-hidden">
+                    <div className="max-w-2xl mx-auto">
+                        {children}
+                    </div>
                 </div>
 
                 {/* Right Preview Sidebar - Only visible on settings page (now root /admin) */}
-                {pathname === "/admin" && (
-                    <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:block p-8">
-                        <div className="sticky top-8 flex flex-col items-center gap-6">
-                            {/* Visit Site Link (Moved here) */}
-                            <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
-                                    <a
-                                        href={profileUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
-                                    >
-                                        {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
-                                    </a>
-                                </div>
+                {pathname === "/admin" && (<aside className="w-full md:w-[300px] lg:w-[380px] bg-white border-t md:border-l border-gray-200 p-8">
+                    <div className="sticky top-8 flex flex-col items-center gap-6">
+                        {/* Visit Site Link (Moved here) */}
+                        <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
                                 <a
                                     href={profileUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                                    className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
                                 >
-                                    <ExternalLink size={14} />
+                                    {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
                                 </a>
                             </div>
-
-                            {/* Phone Preview */}
-                            <div className="w-full">
-                                <PhonePreview url={profileUrl} />
-                            </div>
+                            <a
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                            >
+                                <ExternalLink size={14} />
+                            </a>
                         </div>
-                    </aside>
+
+                        {/* Phone Preview */}
+                        <div className="w-full">
+                            <PhonePreview url={profileUrl} />
+                        </div>
+                    </div>
+                </aside>
                 )}
             </main>
         </div>
