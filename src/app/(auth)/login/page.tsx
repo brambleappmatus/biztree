@@ -31,6 +31,7 @@ export default function LoginPage() {
 
             if (result?.error) {
                 setError("Nesprávny email alebo heslo");
+                setLoading(false);
             } else if (result?.ok) {
                 // Fetch session to check role and onboarding status
                 const response = await fetch("/api/auth/session");
@@ -45,10 +46,10 @@ export default function LoginPage() {
                     router.push("/admin");
                 }
                 router.refresh();
+                // Don't set loading to false here - keep it showing until page changes
             }
         } catch (err) {
             setError("Nastala chyba pri prihlasovaní");
-        } finally {
             setLoading(false);
         }
     };
@@ -95,7 +96,7 @@ export default function LoginPage() {
                             loading={loading}
                             className="w-full"
                         >
-                            Prihlásiť sa
+                            {loading ? "Prihlasujem..." : "Prihlásiť sa"}
                         </MuiButton>
                     </form>
 
