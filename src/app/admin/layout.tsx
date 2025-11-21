@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { LayoutDashboard, Calendar, Users, Settings, ExternalLink, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PhonePreview } from "@/components/admin/phone-preview";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -55,7 +56,7 @@ export default function AdminLayout({
     return (
         <div className={cn("min-h-screen bg-gray-50 flex", inter.className)}>
             {/* Sidebar */}
-            <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full">
+            <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
                 <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
@@ -92,24 +93,48 @@ export default function AdminLayout({
                         <LogOut size={18} />
                         <span>Odhlásiť sa</span>
                     </button>
-                    <a
-                        href={profileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                        <ExternalLink size={18} />
-                        Zobraziť môj web
-                    </a>
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 md:ml-64">
-
-                <div className="p-8">
+            {/* Main Content Area */}
+            <main className="flex-1 md:ml-64 flex min-h-screen">
+                {/* Center Content */}
+                <div className="flex-1 p-8 overflow-y-auto">
                     {children}
                 </div>
+
+                {/* Right Preview Sidebar */}
+                <aside className="w-[420px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
+                    <div className="flex flex-col items-center gap-6">
+                        {/* Visit Site Link (Moved here) */}
+                        <div className="w-full bg-gray-50 rounded-xl p-4 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                                <a
+                                    href={profileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-sm font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                >
+                                    {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                </a>
+                            </div>
+                            <a
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                            >
+                                <ExternalLink size={18} />
+                            </a>
+                        </div>
+
+                        {/* Phone Preview */}
+                        <div className="w-full">
+                            <PhonePreview url={profileUrl} />
+                        </div>
+                    </div>
+                </aside>
             </main>
         </div>
     );
