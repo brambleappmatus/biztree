@@ -68,6 +68,7 @@ export default function SocialLinksManager({ profile }: SocialLinksManagerProps)
             if (response.ok) {
                 startTransition(() => {
                     router.refresh();
+                    window.dispatchEvent(new Event('profile-updated'));
                 });
             } else {
                 // Revert on error
@@ -98,6 +99,7 @@ export default function SocialLinksManager({ profile }: SocialLinksManagerProps)
             if (response.ok) {
                 startTransition(() => {
                     router.refresh();
+                    window.dispatchEvent(new Event('profile-updated'));
                 });
             } else {
                 // Revert on error

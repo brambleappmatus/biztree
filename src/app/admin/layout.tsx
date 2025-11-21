@@ -104,17 +104,17 @@ export default function AdminLayout({
                 </div>
 
                 {/* Right Preview Sidebar */}
-                <aside className="w-[420px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
+                <aside className="w-[380px] bg-white border-l border-gray-200 hidden xl:flex flex-col sticky top-0 h-screen overflow-y-auto p-8">
                     <div className="flex flex-col items-center gap-6">
                         {/* Visit Site Link (Moved here) */}
-                        <div className="w-full bg-gray-50 rounded-xl p-4 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
+                        <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
                             <div className="flex flex-col">
-                                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
                                 <a
                                     href={profileUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-sm font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                    className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
                                 >
                                     {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
                                 </a>
@@ -123,9 +123,9 @@ export default function AdminLayout({
                                 href={profileUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="p-2 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+                                className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
                             >
-                                <ExternalLink size={18} />
+                                <ExternalLink size={14} />
                             </a>
                         </div>
 

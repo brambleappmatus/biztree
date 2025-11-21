@@ -33,6 +33,11 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
             description: profile.about || `Rezervujte si služby u ${profile.name} online.`,
             type: "website",
         },
+        icons: {
+            icon: profile.avatarUrl || '/favicon.ico',
+            shortcut: profile.avatarUrl || '/favicon.ico',
+            apple: profile.avatarUrl || '/favicon.ico',
+        },
     };
 }
 

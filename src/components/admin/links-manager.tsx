@@ -60,6 +60,7 @@ export default function LinksManager({ profile }: LinksManagerProps) {
             if (result.success) {
                 startTransition(() => {
                     router.refresh();
+                    window.dispatchEvent(new Event('profile-updated'));
                 });
             } else {
                 // Revert on error
@@ -87,6 +88,7 @@ export default function LinksManager({ profile }: LinksManagerProps) {
             if (result.success) {
                 startTransition(() => {
                     router.refresh();
+                    window.dispatchEvent(new Event('profile-updated'));
                 });
             } else {
                 // Revert on failure
@@ -129,6 +131,7 @@ export default function LinksManager({ profile }: LinksManagerProps) {
             await updateLinkOrder(updatedLinks.map(l => ({ id: l.id, order: l.order })));
             startTransition(() => {
                 router.refresh();
+                window.dispatchEvent(new Event('profile-updated'));
             });
         } catch (error) {
             console.error("Error updating order:", error);

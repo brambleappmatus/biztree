@@ -23,6 +23,9 @@ const BACKGROUND_GRADIENTS: Record<string, string> = {
     "teal": "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
 };
 
+import { ProfileRefresher } from "@/components/profile/profile-refresher";
+import { CookieConsent } from "@/components/ui/cookie-consent";
+
 // This layout wraps the public profile pages
 export default async function ProfileLayout({
     children,
@@ -71,6 +74,9 @@ export default async function ProfileLayout({
             style={backgroundStyle}
             data-theme={profile.theme}
         >
+            <ProfileRefresher />
+            <CookieConsent />
+
             {/* Background Overlay for better text readability on images */}
             {isImageUrl && (
                 <div
@@ -82,7 +88,7 @@ export default async function ProfileLayout({
             )}
 
             {/* Main Content Container - Mobile First, Narrow on Desktop */}
-            <main className="w-full max-w-[480px] min-h-screen relative z-10 bg-transparent flex flex-col pb-16">
+            <main className="w-full max-w-[480px] min-h-screen relative z-10 bg-transparent flex flex-col pb-8">
                 {children}
             </main>
         </div>

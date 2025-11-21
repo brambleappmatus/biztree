@@ -210,9 +210,25 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         );
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // Auto-save logic
+    const isFirstRun = React.useRef(true);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    React.useEffect(() => {
+        if (isFirstRun.current) {
+            isFirstRun.current = false;
+            return;
+        }
+
         setLoading(true);
+        const timer = setTimeout(() => {
+            handleAutoSave();
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [formData, hours]);
+
+    const handleAutoSave = async () => {
         try {
             // Update profile
             await updateProfile(profile.id, formData);
@@ -220,11 +236,13 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             // Update hours
             await updateWorkingHours(profile.id, hours);
 
-            router.refresh();
-            alert("Profil bol úspešne aktualizovaný");
+            setLastSaved(new Date());
+
+            // Dispatch event for preview refresh
+            window.dispatchEvent(new Event('profile-updated'));
+
         } catch (error) {
             console.error(error);
-            alert("Nastala chyba pri ukladaní");
         } finally {
             setLoading(false);
         }
@@ -235,11 +253,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Nastavenia profilu</h1>
-            </div>
-
+        <div className="space-y-8 max-w-4xl pb-12">
             {/* Identity Section */}
             <MuiCard title="Identita" subtitle="Základné informácie o vašej firme">
                 <div className="space-y-4">
@@ -570,18 +584,25 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                 </div>
             </MuiCard>
 
-            {/* Floating Action Button for Save */}
+            {/* Saving Indicator */}
             <div className="fixed bottom-6 right-6 z-50">
-                <MuiButton
-                    type="submit"
-                    disabled={loading}
-                    className="shadow-xl h-14 px-8 rounded-full text-base"
-                    startIcon={!loading && <Save className="w-5 h-5" />}
-                    loading={loading}
-                >
-                    {loading ? "Ukladám..." : "Uložiť zmeny"}
-                </MuiButton>
+                <div className={cn(
+                    "bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 rounded-full px-6 py-3 flex items-center gap-3 transition-all duration-300",
+                    loading ? "translate-y-0 opacity-100" : lastSaved ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+                )}>
+                    {loading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Ukladám zmeny...</span>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Uložené</span>
+                        </>
+                    )}
+                </div>
             </div>
-        </form>
+        </div>
     );
 }
