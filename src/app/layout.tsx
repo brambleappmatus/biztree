@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     icon: "/logo.svg",
   },
   manifest: "/manifest.json",
+  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

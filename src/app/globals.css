@@ -33,11 +33,18 @@
 }
 
 body {
-  background: var(--background);
+  background: #000000;
+  /* Default to black to hide safe area gaps */
   color: var(--foreground);
   font-family: var(--font-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #000000;
 }
 
 /* Utilities */

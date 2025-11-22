@@ -75,7 +75,7 @@ export default async function ProfileLayout({
         >
             {/* Fixed Background Layer - Covers entire viewport including safe areas */}
             <div
-                className="fixed inset-0 z-[-1]"
+                className="fixed inset-0 z-0"
                 style={backgroundStyle}
             />
 
@@ -83,7 +83,7 @@ export default async function ProfileLayout({
             {isImageUrl && (
                 <div
                     className={cn(
-                        "fixed inset-0 z-[-1]",
+                        "fixed inset-0 z-0",
                         profile.bgBlur ? "backdrop-blur-md bg-black/30" : "bg-black/20"
                     )}
                 />
