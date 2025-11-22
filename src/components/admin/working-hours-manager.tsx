@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 import { Profile, WorkingHours } from "@prisma/client";
 import { MuiCard } from "@/components/ui/mui-card";
 import { MuiButton } from "@/components/ui/mui-button";
@@ -25,6 +26,7 @@ const DAYS = [
 
 export default function WorkingHoursManager({ profile }: WorkingHoursManagerProps) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [saving, setSaving] = useState(false);
 
     // Initialize state from profile hours or defaults
@@ -57,9 +59,10 @@ export default function WorkingHoursManager({ profile }: WorkingHoursManagerProp
         try {
             await updateWorkingHours(profile.id, hours);
             router.refresh();
+            showToast("Otváracie hodiny uložené", "success");
         } catch (error) {
             console.error("Error saving hours:", error);
-            alert("Chyba pri ukladaní otváracích hodín");
+            showToast("Chyba pri ukladaní otváracích hodín", "error");
         } finally {
             setSaving(false);
         }

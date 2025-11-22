@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 import { Booking, Service } from "@prisma/client";
 import { updateBookingStatus } from "@/app/actions";
 import { Loader2, Check, X, Clock, Calendar } from "lucide-react";
@@ -17,6 +18,7 @@ interface BookingsManagerProps {
 
 export default function BookingsManager({ bookings }: BookingsManagerProps) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [loadingId, setLoadingId] = useState<string | null>(null);
 
     const handleStatusUpdate = async (id: string, status: string) => {
@@ -24,9 +26,10 @@ export default function BookingsManager({ bookings }: BookingsManagerProps) {
         try {
             await updateBookingStatus(id, status);
             router.refresh();
+            showToast("Stav rezervácie aktualizovaný", "success");
         } catch (error) {
             console.error(error);
-            alert("Chyba pri aktualizácii");
+            showToast("Chyba pri aktualizácii", "error");
         } finally {
             setLoadingId(null);
         }

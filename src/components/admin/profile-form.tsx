@@ -13,9 +13,10 @@ import { MuiButton } from "@/components/ui/mui-button";
 import { MuiCard } from "@/components/ui/mui-card";
 import LinksManager from "./links-manager";
 import SocialLinksManager from "./social-links-manager";
+import { useToast } from "@/components/ui/toast";
 
 interface ProfileFormProps {
-    profile: Profile & { socialLinks: any[], hours: WorkingHours[], links: any[] };
+    profile: Profile & { socialLinks: any[], hours: WorkingHours[], links: any[], bgNoise?: boolean };
 }
 
 const THEMES = [
@@ -52,6 +53,11 @@ const BACKGROUNDS = [
     { id: "tropical", name: "Tropical", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd200 100%)" },
     { id: "aurora", name: "Aurora", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%)" },
     { id: "cosmic", name: "Cosmic", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 33%, #f093fb 66%, #f5576c 100%)" },
+    // Premium mesh/ray gradients
+    { id: "sunset-rays", name: "Sunset Rays", gradient: "radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.9) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(78, 205, 196, 0.9) 0%, transparent 50%), radial-gradient(circle at 50% 80%, rgba(255, 159, 64, 0.8) 0%, transparent 50%), linear-gradient(135deg, #2c3e50 0%, #34495e 100%)" },
+    { id: "neon-dreams", name: "Neon Dreams", gradient: "radial-gradient(circle at 30% 30%, rgba(138, 43, 226, 0.8) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(255, 20, 147, 0.8) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(0, 191, 255, 0.6) 0%, transparent 60%), linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" },
+    { id: "ocean-depths", name: "Ocean Depths", gradient: "radial-gradient(circle at 40% 40%, rgba(64, 224, 208, 0.7) 0%, transparent 50%), radial-gradient(circle at 60% 60%, rgba(72, 209, 204, 0.7) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(32, 178, 170, 0.6) 0%, transparent 50%), linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)" },
+    { id: "fire-ice", name: "Fire & Ice", gradient: "radial-gradient(circle at 20% 80%, rgba(255, 69, 0, 0.8) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.8) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(138, 43, 226, 0.5) 0%, transparent 60%), linear-gradient(135deg, #232526 0%, #414345 100%)" },
 ];
 
 const DAYS = [
@@ -66,6 +72,7 @@ const DAYS = [
 
 export default function ProfileForm({ profile }: ProfileFormProps) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: profile.name,
@@ -90,13 +97,13 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
         // Validate file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
-            alert("Obrázok je príliš veľký. Maximálna veľkosť je 2MB.");
+            showToast("Obrázok je príliš veľký. Maximálna veľkosť je 2MB.", "error");
             return;
         }
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Prosím nahrajte obrázok.");
+            showToast("Prosím nahrajte obrázok.", "error");
             return;
         }
 
@@ -120,9 +127,10 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
             const data = await response.json();
             setFormData(prev => ({ ...prev, avatarUrl: data.url }));
+            showToast("Profilová fotka nahraná", "success");
         } catch (error) {
             console.error("Error uploading avatar:", error);
-            alert("Nepodarilo sa nahrať obrázok. Skúste to prosím znova.");
+            showToast("Nepodarilo sa nahrať obrázok. Skúste to prosím znova.", "error");
         } finally {
             setLoading(false);
         }
@@ -519,38 +527,54 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                         </div>
 
                         {bgType === "gradient" && (
-                            <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
-                                {BACKGROUNDS.map((bg) => (
-                                    <button
-                                        key={bg.id}
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, bgImage: bg.id })}
-                                        className={cn(
-                                            "h-24 w-32 flex-shrink-0 rounded-lg border-2 transition-all relative overflow-hidden snap-start",
-                                            formData.bgImage === bg.id
-                                                ? "border-blue-500 ring-2 ring-blue-200"
-                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                                        )}
-                                    >
-                                        <div
-                                            className="w-full h-full"
-                                            style={{
-                                                background: bg.gradient,
-                                                backgroundSize: "cover",
-                                                backgroundPosition: "center"
-                                            }}
-                                        />
-                                        {formData.bgImage === bg.id && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-blue-600/20">
-                                                <Check className="text-white" size={24} />
-                                            </div>
-                                        )}
-                                        <span className="absolute bottom-1 left-1 text-[10px] font-medium text-white drop-shadow-md bg-black/20 px-1.5 py-0.5 rounded">
-                                            {bg.name}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
+                            <>
+                                <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
+                                    {BACKGROUNDS.map((bg) => (
+                                        <button
+                                            key={bg.id}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, bgImage: bg.id })}
+                                            className={cn(
+                                                "h-24 w-32 flex-shrink-0 rounded-lg border-2 transition-all relative overflow-hidden snap-start",
+                                                formData.bgImage === bg.id
+                                                    ? "border-blue-500 ring-2 ring-blue-200"
+                                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                            )}
+                                        >
+                                            <div
+                                                className="w-full h-full"
+                                                style={{
+                                                    background: bg.gradient,
+                                                    backgroundSize: "cover",
+                                                    backgroundPosition: "center"
+                                                }}
+                                            />
+                                            {formData.bgImage === bg.id && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-blue-600/20">
+                                                    <Check className="text-white" size={24} />
+                                                </div>
+                                            )}
+                                            <span className="absolute bottom-1 left-1 text-[10px] font-medium text-white drop-shadow-md bg-black/20 px-1.5 py-0.5 rounded">
+                                                {bg.name}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Noise toggle for gradients */}
+                                <div className="flex items-center gap-2 mt-4 mb-2">
+                                    <input
+                                        type="checkbox"
+                                        id="bgNoise"
+                                        checked={formData.bgNoise}
+                                        onChange={(e) => setFormData({ ...formData, bgNoise: e.target.checked })}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                    />
+                                    <label htmlFor="bgNoise" className="text-sm text-gray-700 dark:text-gray-300">
+                                        Pridať šum (grain texture pre prémiový vzhľad)
+                                    </label>
+                                </div>
+                            </>
                         )}
 
                         {bgType === "image" && (
@@ -576,20 +600,6 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                                         </label>
                                     </div>
                                 )}
-
-                                {/* Noise toggle - works for both gradients and images */}
-                                <div className="flex items-center gap-2 mb-2">
-                                    <input
-                                        type="checkbox"
-                                        id="bgNoise"
-                                        checked={formData.bgNoise}
-                                        onChange={(e) => setFormData({ ...formData, bgNoise: e.target.checked })}
-                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
-                                    />
-                                    <label htmlFor="bgNoise" className="text-sm text-gray-700 dark:text-gray-300">
-                                        Pridať šum (grain texture pre prémiový vzhľad)
-                                    </label>
-                                </div>
 
 
                                 <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">

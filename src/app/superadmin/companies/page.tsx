@@ -5,6 +5,8 @@ import { getAllCompanies, deleteCompany, createCompany } from "../actions";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";
 import { Trash2, Plus, Building2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface Company {
     id: string;
@@ -23,6 +25,7 @@ interface Company {
 }
 
 export default function CompaniesPage() {
+    const { showToast } = useToast();
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -34,6 +37,7 @@ export default function CompaniesPage() {
         subdomain: "",
         name: ""
     });
+    const [deleteData, setDeleteData] = useState<{ id: string; name: string } | null>(null);
 
     useEffect(() => {
         loadCompanies();
@@ -45,21 +49,28 @@ export default function CompaniesPage() {
             setCompanies(data);
         } catch (error) {
             console.error("Failed to load companies:", error);
+            showToast("Failed to load companies", "error");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Are you sure you want to delete "${name}"? This will delete all associated data.`)) {
-            return;
-        }
+    const handleDeleteClick = (id: string, name: string) => {
+        setDeleteData({ id, name });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteData) return;
+
+        const { id } = deleteData;
+        setDeleteData(null);
 
         try {
             await deleteCompany(id);
             await loadCompanies();
+            showToast("Company deleted", "success");
         } catch (error) {
-            alert("Failed to delete company");
+            showToast("Failed to delete company", "error");
         }
     };
 
@@ -85,13 +96,16 @@ export default function CompaniesPage() {
             const result = await createCompany(formData);
             if (result.error) {
                 setError(result.error);
+                showToast(result.error, "error");
             } else {
                 setShowCreateModal(false);
                 setFormData({ email: "", password: "", subdomain: "", name: "" });
                 await loadCompanies();
+                showToast("Company created", "success");
             }
         } catch (err) {
             setError("Failed to create company");
+            showToast("Failed to create company", "error");
         } finally {
             setCreateLoading(false);
         }
@@ -132,7 +146,7 @@ export default function CompaniesPage() {
                                 <td className="p-4 text-gray-700 dark:text-gray-300">{company._count.bookings}</td>
                                 <td className="p-4">
                                     <button
-                                        onClick={() => handleDelete(company.id, company.name)}
+                                        onClick={() => handleDeleteClick(company.id, company.name)}
                                         className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                                     >
                                         <Trash2 size={18} />
@@ -210,6 +224,17 @@ export default function CompaniesPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!deleteData}
+                onClose={() => setDeleteData(null)}
+                onConfirm={handleConfirmDelete}
+                title="Delete Company?"
+                description={`Are you sure you want to delete "${deleteData?.name}"? This will delete all associated data. This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 }

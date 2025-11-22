@@ -134,6 +134,7 @@ export async function updateProfile(profileId: string, data: {
     language?: string;
     bgImage?: string;
     bgBlur?: boolean;
+    bgNoise?: boolean;
     avatarUrl?: string;
 }) {
     await prisma.profile.update({
@@ -149,6 +150,7 @@ export async function updateProfile(profileId: string, data: {
             language: data.language,
             bgImage: data.bgImage,
             bgBlur: data.bgBlur,
+            bgNoise: data.bgNoise,
             avatarUrl: data.avatarUrl,
         },
     });

@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
     return (
-        <div className="min-h-[100dvh] w-full flex justify-center bg-gray-50 dark:bg-gray-900">
-            <main className="w-full max-w-[480px] min-h-[100dvh] relative z-10 flex flex-col pb-8 pt-safe pb-safe p-4 space-y-6">
+        <div className="min-h-[100dvh] w-full flex justify-center">
+            <main className="w-full max-w-[480px] min-h-[100dvh] relative z-10 flex flex-col pb-8 pt-safe pb-safe p-4 space-y-6 opacity-0 animate-[fadeIn_0.8s_ease-in-out_1s_forwards]">
                 {/* Profile Header Skeleton */}
                 <div className="flex flex-col items-center space-y-4 mt-8">
                     <Skeleton className="h-24 w-24 rounded-full" />

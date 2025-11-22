@@ -83,8 +83,25 @@ export default function AdminLayout({
     const profileUrl = getProfileUrl();
 
     return (
-        <div className={cn("min-h-screen bg-gray-50 flex", inter.className)}>
-            {/* Sidebar */}
+        <div className={cn("min-h-screen bg-gray-50 flex flex-col md:flex-row", inter.className)}>
+            {/* Mobile Header - Only visible on mobile */}
+            <header className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+                <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden">
+                        <img src="/logo.svg" alt="BizTree Logo" className="w-full h-full object-cover" />
+                    </div>
+                    <h1 className="text-lg font-bold text-blue-600">BizTree Admin</h1>
+                </div>
+                <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
+                    title="Odhlásiť sa"
+                >
+                    <LogOut size={20} />
+                </button>
+            </header>
+
+            {/* Desktop Sidebar */}
             <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
                 <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center gap-2">
@@ -196,46 +213,117 @@ export default function AdminLayout({
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col md:flex-row md:ml-64 min-h-screen">
                 {/* Center Content */}
-                <div className="flex-1 p-8 overflow-y-auto overflow-x-hidden">
+                <div className="flex-1 p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden">
                     <div className="max-w-2xl mx-auto">
                         {children}
                     </div>
                 </div>
 
-                {/* Right Preview Sidebar - Only visible on settings page (now root /admin) */}
-                {pathname === "/admin" && (<aside className="w-full md:w-[300px] lg:w-[380px] bg-white border-t md:border-l border-gray-200 p-8">
-                    <div className="sticky top-8 flex flex-col items-center gap-6">
-                        {/* Visit Site Link (Moved here) */}
-                        <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                {/* Right Preview Sidebar - Only visible on desktop and on settings page */}
+                {pathname === "/admin" && (
+                    <aside className="hidden md:block w-full md:w-[300px] lg:w-[380px] bg-white border-t md:border-l border-gray-200 p-8">
+                        <div className="sticky top-8 flex flex-col items-center gap-6">
+                            {/* Visit Site Link */}
+                            <div className="w-full bg-gray-50 rounded-xl p-3 border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-colors">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Váš verejný profil</span>
+                                    <a
+                                        href={profileUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                    >
+                                        {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                    </a>
+                                </div>
                                 <a
                                     href={profileUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
+                                    className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
                                 >
-                                    {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                    <ExternalLink size={14} />
                                 </a>
                             </div>
-                            <a
-                                href={profileUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 bg-white rounded-lg border border-gray-200 text-gray-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
-                            >
-                                <ExternalLink size={14} />
-                            </a>
-                        </div>
 
-                        {/* Phone Preview */}
-                        <div className="w-full">
-                            <PhonePreview url={profileUrl} />
+                            {/* Phone Preview */}
+                            <div className="w-full">
+                                <PhonePreview url={profileUrl} />
+                            </div>
                         </div>
-                    </div>
-                </aside>
+                    </aside>
                 )}
             </main>
+
+            {/* Mobile Bottom Navigation */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-inset-bottom">
+                <div className="flex items-center justify-around px-2 py-2 pb-safe">
+                    <Link
+                        href="/admin"
+                        className={cn(
+                            "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
+                            pathname === "/admin"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        )}
+                    >
+                        <Settings size={22} className={pathname === "/admin" ? "text-blue-600" : ""} />
+                        <span className="text-[10px] font-medium">Biztree</span>
+                    </Link>
+
+                    <Link
+                        href="/admin/dashboard"
+                        className={cn(
+                            "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
+                            pathname === "/admin/dashboard"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        )}
+                    >
+                        <LayoutDashboard size={22} className={pathname === "/admin/dashboard" ? "text-blue-600" : ""} />
+                        <span className="text-[10px] font-medium">Prehľad</span>
+                    </Link>
+
+                    <Link
+                        href="/admin/services"
+                        className={cn(
+                            "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
+                            pathname === "/admin/services"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        )}
+                    >
+                        <Users size={22} className={pathname === "/admin/services" ? "text-blue-600" : ""} />
+                        <span className="text-[10px] font-medium">Služby</span>
+                    </Link>
+
+                    <Link
+                        href="/admin/bookings"
+                        className={cn(
+                            "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
+                            pathname === "/admin/bookings"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        )}
+                    >
+                        <Calendar size={22} className={pathname === "/admin/bookings" ? "text-blue-600" : ""} />
+                        <span className="text-[10px] font-medium">Rezervácie</span>
+                    </Link>
+
+                    <Link
+                        href="/admin/seo"
+                        className={cn(
+                            "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
+                            pathname === "/admin/seo"
+                                ? "text-blue-600"
+                                : "text-gray-500"
+                        )}
+                    >
+                        <Settings size={22} className={pathname === "/admin/seo" ? "text-blue-600" : ""} />
+                        <span className="text-[10px] font-medium">SEO</span>
+                    </Link>
+                </div>
+            </nav>
         </div>
     );
 }

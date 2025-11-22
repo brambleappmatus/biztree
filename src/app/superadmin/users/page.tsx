@@ -5,6 +5,8 @@ import { getAllUsers, deleteUser, assignUserToCompany, getAllCompanies, updateUs
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiSelect } from "@/components/ui/mui-select";
 import { Trash2, Link as LinkIcon, Edit } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface User {
     id: string;
@@ -19,6 +21,7 @@ interface User {
 }
 
 export default function UsersPage() {
+    const { showToast } = useToast();
     const [users, setUsers] = useState<User[]>([]);
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -27,6 +30,7 @@ export default function UsersPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [selectedCompany, setSelectedCompany] = useState("");
     const [selectedRole, setSelectedRole] = useState("");
+    const [deleteData, setDeleteData] = useState<{ id: string; email: string } | null>(null);
 
     useEffect(() => {
         loadData();
@@ -42,21 +46,28 @@ export default function UsersPage() {
             setCompanies(companiesData);
         } catch (error) {
             console.error("Failed to load data:", error);
+            showToast("Failed to load data", "error");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id: string, email: string) => {
-        if (!confirm(`Are you sure you want to delete user "${email}"?`)) {
-            return;
-        }
+    const handleDeleteClick = (id: string, email: string) => {
+        setDeleteData({ id, email });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteData) return;
+
+        const { id } = deleteData;
+        setDeleteData(null);
 
         try {
             await deleteUser(id);
             await loadData();
+            showToast("User deleted", "success");
         } catch (error) {
-            alert("Failed to delete user");
+            showToast("Failed to delete user", "error");
         }
     };
 
@@ -66,15 +77,16 @@ export default function UsersPage() {
         try {
             const result = await assignUserToCompany(selectedUser.id, selectedCompany);
             if (result.error) {
-                alert(result.error);
+                showToast(result.error, "error");
             } else {
                 setShowAssignModal(false);
                 setSelectedUser(null);
                 setSelectedCompany("");
                 await loadData();
+                showToast("User assigned to company", "success");
             }
         } catch (error) {
-            alert("Failed to assign user");
+            showToast("Failed to assign user", "error");
         }
     };
 
@@ -86,7 +98,7 @@ export default function UsersPage() {
             if (selectedRole && selectedRole !== selectedUser.role) {
                 const roleResult = await updateUserRole(selectedUser.id, selectedRole);
                 if (roleResult.error) {
-                    alert(roleResult.error);
+                    showToast(roleResult.error, "error");
                     return;
                 }
             }
@@ -95,7 +107,7 @@ export default function UsersPage() {
             if (selectedCompany && (!selectedUser.profiles || selectedUser.profiles.length === 0 || selectedCompany !== selectedUser.profiles[0].id)) {
                 const companyResult = await changeUserCompany(selectedUser.id, selectedCompany);
                 if (companyResult.error) {
-                    alert(companyResult.error);
+                    showToast(companyResult.error, "error");
                     return;
                 }
             }
@@ -105,8 +117,9 @@ export default function UsersPage() {
             setSelectedRole("");
             setSelectedCompany("");
             await loadData();
+            showToast("User updated", "success");
         } catch (error) {
-            alert("Failed to update user");
+            showToast("Failed to update user", "error");
         }
     };
 
@@ -173,7 +186,7 @@ export default function UsersPage() {
                                         )}
                                         {user.role !== "SUPERADMIN" && (
                                             <button
-                                                onClick={() => handleDelete(user.id, user.email)}
+                                                onClick={() => handleDeleteClick(user.id, user.email)}
                                                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                                             >
                                                 <Trash2 size={18} />
@@ -304,6 +317,17 @@ export default function UsersPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!deleteData}
+                onClose={() => setDeleteData(null)}
+                onConfirm={handleConfirmDelete}
+                title="Delete User?"
+                description={`Are you sure you want to delete user "${deleteData?.email}"? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 }

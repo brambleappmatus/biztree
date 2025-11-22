@@ -7,10 +7,16 @@ import { getTranslation, Language } from "@/lib/i18n";
 import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
 
 interface ServicesBlockProps {
-    profile: ProfileCore;
+    profile: Omit<ProfileCore, "services"> & {
+        services: (Omit<ProfileCore["services"][0], "price"> & {
+            price: number | any; // Accept number or Decimal (typed as any to avoid import issues)
+        })[];
+    };
+    lang: Language;
+    bgImage: string | null;
 }
 
-export default function ServicesBlock({ profile, lang, bgImage }: { profile: ProfileCore, lang: Language, bgImage: string | null }) {
+export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockProps) {
     const t = getTranslation(lang);
     const [selectedService, setSelectedService] = useState<ProfileCore["services"][0] | null>(null);
     const blockBgClass = getBlockBgClass(bgImage);

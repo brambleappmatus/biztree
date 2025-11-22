@@ -6,6 +6,8 @@ import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";
 import { Plus, Trash2, Eye, EyeOff, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 interface Showcase {
     id: string;
@@ -17,6 +19,7 @@ interface Showcase {
 }
 
 export default function ShowcasesPage() {
+    const { showToast } = useToast();
     const [showcases, setShowcases] = useState<Showcase[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -28,6 +31,7 @@ export default function ShowcasesPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>("");
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchShowcases();
@@ -40,6 +44,7 @@ export default function ShowcasesPage() {
             setShowcases(data);
         } catch (error) {
             console.error("Failed to fetch showcases:", error);
+            showToast("Failed to fetch showcases", "error");
         } finally {
             setLoading(false);
         }
@@ -51,13 +56,13 @@ export default function ShowcasesPage() {
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert("Image is too large. Maximum size is 5MB.");
+            showToast("Image is too large. Maximum size is 5MB.", "error");
             return;
         }
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Please upload an image file.");
+            showToast("Please upload an image file.", "error");
             return;
         }
 
@@ -125,24 +130,36 @@ export default function ShowcasesPage() {
                 setImagePreview("");
                 setEditingId(null);
                 fetchShowcases();
+                showToast(editingId ? "Showcase updated" : "Showcase created", "success");
+            } else {
+                throw new Error("Failed to save");
             }
         } catch (error) {
             console.error("Failed to save showcase:", error);
-            alert("Failed to save showcase. Please try again.");
+            showToast("Failed to save showcase. Please try again.", "error");
         } finally {
             setLoading(false);
             setUploading(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this showcase?")) return;
+    const handleDeleteClick = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteId) return;
+
+        const id = deleteId;
+        setDeleteId(null);
 
         try {
             await fetch(`/api/superadmin/showcases/${id}`, { method: "DELETE" });
             fetchShowcases();
+            showToast("Showcase deleted", "success");
         } catch (error) {
             console.error("Failed to delete showcase:", error);
+            showToast("Failed to delete showcase", "error");
         }
     };
 
@@ -154,8 +171,10 @@ export default function ShowcasesPage() {
                 body: JSON.stringify({ isActive: !isActive }),
             });
             fetchShowcases();
+            showToast("Status updated", "success");
         } catch (error) {
             console.error("Failed to toggle showcase:", error);
+            showToast("Failed to update status", "error");
         }
     };
 
@@ -295,7 +314,7 @@ export default function ShowcasesPage() {
                                         Edit
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(showcase.id)}
+                                        onClick={() => handleDeleteClick(showcase.id)}
                                         className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
                                     >
                                         <Trash2 size={18} />
@@ -306,6 +325,17 @@ export default function ShowcasesPage() {
                     </div>
                 )}
             </MuiCard>
+
+            <ConfirmationModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleConfirmDelete}
+                title="Delete Showcase?"
+                description="Are you sure you want to delete this showcase? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </div>
     );
 }

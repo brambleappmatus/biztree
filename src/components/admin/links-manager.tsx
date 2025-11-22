@@ -9,6 +9,8 @@ import { MuiInput } from "@/components/ui/mui-input";
 import { MuiButton } from "@/components/ui/mui-button";
 import { addLink, deleteLink, updateLinkOrder } from "@/app/actions/links";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
 // Define Link interface locally until Prisma client is regenerated
 interface LinkItem {
@@ -25,12 +27,14 @@ interface LinksManagerProps {
 
 export default function LinksManager({ profile }: LinksManagerProps) {
     const router = useRouter();
+    const { showToast } = useToast();
     const [newLink, setNewLink] = useState({ title: "", url: "" });
     const [saving, setSaving] = useState(false);
     const [isPending, startTransition] = React.useTransition();
     const [localLinks, setLocalLinks] = useState<LinkItem[]>(
         (profile.links || []).sort((a, b) => a.order - b.order)
     );
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     // Sync with server state when it updates
     React.useEffect(() => {
@@ -62,22 +66,30 @@ export default function LinksManager({ profile }: LinksManagerProps) {
                     router.refresh();
                     window.dispatchEvent(new Event('profile-updated'));
                 });
+                showToast("Odkaz pridaný", "success");
             } else {
                 // Revert on error
                 setLocalLinks(prev => prev.filter(l => l.id !== tempId));
-                alert("Chyba pri pridávaní odkazu");
+                showToast("Chyba pri pridávaní odkazu", "error");
             }
         } catch (error) {
             console.error("Error adding link:", error);
             setLocalLinks(prev => prev.filter(l => l.id !== tempId));
-            alert("Chyba pri pridávaní odkazu");
+            showToast("Chyba pri pridávaní odkazu", "error");
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDeleteLink = async (linkId: string) => {
-        if (!confirm("Naozaj chcete odstrániť tento odkaz?")) return;
+    const handleDeleteClick = (linkId: string) => {
+        setDeleteId(linkId);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteId) return;
+
+        const linkId = deleteId;
+        setDeleteId(null);
 
         // Optimistic update
         const previousLinks = localLinks;
@@ -90,15 +102,16 @@ export default function LinksManager({ profile }: LinksManagerProps) {
                     router.refresh();
                     window.dispatchEvent(new Event('profile-updated'));
                 });
+                showToast("Odkaz odstránený", "success");
             } else {
                 // Revert on failure
                 setLocalLinks(previousLinks);
-                alert("Chyba pri odstraňovaní odkazu");
+                showToast("Chyba pri odstraňovaní odkazu", "error");
             }
         } catch (error) {
             console.error("Error deleting link:", error);
             setLocalLinks(previousLinks);
-            alert("Chyba pri odstraňovaní odkazu");
+            showToast("Chyba pri odstraňovaní odkazu", "error");
         }
     };
 
@@ -136,98 +149,112 @@ export default function LinksManager({ profile }: LinksManagerProps) {
         } catch (error) {
             console.error("Error updating order:", error);
             setLocalLinks(previousLinks); // Revert
+            showToast("Chyba pri zmene poradia", "error");
         }
     };
 
     return (
-        <MuiCard
-            title="Vlastné odkazy"
-            subtitle="Pridajte odkazy na vaše ďalšie stránky, články alebo produkty (Linktree štýl)"
-            className="mt-8"
-        >
-            {/* Existing Links */}
-            {localLinks.length > 0 && (
-                <div className="space-y-3 mb-6 mt-2">
-                    {localLinks.map((link, index) => {
-                        const isTemp = link.id.startsWith("temp-");
+        <>
+            <MuiCard
+                title="Vlastné odkazy"
+                subtitle="Pridajte odkazy na vaše ďalšie stránky, články alebo produkty (Linktree štýl)"
+                className="mt-8"
+            >
+                {/* Existing Links */}
+                {localLinks.length > 0 && (
+                    <div className="space-y-3 mb-6 mt-2">
+                        {localLinks.map((link, index) => {
+                            const isTemp = link.id.startsWith("temp-");
 
-                        return (
-                            <div
-                                key={link.id}
-                                className={cn(
-                                    "flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 group transition-opacity",
-                                    isTemp && "opacity-70"
-                                )}
-                            >
-                                <div className="flex flex-col gap-1 text-gray-400">
-                                    <button
-                                        onClick={() => moveLink(index, "up")}
-                                        disabled={index === 0 || isTemp}
-                                        className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
-                                    >
-                                        <ArrowUp size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => moveLink(index, "down")}
-                                        disabled={index === localLinks.length - 1 || isTemp}
-                                        className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
-                                    >
-                                        <ArrowDown size={14} />
-                                    </button>
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-sm truncate">{link.title}</div>
-                                    <div className="text-xs text-gray-500 truncate flex items-center gap-1">
-                                        <ExternalLink size={10} />
-                                        {link.url}
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => handleDeleteLink(link.id)}
-                                    disabled={isTemp}
-                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                                    title="Odstrániť"
+                            return (
+                                <div
+                                    key={link.id}
+                                    className={cn(
+                                        "flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 group transition-opacity",
+                                        isTemp && "opacity-70"
+                                    )}
                                 >
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                                    <div className="flex flex-col gap-1 text-gray-400">
+                                        <button
+                                            onClick={() => moveLink(index, "up")}
+                                            disabled={index === 0 || isTemp}
+                                            className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
+                                        >
+                                            <ArrowUp size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => moveLink(index, "down")}
+                                            disabled={index === localLinks.length - 1 || isTemp}
+                                            className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-gray-400"
+                                        >
+                                            <ArrowDown size={14} />
+                                        </button>
+                                    </div>
 
-            {/* Add New Link */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                <div className="flex-1 w-full">
-                    <MuiInput
-                        label="Názov odkazu"
-                        placeholder="napr. Môj Blog"
-                        value={newLink.title}
-                        onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                        className="bg-white dark:bg-gray-800"
-                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm truncate">{link.title}</div>
+                                        <div className="text-xs text-gray-500 truncate flex items-center gap-1">
+                                            <ExternalLink size={10} />
+                                            {link.url}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleDeleteClick(link.id)}
+                                        disabled={isTemp}
+                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                                        title="Odstrániť"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Add New Link */}
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-gray-50 dark:bg-gray-800/30 p-4 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="flex-1 w-full">
+                        <MuiInput
+                            label="Názov odkazu"
+                            placeholder="napr. Môj Blog"
+                            value={newLink.title}
+                            onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                            className="bg-white dark:bg-gray-800"
+                        />
+                    </div>
+                    <div className="flex-1 w-full">
+                        <MuiInput
+                            label="URL adresa"
+                            placeholder="https://..."
+                            value={newLink.url}
+                            onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                            className="bg-white dark:bg-gray-800"
+                        />
+                    </div>
+                    <MuiButton
+                        onClick={handleAddLink}
+                        disabled={!newLink.title || !newLink.url || saving}
+                        className="w-full sm:w-auto h-[42px]"
+                        startIcon={!saving && <Plus size={18} />}
+                        loading={saving}
+                    >
+                        Pridať
+                    </MuiButton>
                 </div>
-                <div className="flex-1 w-full">
-                    <MuiInput
-                        label="URL adresa"
-                        placeholder="https://..."
-                        value={newLink.url}
-                        onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                        className="bg-white dark:bg-gray-800"
-                    />
-                </div>
-                <MuiButton
-                    onClick={handleAddLink}
-                    disabled={!newLink.title || !newLink.url || saving}
-                    className="w-full sm:w-auto h-[42px]"
-                    startIcon={!saving && <Plus size={18} />}
-                    loading={saving}
-                >
-                    Pridať
-                </MuiButton>
-            </div>
-        </MuiCard>
+            </MuiCard>
+
+            <ConfirmationModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleConfirmDelete}
+                title="Odstrániť odkaz?"
+                description="Naozaj chcete odstrániť tento odkaz? Táto akcia je nevratná."
+                confirmText="Odstrániť"
+                cancelText="Zrušiť"
+                variant="danger"
+            />
+        </>
     );
 }

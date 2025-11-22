@@ -42,7 +42,7 @@ export default function ContactButtonsBlock({ profile, lang, bgImage }: ContactB
     if (buttons.length === 0) return null;
 
     return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className={buttons.length === 1 ? "grid grid-cols-1" : "grid grid-cols-2 gap-3"}>
             {buttons.map((button) => (
                 <a
                     key={button.label}

@@ -1,6 +1,6 @@
 import React from "react";
 import { ProfileCore } from "@/types";
-import { Instagram, Facebook, Twitter, Linkedin, Youtube, Phone, Link } from "lucide-react";
+import { SocialIcon } from "react-social-icons";
 import { getTranslation, Language } from "@/lib/i18n";
 import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
 
@@ -9,15 +9,6 @@ interface SocialLinksBlockProps {
     lang: Language;
     bgImage: string | null;
 }
-
-const ICON_MAP: Record<string, React.ElementType> = {
-    instagram: Instagram,
-    facebook: Facebook,
-    twitter: Twitter,
-    linkedin: Linkedin,
-    youtube: Youtube,
-    whatsapp: Phone,
-};
 
 export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinksBlockProps) {
     const t = getTranslation(lang);
@@ -29,22 +20,22 @@ export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinks
     return (
         <div className={`${blockBgClass} p-4 rounded-2xl shadow-sm`}>
             <h2 className={`font-semibold mb-3 ${isLight ? "text-white" : "text-gray-900"}`}>Social Links</h2>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center flex-wrap">
                 {profile.socialLinks.map((link) => {
-                    const Icon = ICON_MAP[link.platform.toLowerCase()] || Link;
                     return (
-                        <a
+                        <div
                             key={link.id}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`p-3 rounded-full transition-colors ${isLight
-                                ? "bg-white/10 hover:bg-white/20"
-                                : "bg-gray-100 hover:bg-gray-200"
-                                }`}
+                            className="transition-transform hover:scale-110"
                         >
-                            <Icon className={`w-5 h-5 ${isLight ? "text-white" : "text-gray-700"}`} />
-                        </a>
+                            <SocialIcon
+                                url={link.url}
+                                network={link.platform.toLowerCase()}
+                                style={{ width: 40, height: 40 }}
+                                fgColor="white"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            />
+                        </div>
                     );
                 })}
             </div>

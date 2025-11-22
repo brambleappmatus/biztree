@@ -93,6 +93,16 @@ html {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-fade-up {
   opacity: 0;
   animation: fade-up 0.5s ease-out forwards;

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { sk, cs, enUS, pl, hu } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +9,7 @@ import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock, User, Ch
 import { cn } from "@/lib/utils";
 import { getAvailability, createBooking } from "@/app/actions";
 import { ProfileCore } from "@/types";
+import { useToast } from "@/components/ui/toast";
 
 import { getTranslation, Language } from "@/lib/i18n";
 
@@ -28,6 +30,7 @@ interface BookingFlowProps {
 type Step = "date" | "time" | "details" | "confirmation";
 
 export default function BookingFlow({ service, onClose, lang }: BookingFlowProps) {
+    const { showToast } = useToast();
     const [step, setStep] = useState<Step>("date");
     const [date, setDate] = useState<Date | null>(null);
     const [time, setTime] = useState<string | null>(null);
@@ -86,13 +89,13 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
             });
 
             if (result.error) {
-                alert(result.error);
+                showToast(result.error, "error");
             } else {
                 setStep("confirmation");
             }
         } catch (error) {
             console.error(error);
-            alert("Something went wrong");
+            showToast("Something went wrong", "error");
         } finally {
             setSubmitting(false);
         }
@@ -107,8 +110,17 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
     const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    if (!mounted) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-0 sm:p-4">
             <motion.div
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
@@ -315,6 +327,7 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                     </AnimatePresence>
                 </div>
             </motion.div>
-        </div>
+        </div>,
+        document.body
     );
 }

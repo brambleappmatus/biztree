@@ -186,7 +186,17 @@ export default async function ProfilePage({
                 {profileData.services && profileData.services.length > 0 && (
                     <div className="animate-fade-up delay-300">
                         <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Služby</h2>
-                        <ServicesBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <ServicesBlock
+                            profile={{
+                                ...profileData,
+                                services: profileData.services.map(s => ({
+                                    ...s,
+                                    price: Number(s.price)
+                                }))
+                            }}
+                            lang={lang}
+                            bgImage={profileData.bgImage}
+                        />
                     </div>
                 )}
 

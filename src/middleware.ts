@@ -37,7 +37,7 @@ export function middleware(req: NextRequest) {
     }
 
     // Handle subdomain routing
-    if (subdomain && subdomain !== "www" && !url.pathname.startsWith("/privacy") && !url.pathname.startsWith("/cookies")) {
+    if (subdomain && subdomain !== "www" && !url.pathname.startsWith("/privacy") && !url.pathname.startsWith("/cookies") && !url.pathname.startsWith("/textures")) {
         // Rewrite to /app/[subdomain]
         console.log(`Rewriting subdomain ${subdomain} to /app/${subdomain}${url.pathname}`);
         return NextResponse.rewrite(new URL(`/app/${subdomain}${url.pathname}`, req.url));
