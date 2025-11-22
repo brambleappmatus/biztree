@@ -70,7 +70,7 @@ export default async function ProfileLayout({
 
     return (
         <div
-            className="min-h-screen w-full flex justify-center bg-fixed relative"
+            className="min-h-[100dvh] w-full flex justify-center bg-fixed relative"
             style={backgroundStyle}
             data-theme={profile.theme}
         >
@@ -88,7 +88,7 @@ export default async function ProfileLayout({
             )}
 
             {/* Main Content Container - Mobile First, Narrow on Desktop */}
-            <main className="w-full max-w-[480px] min-h-screen relative z-10 bg-transparent flex flex-col pb-8">
+            <main className="w-full max-w-[480px] min-h-[100dvh] relative z-10 bg-transparent flex flex-col pb-8 pt-safe pb-safe">
                 {children}
             </main>
         </div>
