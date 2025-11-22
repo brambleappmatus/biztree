@@ -42,6 +42,16 @@ const BACKGROUNDS = [
     { id: "charcoal", name: "Charcoal", gradient: "linear-gradient(135deg, #232526 0%, #414345 100%)" },
     { id: "burgundy", name: "Burgundy", gradient: "linear-gradient(135deg, #7b4397 0%, #dc2430 100%)" },
     { id: "teal", name: "Teal", gradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)" },
+    // New premium gradients
+    { id: "peach-fade", name: "Peach Fade", gradient: "linear-gradient(135deg, #ff9a56 0%, #ffecd2 100%)" },
+    { id: "lavender-fade", name: "Lavender Fade", gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)" },
+    { id: "mint-fade", name: "Mint Fade", gradient: "linear-gradient(135deg, #00d2ff 0%, #e0f9ff 100%)" },
+    { id: "rose-fade", name: "Rose Fade", gradient: "linear-gradient(135deg, #ff6b9d 0%, #ffc3d8 100%)" },
+    { id: "sky-fade", name: "Sky Fade", gradient: "linear-gradient(135deg, #4facfe 0%, #e0f4ff 100%)" },
+    { id: "rainbow", name: "Rainbow", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)" },
+    { id: "tropical", name: "Tropical", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd200 100%)" },
+    { id: "aurora", name: "Aurora", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%)" },
+    { id: "cosmic", name: "Cosmic", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 33%, #f093fb 66%, #f5576c 100%)" },
 ];
 
 const DAYS = [
@@ -68,6 +78,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         language: profile.language || "sk",
         bgImage: profile.bgImage === "none" ? "black" : (profile.bgImage || "black"),
         bgBlur: profile.bgBlur || false,
+        bgNoise: profile.bgNoise || false,
         avatarUrl: profile.avatarUrl || "",
     });
 
@@ -565,6 +576,21 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                                         </label>
                                     </div>
                                 )}
+
+                                {/* Noise toggle - works for both gradients and images */}
+                                <div className="flex items-center gap-2 mb-2">
+                                    <input
+                                        type="checkbox"
+                                        id="bgNoise"
+                                        checked={formData.bgNoise}
+                                        onChange={(e) => setFormData({ ...formData, bgNoise: e.target.checked })}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                    />
+                                    <label htmlFor="bgNoise" className="text-sm text-gray-700 dark:text-gray-300">
+                                        Pridať šum (grain texture pre prémiový vzhľad)
+                                    </label>
+                                </div>
+
 
                                 <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
                                     {searchResults.map((photo) => (

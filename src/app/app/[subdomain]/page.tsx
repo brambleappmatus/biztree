@@ -13,19 +13,24 @@ import { ProfileCore } from "@/types";
 import { getTextColorClass } from "@/lib/background-utils";
 import { Metadata } from "next";
 
+import { cache } from "react";
+
+// Cached data fetcher to deduplicate requests
+const getProfile = cache(async (subdomain: string) => {
+    return await prisma.profile.findUnique({
+        where: { subdomain },
+        include: {
+            services: true,
+            socialLinks: true,
+            hours: true,
+            links: true,
+        },
+    }) as ProfileCore | null;
+});
+
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }): Promise<Metadata> {
     const { subdomain } = await params;
-    const profile = await prisma.profile.findUnique({
-        where: { subdomain },
-        select: {
-            name: true,
-            about: true,
-            avatarUrl: true,
-            logo: true,
-            seoTitle: true,
-            seoDesc: true,
-        },
-    });
+    const profile = await getProfile(subdomain);
 
     if (!profile) {
         return {
@@ -82,15 +87,7 @@ export default async function ProfilePage({
 }) {
     const { subdomain } = await params;
 
-    const profileData = await prisma.profile.findUnique({
-        where: { subdomain },
-        include: {
-            services: true,
-            socialLinks: true,
-            hours: true,
-            links: true,
-        },
-    }) as ProfileCore | null;
+    const profileData = await getProfile(subdomain);
 
     if (!profileData) {
         return notFound();
@@ -167,35 +164,57 @@ export default async function ProfilePage({
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
-                <HeaderBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                <div className="animate-fade-up">
+                    <HeaderBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                </div>
 
                 {/* Contact Buttons */}
-                <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                {(profileData.phone || profileData.email) && (
+                    <div className="animate-fade-up delay-100">
+                        <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
 
                 {/* Custom Links */}
                 {profileData.links && profileData.links.length > 0 && (
-                    <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
+                    <div className="animate-fade-up delay-200">
+                        <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
+                    </div>
                 )}
 
                 {/* Services */}
                 {profileData.services && profileData.services.length > 0 && (
-                    <div>
+                    <div className="animate-fade-up delay-300">
                         <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Služby</h2>
                         <ServicesBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
                     </div>
                 )}
 
                 {/* Hours */}
-                <HoursBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                {profileData.hours && profileData.hours.length > 0 && (
+                    <div className="animate-fade-up delay-400">
+                        <HoursBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
 
                 {/* Social Links */}
-                <SocialLinksBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                {profileData.socialLinks && profileData.socialLinks.length > 0 && (
+                    <div className="animate-fade-up delay-500">
+                        <SocialLinksBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
 
                 {/* Location */}
-                <LocationBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                {(profileData.address || (profileData.locationLat && profileData.locationLng)) && (
+                    <div className="animate-fade-up delay-500">
+                        <LocationBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
 
                 {/* Footer */}
-                <FooterBlock lang={lang} bgImage={profileData.bgImage} />
+                <div className="animate-fade-up delay-500">
+                    <FooterBlock lang={lang} bgImage={profileData.bgImage} />
+                </div>
             </div>
         </>
     );

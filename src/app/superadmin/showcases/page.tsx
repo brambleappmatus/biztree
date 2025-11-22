@@ -82,7 +82,9 @@ export default function ShowcasesPage() {
         });
 
         if (!res.ok) {
-            throw new Error("Failed to upload image");
+            const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
+            console.error("Upload failed:", errorData);
+            throw new Error(errorData.error || "Failed to upload image");
         }
 
         const data = await res.json();

@@ -17,19 +17,46 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const pathname = usePathname();
     const [subdomain, setSubdomain] = useState<string | null>(null);
+    const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
     useEffect(() => {
-        // Fetch user's subdomain
+        // Fetch user's subdomain and check if they have a profile
         if (session?.user?.id) {
             fetch('/api/user/subdomain')
-                .then(res => res.json())
-                .then(data => setSubdomain(data.subdomain))
-                .catch(err => console.error('Failed to fetch subdomain:', err));
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch subdomain');
+                    return res.json();
+                })
+                .then(data => {
+                    setSubdomain(data.subdomain);
+                    setHasProfile(!!data.subdomain);
+                })
+                .catch(err => {
+                    console.error('Failed to fetch subdomain:', err);
+                    // If no subdomain, redirect to onboarding
+                    setHasProfile(false);
+                });
         }
     }, [session]);
+
+    // Redirect to onboarding if user has no profile
+    useEffect(() => {
+        if (hasProfile === false && pathname !== '/onboarding') {
+            window.location.href = '/onboarding';
+        }
+    }, [hasProfile, pathname]);
+
+    // Show loading while checking profile status
+    if (status === "loading" || hasProfile === null) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
 
     // Determine the base domain based on environment
     const getProfileUrl = () => {

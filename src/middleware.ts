@@ -43,9 +43,19 @@ export function middleware(req: NextRequest) {
         return NextResponse.rewrite(new URL(`/app/${subdomain}${url.pathname}`, req.url));
     }
 
-    // Handle admin routing
+    // Handle admin routing with onboarding check
     if (url.pathname.startsWith("/admin")) {
-        // Keep as is, or add auth checks here later
+        // Get the session token from cookies
+        const sessionToken = req.cookies.get("next-auth.session-token") || req.cookies.get("__Secure-next-auth.session-token");
+
+        // If no session, redirect to login
+        if (!sessionToken) {
+            return NextResponse.redirect(new URL("/login", req.url));
+        }
+
+        // Note: We can't easily check onboardingCompleted in middleware without a database call
+        // The server component will handle the onboarding redirect
+        // But we can add a loading state to prevent the flash
         return NextResponse.next();
     }
 

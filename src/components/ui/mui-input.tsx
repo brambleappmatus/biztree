@@ -50,7 +50,7 @@ export const MuiInput = React.forwardRef<HTMLInputElement, MuiInputProps>(
                     />
                     <label
                         className={cn(
-                            "pointer-events-none absolute left-3 top-4 origin-[0] -translate-y-3 scale-75 transform text-gray-500 duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-blue-600 dark:text-gray-400 dark:peer-focus:text-blue-400",
+                            "pointer-events-none absolute left-3 top-4 origin-[0] -translate-y-3 scale-75 transform text-gray-500 duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-3 peer-focus:scale-75 peer-focus:text-blue-600 dark:text-gray-400 dark:peer-focus:text-blue-400 peer-[:not(:placeholder-shown)]:-translate-y-3 peer-[:not(:placeholder-shown)]:scale-75 peer-[:-webkit-autofill]:-translate-y-3 peer-[:-webkit-autofill]:scale-75",
                             startIcon ? "left-9" : "",
                             (isFocused || hasValue) ? "-translate-y-3 scale-75" : ""
                         )}

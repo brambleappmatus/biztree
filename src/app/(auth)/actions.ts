@@ -54,6 +54,9 @@ export async function createProfileFromOnboarding(userId: string, data: {
     theme: string;
     bgImage?: string;
     bgBlur?: boolean;
+    address?: string;
+    hours?: { day: number; isOpen: boolean; openTime: string; closeTime: string }[];
+    socialLinks?: { platform: string; url: string }[];
 }) {
     // Check subdomain availability again
     const existing = await prisma.profile.findUnique({
@@ -64,8 +67,8 @@ export async function createProfileFromOnboarding(userId: string, data: {
         return { error: "Subdoména už existuje" };
     }
 
-    // Create profile
-    await prisma.profile.create({
+    // Create profile with hours and social links
+    const profile = await prisma.profile.create({
         data: {
             userId,
             subdomain: data.subdomain,
@@ -76,7 +79,28 @@ export async function createProfileFromOnboarding(userId: string, data: {
             theme: data.theme,
             bgImage: data.bgImage,
             bgBlur: data.bgBlur ?? false,
-            language: "sk"
+            address: data.address,
+            language: "sk",
+            // Create hours if provided
+            hours: data.hours && data.hours.length > 0 ? {
+                create: data.hours
+                    .filter(h => h.isOpen) // Only create records for open days
+                    .map(h => ({
+                        dayOfWeek: h.day,
+                        openTime: h.openTime,
+                        closeTime: h.closeTime,
+                        isClosed: false
+                    }))
+            } : undefined,
+            // Create social links if provided
+            socialLinks: data.socialLinks && data.socialLinks.length > 0 ? {
+                create: data.socialLinks
+                    .filter(s => s.url && s.url.trim() !== '') // Only create if URL is provided
+                    .map(s => ({
+                        platform: s.platform,
+                        url: s.url
+                    }))
+            } : undefined
         }
     });
 
@@ -88,3 +112,4 @@ export async function createProfileFromOnboarding(userId: string, data: {
 
     return { success: true };
 }
+

@@ -87,11 +87,53 @@ body {
 }
 
 .animate-fade-up {
+  opacity: 0;
   animation: fade-up 0.5s ease-out forwards;
 }
 
 .animate-scale-in {
+  opacity: 0;
   animation: scale-in 0.2s ease-out forwards;
+}
+
+/* Delayed Fade In for Skeleton */
+@keyframes delayed-fade-in {
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-delayed-fade-in {
+  animation: delayed-fade-in 0.5s ease-out forwards;
+}
+
+/* Staggered Animation Delays */
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-400 {
+  animation-delay: 400ms;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
 }
 
 /* Carousel Animation */
@@ -99,6 +141,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(calc(-280px * 5 - 1.5rem * 5));
   }

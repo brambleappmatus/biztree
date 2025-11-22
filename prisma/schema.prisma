@@ -9,7 +9,10 @@ datasource db {
 
 model User {
   id                 String    @id @default(cuid())
+  name               String?
   email              String    @unique
+  emailVerified      DateTime?
+  image              String?
   password           String?
   role               String    @default("USER") // USER, ADMIN, SUPER_ADMIN
   onboardingCompleted Boolean  @default(false)
@@ -75,12 +78,13 @@ model Profile {
   avatarUrl     String?  // URL to profile picture
   bgImage       String?
   bgBlur        Boolean  @default(false)
+  bgNoise       Boolean  @default(false)
   
   seoTitle      String?
   seoDesc       String?
   
   userId        String?
-  user          User?     @relation(fields: [userId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   
   @@index([userId])
   
