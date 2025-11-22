@@ -70,22 +70,27 @@ export default async function ProfileLayout({
 
     return (
         <div
-            className="min-h-[100dvh] w-full flex justify-center bg-fixed relative"
-            style={backgroundStyle}
+            className="min-h-[100dvh] w-full flex justify-center relative"
             data-theme={profile.theme}
         >
-            <ProfileRefresher />
-            <CookieConsent />
+            {/* Fixed Background Layer - Covers entire viewport including safe areas */}
+            <div
+                className="fixed inset-0 z-[-1]"
+                style={backgroundStyle}
+            />
 
             {/* Background Overlay for better text readability on images */}
             {isImageUrl && (
                 <div
                     className={cn(
-                        "absolute inset-0 z-0",
+                        "fixed inset-0 z-[-1]",
                         profile.bgBlur ? "backdrop-blur-md bg-black/30" : "bg-black/20"
                     )}
                 />
             )}
+
+            <ProfileRefresher />
+            <CookieConsent />
 
             {/* Main Content Container - Mobile First, Narrow on Desktop */}
             <main className="w-full max-w-[480px] min-h-[100dvh] relative z-10 bg-transparent flex flex-col pb-8 pt-safe pb-safe">

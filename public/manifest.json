@@ -1,0 +1,16 @@
+{
+    "name": "BizTree",
+    "short_name": "BizTree",
+    "description": "SaaS platform for local businesses",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "/logo.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}
