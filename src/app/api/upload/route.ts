@@ -29,6 +29,13 @@ export async function POST(request: NextRequest) {
         const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
+        // Ensure bucket exists (create if missing)
+        const { data: bucketInfo, error: bucketErr } = await supabase.storage.createBucket(bucket, { public: true });
+        if (bucketErr && bucketErr.message !== "Bucket already exists") {
+            console.error("Failed to create bucket:", bucketErr);
+            return NextResponse.json({ error: "Bucket creation failed" }, { status: 500 });
+        }
+
         const { data, error } = await supabase.storage
             .from(bucket)
             .upload(filePath, buffer, {
