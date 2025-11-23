@@ -155,7 +155,7 @@ model Booking {
   customerPhone String?
   startTime   DateTime
   endTime     DateTime
-  status      String   @default("CONFIRMED") // CONFIRMED, CANCELLED
+  status      String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
   
   serviceId   String
   service     Service  @relation(fields: [serviceId], references: [id])

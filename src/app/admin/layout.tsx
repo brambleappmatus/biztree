@@ -9,6 +9,7 @@ import { signOut } from "next-auth/react";
 import { LayoutDashboard, Calendar, Users, Settings, ExternalLink, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PhonePreview } from "@/components/admin/phone-preview";
+import DockMenu from "@/components/admin/DockMenu";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -101,120 +102,20 @@ export default function AdminLayout({
                 </button>
             </header>
 
-            {/* Desktop Sidebar */}
-            <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed h-full z-20">
-                <div className="p-6 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                            <img src="/logo.svg" alt="BizTree Logo" className="w-full h-full object-cover" />
-                        </div>
-                        <h1 className="text-xl font-bold text-blue-600">BizTree Admin</h1>
-                    </div>
-                </div>
-
-                <nav className="flex-1 p-4 space-y-2">
-                    <Link
-                        href="/admin"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
-                            pathname === "/admin"
-                                ? "bg-blue-50 text-blue-600 shadow-sm"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        )}
-                    >
-                        <div className={cn(
-                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
-                            pathname === "/admin" ? "translate-x-0" : "-translate-x-full"
-                        )} />
-                        <Settings size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin" && "text-blue-600")} />
-                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Vaše Biztree</span>
-                    </Link>
-
-                    <Link
-                        href="/admin/dashboard"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
-                            pathname === "/admin/dashboard"
-                                ? "bg-blue-50 text-blue-600 shadow-sm"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        )}
-                    >
-                        <div className={cn(
-                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
-                            pathname === "/admin/dashboard" ? "translate-x-0" : "-translate-x-full"
-                        )} />
-                        <LayoutDashboard size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/dashboard" && "text-blue-600")} />
-                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Prehľad</span>
-                    </Link>
-
-                    <Link
-                        href="/admin/services"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
-                            pathname === "/admin/services"
-                                ? "bg-blue-50 text-blue-600 shadow-sm"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        )}
-                    >
-                        <div className={cn(
-                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
-                            pathname === "/admin/services" ? "translate-x-0" : "-translate-x-full"
-                        )} />
-                        <Users size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/services" && "text-blue-600")} />
-                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Služby</span>
-                    </Link>
-
-                    <Link
-                        href="/admin/bookings"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
-                            pathname === "/admin/bookings"
-                                ? "bg-blue-50 text-blue-600 shadow-sm"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        )}
-                    >
-                        <div className={cn(
-                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
-                            pathname === "/admin/bookings" ? "translate-x-0" : "-translate-x-full"
-                        )} />
-                        <Calendar size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/bookings" && "text-blue-600")} />
-                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">Rezervácie</span>
-                    </Link>
-
-                    <Link
-                        href="/admin/seo"
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group relative overflow-hidden active:scale-95",
-                            pathname === "/admin/seo"
-                                ? "bg-blue-50 text-blue-600 shadow-sm"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        )}
-                    >
-                        <div className={cn(
-                            "absolute inset-0 w-1 bg-blue-600 rounded-r-full transition-transform duration-200",
-                            pathname === "/admin/seo" ? "translate-x-0" : "-translate-x-full"
-                        )} />
-                        <Settings size={20} className={cn("transition-transform duration-200 group-hover:scale-110", pathname === "/admin/seo" && "text-blue-600")} />
-                        <span className="relative group-hover:translate-x-1 transition-transform duration-200">SEO</span>
-                    </Link>
-                </nav>
-
-                <div className="p-4 border-t border-gray-100 space-y-2">
-                    <button
-                        onClick={() => signOut({ callbackUrl: "/login" })}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium transition-colors active:scale-95 transition-transform"
-                    >
-                        <LogOut size={18} />
-                        <span>Odhlásiť sa</span>
-                    </button>
-                </div>
-            </aside>
+            {/* Desktop Dock - Replaces Sidebar */}
+            <div className="hidden md:block">
+                <DockMenu />
+            </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col md:flex-row md:ml-64 min-h-screen">
+            <main className="flex-1 flex flex-col md:flex-row min-h-screen">
                 {/* Center Content */}
                 <div className="flex-1 p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden">
-                    <div className="max-w-2xl mx-auto">
+                    <div className={cn(
+                        pathname === "/admin"
+                            ? "w-full max-w-5xl"
+                            : "max-w-2xl mx-auto"
+                    )}>
                         {children}
                     </div>
                 </div>

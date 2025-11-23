@@ -115,7 +115,7 @@ export async function createBooking(data: {
             customerPhone: data.phone,
             startTime,
             endTime,
-            status: "CONFIRMED",
+            status: "PENDING",
         },
     });
 
@@ -208,6 +208,16 @@ export async function updateBookingStatus(bookingId: string, status: string) {
         data: { status },
     });
     return { success: true };
+}
+
+export async function getBookingCount(profileId: string) {
+    const count = await prisma.booking.count({
+        where: {
+            profileId,
+            status: { in: ["PENDING", "CONFIRMED"] },
+        },
+    });
+    return count;
 }
 
 export async function updateWorkingHours(profileId: string, hours: { dayOfWeek: number; openTime: string; closeTime: string; isClosed: boolean }[]) {

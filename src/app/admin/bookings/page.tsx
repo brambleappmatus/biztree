@@ -27,10 +27,19 @@ export default async function BookingsPage() {
         orderBy: { startTime: "desc" },
     });
 
+    // Serialize bookings for client component (convert Decimal to number)
+    const serializedBookings = bookings.map(booking => ({
+        ...booking,
+        service: {
+            ...booking.service,
+            price: booking.service.price ? Number(booking.service.price) : null,
+        },
+    }));
+
     return (
         <div>
             <h1 className="text-2xl font-bold mb-6">Správa rezervácií</h1>
-            <BookingsManager bookings={bookings} />
+            <BookingsManager bookings={serializedBookings} />
         </div>
     );
 }

@@ -26,8 +26,8 @@ export function PhonePreview({ url }: PhonePreviewProps) {
     }, []);
 
     return (
-        <div className="flex flex-col items-center w-full max-w-[320px] mx-auto">
-            <div className="relative w-full aspect-[9/19] bg-gray-900 rounded-[3rem] shadow-2xl border-[8px] border-gray-900 overflow-hidden ring-1 ring-gray-900/10 mx-auto max-w-[300px]">
+        <div className="flex flex-col items-center w-full max-w-[304px] mx-auto">
+            <div className="relative w-full aspect-[9/19] bg-gray-900 rounded-[3rem] shadow-2xl border-[8px] border-gray-900 overflow-hidden ring-1 ring-gray-900/10 mx-auto max-w-[285px]">
                 {/* Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-gray-900 rounded-b-xl z-20 flex items-center justify-center">
                     <div className="w-12 h-4 bg-black/20 rounded-full" />
@@ -53,6 +53,7 @@ export function PhonePreview({ url }: PhonePreviewProps) {
                             "w-full h-full border-0 transition-opacity duration-300",
                             isInitialLoad ? "opacity-0" : "opacity-100"
                         )}
+                        style={{ zoom: 0.85 }}
                         onLoad={() => setIsInitialLoad(false)}
                         title="Mobile Preview"
                     />
