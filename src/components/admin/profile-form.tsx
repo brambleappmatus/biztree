@@ -13,6 +13,7 @@ import { MuiButton } from "@/components/ui/mui-button";
 import { MuiCard } from "@/components/ui/mui-card";
 import LinksManager from "./links-manager";
 import SocialLinksManager from "./social-links-manager";
+import GalleryManager from "./gallery-manager";
 import { useToast } from "@/components/ui/toast";
 
 interface ProfileFormProps {
@@ -87,6 +88,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         bgBlur: profile.bgBlur || false,
         bgNoise: profile.bgNoise || false,
         avatarUrl: profile.avatarUrl || "",
+        showBusinessCard: profile.showBusinessCard !== undefined ? profile.showBusinessCard : true,
     });
 
     // Avatar upload handler
@@ -368,13 +370,39 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                         <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                             Vložte iframe kód z Google Maps (Zdieľať → Vložiť mapu)
                         </p>
+
+                        {/* Business Card Toggle */}
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl mt-4">
+                            <div className="flex-1">
+                                <label htmlFor="showBusinessCard" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Zobraziť vizitku
+                                </label>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Umožniť návštevníkom stiahnuť vašu vizitku do telefónu
+                                </p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                <input
+                                    type="checkbox"
+                                    id="showBusinessCard"
+                                    className="sr-only peer"
+                                    checked={formData.showBusinessCard}
+                                    onChange={(e) => setFormData({ ...formData, showBusinessCard: e.target.checked })}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
                     </div>
                 </MuiCard>
             </div>
 
-            {/* Links Manager (Linktree style) */}
             <div id="links" data-section data-section-label="Odkazy" data-section-icon="Link">
                 <LinksManager profile={profile} />
+            </div>
+
+            {/* Gallery Manager */}
+            <div id="gallery" data-section data-section-label="Galéria" data-section-icon="Image">
+                <GalleryManager profile={profile} />
             </div>
 
             {/* Social Media Manager */}

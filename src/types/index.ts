@@ -7,6 +7,11 @@ export type ProfileCore = Prisma.ProfileGetPayload<{
         socialLinks: true;
         hours: true;
         links: true;
+        albums: {
+            include: {
+                images: true;
+            };
+        };
         bookings: false;
     };
 }>;

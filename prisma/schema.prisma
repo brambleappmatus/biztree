@@ -80,6 +80,8 @@ model Profile {
   bgBlur        Boolean  @default(false)
   bgNoise       Boolean  @default(false)
   
+  showBusinessCard Boolean @default(true) // Toggle to show/hide business card on profile
+  
   seoTitle      String?
   seoDesc       String?
   
@@ -93,6 +95,7 @@ model Profile {
   links         Link[]
   hours         WorkingHours[]
   bookings      Booking[]
+  albums        GalleryAlbum[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -177,5 +180,42 @@ model Showcase {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  @@index([order])
+}
+
+
+model GalleryAlbum {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  coverUrl    String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  images      GalleryImage[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([order])
+}
+
+model GalleryImage {
+  id          String   @id @default(cuid())
+  url         String
+  caption     String?
+  order       Int      @default(0)
+  
+  albumId     String
+  album       GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([albumId])
   @@index([order])
 }

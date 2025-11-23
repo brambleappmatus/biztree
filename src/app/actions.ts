@@ -41,7 +41,9 @@ export async function getAvailability(serviceId: string, date: string) {
                 gte: currentTime,
                 lt: addDays(currentTime, 1),
             },
-            status: "CONFIRMED",
+            status: {
+                in: ["PENDING", "CONFIRMED", "COMPLETED"],
+            },
         },
     });
 
@@ -94,7 +96,9 @@ export async function createBooking(data: {
     const existing = await prisma.booking.findFirst({
         where: {
             profileId: service.profileId,
-            status: "CONFIRMED",
+            status: {
+                in: ["PENDING", "CONFIRMED", "COMPLETED"],
+            },
             OR: [
                 { startTime: { lte: startTime }, endTime: { gt: startTime } },
                 { startTime: { lt: endTime }, endTime: { gte: endTime } },
@@ -136,6 +140,7 @@ export async function updateProfile(profileId: string, data: {
     bgBlur?: boolean;
     bgNoise?: boolean;
     avatarUrl?: string;
+    showBusinessCard?: boolean;
 }) {
     await prisma.profile.update({
         where: { id: profileId },
@@ -152,6 +157,7 @@ export async function updateProfile(profileId: string, data: {
             bgBlur: data.bgBlur,
             bgNoise: data.bgNoise,
             avatarUrl: data.avatarUrl,
+            showBusinessCard: data.showBusinessCard,
         },
     });
 

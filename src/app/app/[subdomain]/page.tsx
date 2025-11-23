@@ -5,9 +5,11 @@ import HeaderBlock from "@/components/blocks/header-block";
 import ServicesBlock from "@/components/blocks/services-block";
 import HoursBlock from "@/components/blocks/hours-block";
 import ContactButtonsBlock from "@/components/blocks/contact-buttons-block";
+import AddToWalletButton from "@/components/blocks/add-to-wallet-button";
 import SocialLinksBlock from "@/components/blocks/social-links-block";
 import LinksBlock from "@/components/blocks/links-block";
 import LocationBlock from "@/components/blocks/location-block";
+import GalleryBlock from "@/components/blocks/gallery-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
 import { getTextColorClass } from "@/lib/background-utils";
@@ -24,6 +26,14 @@ const getProfile = cache(async (subdomain: string) => {
             socialLinks: true,
             hours: true,
             links: true,
+            albums: {
+                include: {
+                    images: {
+                        orderBy: { order: 'asc' }
+                    }
+                },
+                orderBy: { order: 'asc' }
+            }
         },
     }) as ProfileCore | null;
 });
@@ -175,6 +185,13 @@ export default async function ProfilePage({
                     </div>
                 )}
 
+                {/* Add to Wallet Button */}
+                {(profileData.phone || profileData.email) && profileData.showBusinessCard && (
+                    <div className="animate-fade-up delay-150">
+                        <AddToWalletButton profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    </div>
+                )}
+
                 {/* Custom Links */}
                 {profileData.links && profileData.links.length > 0 && (
                     <div className="animate-fade-up delay-200">
@@ -197,6 +214,14 @@ export default async function ProfilePage({
                             lang={lang}
                             bgImage={profileData.bgImage}
                         />
+                    </div>
+                )}
+
+                {/* Gallery */}
+                {profileData.albums && profileData.albums.length > 0 && (
+                    <div className="animate-fade-up delay-350">
+                        <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Galéria</h2>
+                        <GalleryBlock albums={profileData.albums} bgImage={profileData.bgImage} />
                     </div>
                 )}
 

@@ -10,6 +10,9 @@ import { cn } from "@/lib/utils";
 import { getAvailability, createBooking } from "@/app/actions";
 import { ProfileCore } from "@/types";
 import { useToast } from "@/components/ui/toast";
+import Image from "next/image";
+import googleIcon from "@/assets/google-calendar.png";
+import appleIcon from "@/assets/apple-calendar.png";
 
 import { getTranslation, Language } from "@/lib/i18n";
 
@@ -23,13 +26,14 @@ const locales: Record<Language, any> = {
 
 interface BookingFlowProps {
     service: ProfileCore["services"][0];
+    profile: Omit<ProfileCore, "services">;
     onClose: () => void;
     lang: Language;
 }
 
 type Step = "date" | "time" | "details" | "confirmation";
 
-export default function BookingFlow({ service, onClose, lang }: BookingFlowProps) {
+export default function BookingFlow({ service, profile, onClose, lang }: BookingFlowProps) {
     const { showToast } = useToast();
     const [step, setStep] = useState<Step>("date");
     const [date, setDate] = useState<Date | null>(null);
@@ -125,10 +129,14 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
-                className="bg-white dark:bg-gray-900 w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+                className={cn(
+                    "bg-white dark:bg-gray-900 w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col transition-[height] duration-300 ease-in-out",
+                    "h-[85vh]", // Mobile height
+                    step === "details" ? "sm:h-[670px]" : "sm:h-[520px]" // Desktop height
+                )}
             >
                 {/* Header */}
-                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                     <div>
                         <h2 className="font-semibold text-lg">{service.name}</h2>
                         <p className="text-xs text-gray-500">{service.duration > 0 && `${service.duration} min • `}{Number(service.price)} €</p>
@@ -147,6 +155,7 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
+                                className="h-full"
                             >
                                 <div className="flex justify-between items-center mb-4">
                                     <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft size={20} /></button>
@@ -193,6 +202,7 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
+                                className="h-full"
                             >
                                 <div className="flex items-center gap-2 mb-4">
                                     <button onClick={() => setStep("date")} className="text-sm text-[var(--primary)] flex items-center">
@@ -233,6 +243,7 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
+                                className="h-full"
                             >
                                 <div className="flex items-center gap-2 mb-6">
                                     <button onClick={() => setStep("time")} className="text-sm text-[var(--primary)] flex items-center">
@@ -290,6 +301,18 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                         />
                                     </div>
 
+                                    <div className="flex items-start gap-3 pt-2">
+                                        <input
+                                            required
+                                            type="checkbox"
+                                            id="terms"
+                                            className="mt-1 w-4 h-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+                                        />
+                                        <label htmlFor="terms" className="text-xs text-gray-500">
+                                            Súhlasím s <a href="/legal/terms" target="_blank" className="text-[var(--primary)] hover:underline">obchodnými podmienkami</a> a so <a href="/legal/privacy" target="_blank" className="text-[var(--primary)] hover:underline">spracovaním osobných údajov</a>.
+                                        </label>
+                                    </div>
+
                                     <button
                                         type="submit"
                                         disabled={submitting}
@@ -307,7 +330,7 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                 key="confirmation"
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="flex flex-col items-center justify-center py-12 text-center"
+                                className="flex flex-col items-center justify-center py-8 text-center"
                             >
                                 <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
                                     <CheckCircle size={40} />
@@ -316,9 +339,92 @@ export default function BookingFlow({ service, onClose, lang }: BookingFlowProps
                                 <p className="text-gray-500 mb-8 max-w-xs mx-auto">
                                     Ďakujeme, {formData.name}. Potvrdenie sme poslali na váš email.
                                 </p>
+
+                                <div className="w-full mb-8">
+                                    <p className="text-sm font-medium text-gray-500 mb-3">Pridať do kalendára</p>
+                                    <div className="flex flex-row gap-3">
+                                        <button
+                                            onClick={() => {
+                                                if (!date || !time) return;
+                                                const [hours, minutes] = time.split(":").map(Number);
+                                                const startDate = new Date(date);
+                                                startDate.setHours(hours, minutes);
+                                                const endDate = new Date(startDate.getTime() + (service.duration || 30) * 60000);
+
+                                                const googleUrl = new URL("https://calendar.google.com/calendar/render");
+                                                googleUrl.searchParams.append("action", "TEMPLATE");
+                                                googleUrl.searchParams.append("text", `Rezervácia: ${service.name} - ${profile.name}`);
+                                                googleUrl.searchParams.append("dates", `${format(startDate, "yyyyMMdd'T'HHmmss")}/${format(endDate, "yyyyMMdd'T'HHmmss")}`);
+
+                                                const details = [
+                                                    `Rezervácia služby ${service.name}`,
+                                                    `Poskytovateľ: ${profile.name}`,
+                                                    profile.phone ? `Tel: ${profile.phone}` : "",
+                                                    profile.email ? `Email: ${profile.email}` : "",
+                                                    `Pre: ${formData.name}`
+                                                ].filter(Boolean).join("\n");
+
+                                                googleUrl.searchParams.append("details", details);
+                                                if (profile.address) {
+                                                    googleUrl.searchParams.append("location", profile.address);
+                                                }
+
+                                                window.open(googleUrl.toString(), "_blank");
+                                            }}
+                                            className="flex-1 py-3 px-4 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors text-sm"
+                                        >
+                                            <Image src={googleIcon} alt="Google Calendar" width={20} height={20} className="object-contain" />
+                                            Google
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                if (!date || !time) return;
+                                                const [hours, minutes] = time.split(":").map(Number);
+                                                const startDate = new Date(date);
+                                                startDate.setHours(hours, minutes);
+                                                const endDate = new Date(startDate.getTime() + (service.duration || 30) * 60000);
+
+                                                const description = [
+                                                    `Rezervácia služby ${service.name}`,
+                                                    `Poskytovateľ: ${profile.name}`,
+                                                    profile.phone ? `Tel: ${profile.phone}` : "",
+                                                    profile.email ? `Email: ${profile.email}` : "",
+                                                    `Pre: ${formData.name}`
+                                                ].filter(Boolean).join("\\n");
+
+                                                const icsContent = [
+                                                    "BEGIN:VCALENDAR",
+                                                    "VERSION:2.0",
+                                                    "BEGIN:VEVENT",
+                                                    `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss")}`,
+                                                    `DTEND:${format(endDate, "yyyyMMdd'T'HHmmss")}`,
+                                                    `SUMMARY:Rezervácia: ${service.name} - ${profile.name}`,
+                                                    `DESCRIPTION:${description}`,
+                                                    profile.address ? `LOCATION:${profile.address}` : "",
+                                                    "END:VEVENT",
+                                                    "END:VCALENDAR"
+                                                ].filter(Boolean).join("\n");
+
+                                                const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+                                                const link = document.createElement("a");
+                                                link.href = window.URL.createObjectURL(blob);
+                                                link.download = "rezervacia.ics";
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                            }}
+                                            className="flex-1 py-3 px-4 bg-black text-white hover:bg-gray-900 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors text-sm"
+                                        >
+                                            <Image src={appleIcon} alt="Apple Calendar" width={20} height={20} className="object-contain" />
+                                            Apple
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <button
                                     onClick={onClose}
-                                    className="px-8 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                                    className="text-gray-500 hover:text-gray-700 font-medium transition-colors"
                                 >
                                     Zavrieť
                                 </button>

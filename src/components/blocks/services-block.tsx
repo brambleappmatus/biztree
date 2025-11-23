@@ -55,6 +55,7 @@ export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockP
             {selectedService && (
                 <BookingFlow
                     service={selectedService}
+                    profile={profile}
                     onClose={() => setSelectedService(null)}
                     lang={lang}
                 />
