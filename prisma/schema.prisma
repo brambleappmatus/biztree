@@ -173,13 +173,33 @@ model Booking {
 model Showcase {
   id          String   @id @default(cuid())
   name        String   // Display name for the showcase
-  imageUrl    String   // URL to the phone screenshot
+  imageUrl    String   // URL to the main phone screenshot
   profileUrl  String   // Link to the demo profile
   order       Int      @default(0) // For ordering showcases
   isActive    Boolean  @default(true)
+  
+  // Parallax layers support
+  layers      ShowcaseLayer[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  @@index([order])
+}
+
+model ShowcaseLayer {
+  id          String   @id @default(cuid())
+  imageUrl    String   // URL to the layer image
+  depth       Int      @default(0) // Parallax depth (0-100, higher = more movement)
+  order       Int      @default(0) // Layer stacking order (0 = bottom)
+  
+  showcaseId  String
+  showcase    Showcase @relation(fields: [showcaseId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([showcaseId])
   @@index([order])
 }
 
