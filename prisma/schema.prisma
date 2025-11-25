@@ -80,10 +80,21 @@ model Profile {
   bgBlur        Boolean  @default(false)
   bgNoise       Boolean  @default(false)
   
+  // Google Calendar Integration
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry  BigInt?
+
+  
   showBusinessCard Boolean @default(true) // Toggle to show/hide business card on profile
   
   seoTitle      String?
   seoDesc       String?
+  
+  // Subscription Management
+  subscriptionStatus    String?   // ACTIVE, EXPIRED, CANCELLED, TRIAL
+  subscriptionExpiresAt DateTime? // When the current subscription expires
+  trialEndsAt           DateTime? // When trial period ends
   
   userId        String?
   user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -96,9 +107,46 @@ model Profile {
   hours         WorkingHours[]
   bookings      Booking[]
   albums        GalleryAlbum[]
+  documents     Document[]
+  subscriptions Subscription[]
+  subscriptionHistory SubscriptionHistory[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  tierId        String?
+  tier          Tier?    @relation(fields: [tierId], references: [id])
+}
+
+model Tier {
+  id            String   @id @default(cuid())
+  name          String   @unique // Free, Business, Pro
+  price         Decimal?
+  features      TierFeature[]
+  profiles      Profile[]
+  subscriptions Subscription[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Feature {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. "page_dashboard", "component_gallery", "page_seo"
+  name        String   // Display name
+  description String?
+  tiers       TierFeature[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TierFeature {
+  id        String   @id @default(cuid())
+  tierId    String
+  featureId String
+  tier      Tier     @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([tierId, featureId])
 }
 
 model Service {
@@ -238,4 +286,103 @@ model GalleryImage {
   
   @@index([albumId])
   @@index([order])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String   // Display name
+  url         String   // File URL in Supabase
+  fileType    String   // pdf, doc, docx, etc.
+  fileSize    Int      // Size in bytes
+  order       Int      @default(0)
+  
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([order])
+}
+
+model Subscription {
+  id                    String   @id @default(cuid())
+  profileId             String
+  profile               Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  tierId                String
+  tier                  Tier     @relation(fields: [tierId], references: [id])
+  
+  status                String   @default("ACTIVE") // ACTIVE, CANCELLED, PAST_DUE, UNPAID
+  
+  // Stripe Integration
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?  @unique
+  stripePriceId         String?
+  
+  // Subscription Period
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  
+  // Cancellation
+  cancelAtPeriodEnd     Boolean  @default(false)
+  cancelledAt           DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([stripeSubscriptionId])
+}
+
+model PromoCode {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  description       String?
+  
+  type              String   // PERCENTAGE, FIXED_AMOUNT, FREE_TRIAL_DAYS
+  value             Decimal  // Percentage (0-100), amount in EUR, or number of days
+  
+  maxUses           Int?     // null = unlimited
+  currentUses       Int      @default(0)
+  
+  validFrom         DateTime @default(now())
+  validUntil        DateTime?
+  
+  isActive          Boolean  @default(true)
+  
+  // Optional: Restrict to specific tiers
+  applicableTierIds String[] // Array of tier IDs
+  
+  subscriptionHistory SubscriptionHistory[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([code])
+}
+
+model SubscriptionHistory {
+  id              String   @id @default(cuid())
+  profileId       String
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  action          String   // UPGRADED, DOWNGRADED, RENEWED, CANCELLED, EXPIRED, MANUAL_CHANGE
+  
+  previousTierId  String?
+  newTierId       String?
+  
+  promoCodeId     String?
+  promoCode       PromoCode? @relation(fields: [promoCodeId], references: [id])
+  
+  performedBy     String   // SYSTEM, ADMIN, USER
+  performedByUserId String? // User ID if performed by admin/user
+  
+  notes           String?  // Additional context
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([profileId])
+  @@index([createdAt])
 }

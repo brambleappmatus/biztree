@@ -85,6 +85,10 @@ export default function SuperAdminLayout({
                         <LayoutDashboard size={20} />
                         Showcases
                     </Link>
+                    <Link href="/superadmin/licensing" className="flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors">
+                        <Shield size={20} />
+                        Licensing
+                    </Link>
                 </nav>
 
                 <div className="p-4 border-t border-gray-100 dark:border-gray-800 space-y-2">

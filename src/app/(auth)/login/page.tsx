@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { MuiInput } from "@/components/ui/mui-input";
 import { MuiButton } from "@/components/ui/mui-button";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/language-context";
+import LanguageSwitcher from "@/components/language-switcher";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [formData, setFormData] = useState({
@@ -30,7 +33,7 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                setError("Nesprávny email alebo heslo");
+                setError(t.auth.invalidEmail);
                 setLoading(false);
             } else if (result?.ok) {
                 // Fetch session to check role and onboarding status
@@ -51,13 +54,18 @@ export default function LoginPage() {
                 // Don't set loading to false here - keep it showing until page changes
             }
         } catch (err) {
-            setError("Nastala chyba pri prihlasovaní");
+            setError(t.messages.saveError);
             setLoading(false);
         }
     };
 
     return (
         <div className="min-h-screen flex bg-white dark:bg-gray-900">
+            {/* Language Switcher - Top Right */}
+            <div className="absolute top-4 right-4 z-50">
+                <LanguageSwitcher variant="compact" />
+            </div>
+
             {/* Left Side - Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16">
                 <div className="w-full max-w-md space-y-8">
@@ -68,10 +76,10 @@ export default function LoginPage() {
                             </div>
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            Vitajte späť
+                            {t.auth.welcomeBack}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400">
-                            Prihláste sa do svojho BizTree účtu
+                            {t.auth.getStarted}
                         </p>
                     </div>
 
@@ -105,7 +113,7 @@ export default function LoginPage() {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            Pokračovať cez Google
+                            Continue with Google
                         </button>
 
                         <div className="relative my-6">
@@ -114,7 +122,7 @@ export default function LoginPage() {
                             </div>
                             <div className="relative flex justify-center text-sm">
                                 <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-                                    Alebo emailom
+                                    Or with email
                                 </span>
                             </div>
                         </div>
@@ -122,7 +130,7 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <MuiInput
-                            label="Email"
+                            label={t.auth.email}
                             type="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -130,7 +138,7 @@ export default function LoginPage() {
                         />
 
                         <MuiInput
-                            label="Heslo"
+                            label={t.auth.password}
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -140,7 +148,7 @@ export default function LoginPage() {
                         <div className="flex items-center justify-between">
                             <div className="text-sm">
                                 <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                                    Zabudli ste heslo?
+                                    {t.auth.forgotPassword}
                                 </a>
                             </div>
                         </div>
@@ -151,7 +159,7 @@ export default function LoginPage() {
                             loading={loading}
                             className="w-full py-6 text-lg"
                         >
-                            {loading ? "Prihlasovanie..." : "Prihlásiť sa"}
+                            {loading ? t.auth.loggingIn : t.auth.signIn}
                         </MuiButton>
 
                         <div className="relative my-6">
@@ -160,17 +168,17 @@ export default function LoginPage() {
                             </div>
                             <div className="relative flex justify-center text-sm">
                                 <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-                                    Alebo
+                                    {t.common.back}
                                 </span>
                             </div>
                         </div>
 
                         <div className="text-center text-sm">
                             <span className="text-gray-600 dark:text-gray-400">
-                                Nemáte ešte účet?{" "}
+                                {t.auth.noAccount}{" "}
                             </span>
                             <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                                Zaregistrujte sa zadarmo
+                                {t.auth.createAccount}
                             </Link>
                         </div>
                     </form>
@@ -181,18 +189,18 @@ export default function LoginPage() {
             <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div className="relative z-10 text-center text-white max-w-lg">
-                    <h2 className="text-4xl font-bold mb-6">Všetko na jednom mieste</h2>
+                    <h2 className="text-4xl font-bold mb-6">{t.landing.allYouNeed}</h2>
                     <p className="text-xl text-blue-100 mb-8">
-                        Vytvorte si profesionálnu stránku pre svoje podnikanie za pár minút. Rezervácie, služby a kontakty v jednom odkaze.
+                        {t.landing.heroSubtitle}
                     </p>
                     <div className="grid grid-cols-2 gap-4 opacity-80">
                         <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
                             <div className="text-2xl font-bold mb-1">100+</div>
-                            <div className="text-sm text-blue-100">Spokojných firiem</div>
+                            <div className="text-sm text-blue-100">{t.landing.activeCompanies}</div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
                             <div className="text-2xl font-bold mb-1">24/7</div>
-                            <div className="text-sm text-blue-100">Online rezervácie</div>
+                            <div className="text-sm text-blue-100">{t.landing.onlineBooking}</div>
                         </div>
                     </div>
                 </div>

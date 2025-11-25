@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { addDays, format, isSameDay, parseISO, setHours, setMinutes } from "date-fns";
+import { getGoogleCalendarClient } from "@/lib/google-calendar";
 
 export async function getAvailability(serviceId: string, date: string) {
     // date is ISO string (YYYY-MM-DD)
@@ -47,6 +48,40 @@ export async function getAvailability(serviceId: string, date: string) {
         },
     });
 
+    // Fetch Google Calendar busy slots
+    let googleBusySlots: { start: Date; end: Date }[] = [];
+    if (profile.googleAccessToken && profile.googleRefreshToken) {
+        console.log("🔍 Checking Google Calendar for busy slots...");
+        console.log("📅 Date range:", currentTime.toISOString(), "to", endTime.toISOString());
+        try {
+            const calendar = getGoogleCalendarClient(profile.googleAccessToken, profile.googleRefreshToken);
+            const response = await calendar.freebusy.query({
+                requestBody: {
+                    timeMin: currentTime.toISOString(),
+                    timeMax: endTime.toISOString(),
+                    items: [{ id: 'primary' }],
+                },
+            });
+
+            const busy = response.data.calendars?.primary?.busy;
+            console.log("📊 Google Calendar response:", JSON.stringify(busy, null, 2));
+            if (busy) {
+                googleBusySlots = busy.map((b) => ({
+                    start: new Date(b.start!),
+                    end: new Date(b.end!),
+                }));
+                console.log("🚫 Found busy slots:", googleBusySlots);
+            } else {
+                console.log("✅ No busy slots found");
+            }
+        } catch (error) {
+            console.error("❌ Failed to fetch Google Calendar availability:", error);
+            // Continue without Google Calendar slots if it fails
+        }
+    } else {
+        console.log("⚠️ No Google Calendar tokens found");
+    }
+
     while (currentTime < endTime) {
         const durationInMinutes = service.duration > 0 ? service.duration : 30;
         const slotEnd = new Date(currentTime.getTime() + durationInMinutes * 60000);
@@ -62,7 +97,15 @@ export async function getAvailability(serviceId: string, date: string) {
             );
         });
 
-        if (!isBooked) {
+        const isGoogleBusy = googleBusySlots.some((slot) => {
+            return (
+                (currentTime >= slot.start && currentTime < slot.end) ||
+                (slotEnd > slot.start && slotEnd <= slot.end) ||
+                (currentTime <= slot.start && slotEnd >= slot.end)
+            );
+        });
+
+        if (!isBooked && !isGoogleBusy) {
             slots.push(format(currentTime, "HH:mm"));
         }
 
@@ -122,6 +165,36 @@ export async function createBooking(data: {
             status: "PENDING",
         },
     });
+
+    // Add to Google Calendar
+    const profile = service.profile;
+    console.log("📝 Attempting to add booking to Google Calendar...");
+    console.log("🔑 Has tokens?", !!(profile.googleAccessToken && profile.googleRefreshToken));
+    if (profile.googleAccessToken && profile.googleRefreshToken) {
+        try {
+            console.log("📅 Creating event:", {
+                summary: `Rezervácia: ${service.name} - ${data.name}`,
+                start: startTime.toISOString(),
+                end: endTime.toISOString()
+            });
+            const calendar = getGoogleCalendarClient(profile.googleAccessToken, profile.googleRefreshToken);
+            const result = await calendar.events.insert({
+                calendarId: 'primary',
+                requestBody: {
+                    summary: `Rezervácia: ${service.name} - ${data.name}`,
+                    description: `Služba: ${service.name}\nKlient: ${data.name}\nEmail: ${data.email}\nTel: ${data.phone}`,
+                    start: { dateTime: startTime.toISOString() },
+                    end: { dateTime: endTime.toISOString() },
+                },
+            });
+            console.log("✅ Event created successfully:", result.data.id);
+        } catch (error) {
+            console.error("❌ Failed to add event to Google Calendar:", error);
+            // Don't fail the booking if Google Calendar sync fails
+        }
+    } else {
+        console.log("⚠️ No Google Calendar tokens, skipping sync");
+    }
 
     return { success: true, bookingId: booking.id };
 }

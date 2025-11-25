@@ -9,6 +9,13 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
+interface ShowcaseLayer {
+    id?: string;
+    imageUrl: string;
+    depth: number;
+    order: number;
+}
+
 interface Showcase {
     id: string;
     name: string;
@@ -16,6 +23,7 @@ interface Showcase {
     profileUrl: string;
     order: number;
     isActive: boolean;
+    layers?: ShowcaseLayer[];
 }
 
 export default function ShowcasesPage() {
@@ -23,13 +31,21 @@ export default function ShowcasesPage() {
     const [showcases, setShowcases] = useState<Showcase[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        name: string;
+        imageUrl: string;
+        profileUrl: string;
+        layers: ShowcaseLayer[];
+    }>({
         name: "",
         imageUrl: "",
         profileUrl: "",
+        layers: [],
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>("");
+    const [layerFiles, setLayerFiles] = useState<Map<number, File>>(new Map());
+    const [layerPreviews, setLayerPreviews] = useState<Map<number, string>>(new Map());
     const [editingId, setEditingId] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -54,13 +70,11 @@ export default function ShowcasesPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             showToast("Image is too large. Maximum size is 5MB.", "error");
             return;
         }
 
-        // Validate file type
         if (!file.type.startsWith("image/")) {
             showToast("Please upload an image file.", "error");
             return;
@@ -68,12 +82,65 @@ export default function ShowcasesPage() {
 
         setImageFile(file);
 
-        // Create preview
         const reader = new FileReader();
         reader.onloadend = () => {
             setImagePreview(reader.result as string);
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleLayerImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            showToast("Layer image is too large. Maximum size is 5MB.", "error");
+            return;
+        }
+
+        setLayerFiles(prev => new Map(prev).set(index, file));
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setLayerPreviews(prev => new Map(prev).set(index, reader.result as string));
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const addLayer = () => {
+        setFormData(prev => ({
+            ...prev,
+            layers: [
+                ...prev.layers,
+                { imageUrl: "", depth: 20, order: prev.layers.length }
+            ]
+        }));
+    };
+
+    const removeLayer = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            layers: prev.layers.filter((_, i) => i !== index)
+        }));
+        setLayerFiles(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(index);
+            return newMap;
+        });
+        setLayerPreviews(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(index);
+            return newMap;
+        });
+    };
+
+    const updateLayer = (index: number, field: keyof ShowcaseLayer, value: any) => {
+        setFormData(prev => ({
+            ...prev,
+            layers: prev.layers.map((layer, i) =>
+                i === index ? { ...layer, [field]: value } : layer
+            )
+        }));
     };
 
     const uploadImage = async (file: File): Promise<string> => {
@@ -107,8 +174,25 @@ export default function ShowcasesPage() {
             if (imageFile) {
                 setUploading(true);
                 imageUrl = await uploadImage(imageFile);
-                setUploading(false);
             }
+
+            // Upload layer images
+            const processedLayers = await Promise.all(formData.layers.map(async (layer, index) => {
+                const file = layerFiles.get(index);
+                let layerImageUrl = layer.imageUrl;
+
+                if (file) {
+                    setUploading(true);
+                    layerImageUrl = await uploadImage(file);
+                }
+
+                return {
+                    ...layer,
+                    imageUrl: layerImageUrl
+                };
+            }));
+
+            setUploading(false);
 
             const url = editingId
                 ? `/api/superadmin/showcases/${editingId}`
@@ -121,13 +205,16 @@ export default function ShowcasesPage() {
                 body: JSON.stringify({
                     ...formData,
                     imageUrl,
+                    layers: processedLayers,
                 }),
             });
 
             if (res.ok) {
-                setFormData({ name: "", imageUrl: "", profileUrl: "" });
+                setFormData({ name: "", imageUrl: "", profileUrl: "", layers: [] });
                 setImageFile(null);
                 setImagePreview("");
+                setLayerFiles(new Map());
+                setLayerPreviews(new Map());
                 setEditingId(null);
                 fetchShowcases();
                 showToast(editingId ? "Showcase updated" : "Showcase created", "success");
@@ -183,8 +270,17 @@ export default function ShowcasesPage() {
             name: showcase.name,
             imageUrl: showcase.imageUrl,
             profileUrl: showcase.profileUrl,
+            layers: showcase.layers || [],
         });
         setImagePreview(showcase.imageUrl);
+
+        // Initialize layer previews
+        const newLayerPreviews = new Map();
+        showcase.layers?.forEach((layer, index) => {
+            newLayerPreviews.set(index, layer.imageUrl);
+        });
+        setLayerPreviews(newLayerPreviews);
+        setLayerFiles(new Map());
         setEditingId(showcase.id);
     };
 
@@ -240,6 +336,84 @@ export default function ShowcasesPage() {
                         placeholder="https://demo.biztree.bio"
                         required
                     />
+
+                    {/* Layers Section */}
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">Parallax Layers</h3>
+                            <MuiButton
+                                type="button"
+                                variant="outlined"
+                                className="!px-3 !py-1 !text-xs"
+                                onClick={addLayer}
+                                startIcon={<Plus size={16} />}
+                            >
+                                Add Layer
+                            </MuiButton>
+                        </div>
+
+                        <div className="space-y-4">
+                            {formData.layers.map((layer, index) => (
+                                <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200 relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => removeLayer(index)}
+                                        className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Layer Image
+                                            </label>
+                                            {layerPreviews.get(index) && (
+                                                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden mb-2">
+                                                    <img
+                                                        src={layerPreviews.get(index)}
+                                                        alt={`Layer ${index + 1}`}
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleLayerImageChange(index, e)}
+                                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Depth (0-100)
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={layer.depth}
+                                                    onChange={(e) => updateLayer(index, 'depth', parseInt(e.target.value))}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Order
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={layer.order}
+                                                    onChange={(e) => updateLayer(index, 'order', parseInt(e.target.value))}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                     <div className="flex gap-2">
                         <MuiButton
                             type="submit"
@@ -255,9 +429,11 @@ export default function ShowcasesPage() {
                                 variant="outlined"
                                 onClick={() => {
                                     setEditingId(null);
-                                    setFormData({ name: "", imageUrl: "", profileUrl: "" });
+                                    setFormData({ name: "", imageUrl: "", profileUrl: "", layers: [] });
                                     setImageFile(null);
                                     setImagePreview("");
+                                    setLayerFiles(new Map());
+                                    setLayerPreviews(new Map());
                                 }}
                             >
                                 Cancel

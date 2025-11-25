@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 export async function GET() {
     try {
         const showcases = await prisma.showcase.findMany({
+            include: { layers: true },
             orderBy: { order: "asc" },
         });
         return NextResponse.json(showcases);
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, imageUrl, profileUrl } = body;
+        const { name, imageUrl, profileUrl, layers } = body;
 
         // Get the highest order number and add 1
         const maxOrder = await prisma.showcase.findFirst({
@@ -39,7 +40,15 @@ export async function POST(request: Request) {
                 imageUrl,
                 profileUrl,
                 order: (maxOrder?.order ?? -1) + 1,
+                layers: layers ? {
+                    create: layers.map((layer: any) => ({
+                        imageUrl: layer.imageUrl,
+                        depth: layer.depth,
+                        order: layer.order
+                    }))
+                } : undefined
             },
+            include: { layers: true }
         });
 
         return NextResponse.json(showcase);

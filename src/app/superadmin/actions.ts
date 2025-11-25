@@ -18,7 +18,13 @@ export async function getAllCompanies() {
     await checkSuperAdmin();
 
     return await prisma.profile.findMany({
-        include: {
+        select: {
+            id: true,
+            name: true,
+            subdomain: true,
+            createdAt: true,
+            subscriptionStatus: true,
+            subscriptionExpiresAt: true,
             user: {
                 select: {
                     id: true,
@@ -27,6 +33,7 @@ export async function getAllCompanies() {
                     createdAt: true
                 }
             },
+            tier: true,
             _count: {
                 select: {
                     services: true,
@@ -316,3 +323,151 @@ export async function changeUserCompany(userId: string, newProfileId: string | n
 
     return { success: true };
 }
+
+// Update company tier
+export async function updateCompanyTier(
+    profileId: string,
+    tierId: string | null,
+    expiresAt?: Date | null,
+    notes?: string
+) {
+    await checkSuperAdmin();
+
+    // Get the profile's current background and the new tier's features
+    const profile = await prisma.profile.findUnique({
+        where: { id: profileId },
+        select: { bgImage: true, tierId: true }
+    });
+
+    const newTier = tierId ? await prisma.tier.findUnique({
+        where: { id: tierId },
+        include: {
+            features: {
+                include: {
+                    feature: true
+                }
+            }
+        }
+    }) : null;
+
+    // Check if new tier has background image features
+    const hasUnsplashAccess = newTier?.features.some(tf => tf.feature.key === 'component_background_images') ?? false;
+    const hasUploadAccess = newTier?.features.some(tf => tf.feature.key === 'component_background_upload') ?? false;
+
+    // Prepare update data
+    const updateData: any = { tierId };
+
+    // Set subscription status and expiration
+    if (tierId) {
+        updateData.subscriptionStatus = expiresAt ? "ACTIVE" : "ACTIVE";
+        updateData.subscriptionExpiresAt = expiresAt;
+    } else {
+        updateData.subscriptionStatus = null;
+        updateData.subscriptionExpiresAt = null;
+    }
+
+    // Reset background to dark-gray if user loses access and has a custom/Unsplash background
+    if (profile?.bgImage) {
+        const isUnsplashImage = profile.bgImage.includes('unsplash');
+        const isCustomImage = profile.bgImage.startsWith('http') && !isUnsplashImage;
+
+        if ((isUnsplashImage && !hasUnsplashAccess) || (isCustomImage && !hasUploadAccess)) {
+            updateData.bgImage = 'dark-gray';
+        }
+    }
+
+    await prisma.profile.update({
+        where: { id: profileId },
+        data: updateData
+    });
+
+    // Log the tier change in subscription history
+    const session = await getServerSession(authOptions);
+    await prisma.subscriptionHistory.create({
+        data: {
+            profileId,
+            action: "MANUAL_CHANGE",
+            previousTierId: profile?.tierId,
+            newTierId: tierId,
+            performedBy: "ADMIN",
+            performedByUserId: session?.user?.id,
+            notes: notes || `Tier manually changed by superadmin${expiresAt ? ` with expiration: ${expiresAt.toISOString()}` : ''}`
+        }
+    });
+
+    return { success: true };
+}
+
+// Extend subscription expiration
+export async function extendSubscription(profileId: string, days: number) {
+    await checkSuperAdmin();
+
+    const profile = await prisma.profile.findUnique({
+        where: { id: profileId },
+        select: { subscriptionExpiresAt: true }
+    });
+
+    if (!profile) {
+        return { error: "Profile not found" };
+    }
+
+    const currentExpiration = profile.subscriptionExpiresAt || new Date();
+    const newExpiration = new Date(currentExpiration);
+    newExpiration.setDate(newExpiration.getDate() + days);
+
+    await prisma.profile.update({
+        where: { id: profileId },
+        data: {
+            subscriptionExpiresAt: newExpiration,
+            subscriptionStatus: "ACTIVE"
+        }
+    });
+
+    // Log the extension
+    const session = await getServerSession(authOptions);
+    await prisma.subscriptionHistory.create({
+        data: {
+            profileId,
+            action: "RENEWED",
+            performedBy: "ADMIN",
+            performedByUserId: session?.user?.id,
+            notes: `Subscription extended by ${days} days to ${newExpiration.toISOString()}`
+        }
+    });
+
+    return { success: true, newExpiration };
+}
+
+// Get subscription history for a profile
+export async function getSubscriptionHistory(profileId: string) {
+    await checkSuperAdmin();
+
+    return await prisma.subscriptionHistory.findMany({
+        where: { profileId },
+        include: {
+            promoCode: {
+                select: {
+                    code: true,
+                    description: true
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50
+    });
+}
+
+// Get all tiers (simple version for dropdown)
+export async function getTiersList() {
+    await checkSuperAdmin();
+    const tiers = await prisma.tier.findMany({
+        orderBy: { price: 'asc' }
+    });
+
+    // Convert Decimal to string for client components
+    return tiers.map(tier => ({
+        ...tier,
+        price: tier.price?.toString() || "0"
+    }));
+}
+

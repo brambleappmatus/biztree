@@ -1,49 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { LANGUAGES, getTranslation, Language } from "@/lib/i18n";
-import { Check, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
+import LanguageSwitcher from "@/components/language-switcher";
 
 export default function LandingNav() {
-    const [lang, setLang] = useState<Language>("sk");
-    const t = getTranslation(lang);
+    const [scrolled, setScrolled] = useState(false);
+    const { t } = useLanguage();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
-        <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 z-50">
+        <nav
+            className={cn(
+                "fixed top-0 w-full z-50 transition-all duration-300",
+                scrolled
+                    ? "bg-white/90 backdrop-blur-lg border-b border-gray-200 shadow-lg"
+                    : "bg-white/80 backdrop-blur-md border-b border-gray-100"
+            )}
+        >
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight group">
+                    <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden transition-transform duration-300",
+                        scrolled && "scale-95"
+                    )}>
                         <img src="/logo.svg" alt="BizTree Logo" className="w-full h-full object-cover" />
                     </div>
-                    BizTree
-                </div>
+                    <span className="group-hover:text-blue-600 transition-colors">BizTree</span>
+                </Link>
 
                 <div className="flex items-center gap-4">
-                    <div className="relative group">
-                        <button className="flex items-center gap-2 text-sm font-medium hover:bg-gray-100 px-3 py-2 rounded-full transition-colors">
-                            <Globe size={16} />
-                            <span className="uppercase">{lang}</span>
-                        </button>
-                        <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden hidden group-hover:block">
-                            {LANGUAGES.map((l) => (
-                                <button
-                                    key={l.code}
-                                    onClick={() => setLang(l.code)}
-                                    className={cn(
-                                        "w-full text-left px-4 py-3 text-sm hover:bg-gray-50 flex items-center justify-between",
-                                        lang === l.code && "bg-blue-50 text-blue-600 font-medium"
-                                    )}
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <span>{l.flag}</span> {l.name}
-                                    </span>
-                                    {lang === l.code && <Check size={14} />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <LanguageSwitcher />
 
                     <Link
                         href="/login"
@@ -53,7 +50,12 @@ export default function LandingNav() {
                     </Link>
                     <Link
                         href="/register"
-                        className="bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition-all hover:scale-105 active:scale-95"
+                        className={cn(
+                            "px-5 py-2.5 rounded-full text-sm font-medium transition-all",
+                            scrolled
+                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg"
+                                : "bg-gray-900 text-white hover:bg-gray-800"
+                        )}
                     >
                         {t.landing.ctaStart}
                     </Link>
@@ -62,3 +64,4 @@ export default function LandingNav() {
         </nav>
     );
 }
+

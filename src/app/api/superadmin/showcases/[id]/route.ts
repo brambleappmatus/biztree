@@ -16,11 +16,39 @@ export async function PUT(
 
         const { id } = await params;
         const body = await request.json();
-        const { name, imageUrl, profileUrl } = body;
+        const { name, imageUrl, profileUrl, layers } = body;
 
-        const showcase = await prisma.showcase.update({
-            where: { id },
-            data: { name, imageUrl, profileUrl },
+        const showcase = await prisma.$transaction(async (tx) => {
+            // Update showcase details
+            const updated = await tx.showcase.update({
+                where: { id },
+                data: { name, imageUrl, profileUrl },
+            });
+
+            // If layers are provided, replace them
+            if (layers) {
+                // Delete existing layers
+                await tx.showcaseLayer.deleteMany({
+                    where: { showcaseId: id }
+                });
+
+                // Create new layers
+                if (layers.length > 0) {
+                    await tx.showcaseLayer.createMany({
+                        data: layers.map((layer: any) => ({
+                            showcaseId: id,
+                            imageUrl: layer.imageUrl,
+                            depth: layer.depth,
+                            order: layer.order
+                        }))
+                    });
+                }
+            }
+
+            return await tx.showcase.findUnique({
+                where: { id },
+                include: { layers: true }
+            });
         });
 
         return NextResponse.json(showcase);

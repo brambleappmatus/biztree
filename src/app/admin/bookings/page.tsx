@@ -4,6 +4,7 @@ import BookingsManager from "@/components/admin/bookings-manager";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { LockedFeatureGuard } from "@/components/admin/LockedFeatureGuard";
 
 export default async function BookingsPage() {
     const session = await getServerSession(authOptions);
@@ -37,9 +38,11 @@ export default async function BookingsPage() {
     }));
 
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-6">Správa rezervácií</h1>
-            <BookingsManager bookings={serializedBookings} />
-        </div>
+        <LockedFeatureGuard featureKey="page_bookings">
+            <div>
+                <h1 className="text-2xl font-bold mb-6">Správa rezervácií</h1>
+                <BookingsManager bookings={serializedBookings} />
+            </div>
+        </LockedFeatureGuard>
     );
 }

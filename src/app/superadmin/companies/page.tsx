@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllCompanies, deleteCompany, createCompany } from "../actions";
+import { getAllCompanies, deleteCompany, createCompany, getTiersList, updateCompanyTier, extendSubscription } from "../actions";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";
-import { Trash2, Plus, Building2 } from "lucide-react";
+import { Trash2, Plus, Building2, Calendar, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
@@ -13,6 +13,8 @@ interface Company {
     name: string;
     subdomain: string;
     createdAt: Date;
+    subscriptionStatus?: string | null;
+    subscriptionExpiresAt?: Date | null;
     user: {
         id: string;
         email: string;
@@ -22,11 +24,21 @@ interface Company {
         services: number;
         bookings: number;
     };
+    tier: {
+        id: string;
+        name: string;
+    } | null;
+}
+
+interface Tier {
+    id: string;
+    name: string;
 }
 
 export default function CompaniesPage() {
     const { showToast } = useToast();
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [tiers, setTiers] = useState<Tier[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
@@ -38,6 +50,9 @@ export default function CompaniesPage() {
         name: ""
     });
     const [deleteData, setDeleteData] = useState<{ id: string; name: string } | null>(null);
+    const [tierModalData, setTierModalData] = useState<{ companyId: string; companyName: string; currentTierId: string | null } | null>(null);
+    const [selectedTierId, setSelectedTierId] = useState<string>("");
+    const [expirationDate, setExpirationDate] = useState<string>("");
 
     useEffect(() => {
         loadCompanies();
@@ -45,8 +60,12 @@ export default function CompaniesPage() {
 
     const loadCompanies = async () => {
         try {
-            const data = await getAllCompanies();
-            setCompanies(data);
+            const [companiesData, tiersData] = await Promise.all([
+                getAllCompanies(),
+                getTiersList()
+            ]);
+            setCompanies(companiesData);
+            setTiers(tiersData);
         } catch (error) {
             console.error("Failed to load companies:", error);
             showToast("Failed to load companies", "error");
@@ -72,6 +91,65 @@ export default function CompaniesPage() {
         } catch (error) {
             showToast("Failed to delete company", "error");
         }
+    };
+
+    const handleTierChange = async (companyId: string, companyName: string, currentTierId: string | null) => {
+        setTierModalData({ companyId, companyName, currentTierId });
+        setSelectedTierId(currentTierId || "");
+        setExpirationDate("");
+    };
+
+    const handleConfirmTierChange = async () => {
+        if (!tierModalData) return;
+
+        try {
+            const expiresAt = expirationDate ? new Date(expirationDate) : null;
+            await updateCompanyTier(tierModalData.companyId, selectedTierId || null, expiresAt);
+            await loadCompanies();
+            showToast("Tier updated successfully", "success");
+            setTierModalData(null);
+        } catch (error) {
+            showToast("Failed to update tier", "error");
+        }
+    };
+
+    const handleExtendSubscription = async (companyId: string, days: number) => {
+        try {
+            await extendSubscription(companyId, days);
+            await loadCompanies();
+            showToast(`Subscription extended by ${days} days`, "success");
+        } catch (error) {
+            showToast("Failed to extend subscription", "error");
+        }
+    };
+
+    const formatDate = (date: Date | null | undefined) => {
+        if (!date) return "-";
+        return new Date(date).toLocaleDateString();
+    };
+
+    const getDaysRemaining = (expiresAt: Date | null | undefined) => {
+        if (!expiresAt) return null;
+        const now = new Date();
+        const expiry = new Date(expiresAt);
+        const diff = expiry.getTime() - now.getTime();
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        return days;
+    };
+
+    const getStatusBadge = (status: string | null | undefined, expiresAt: Date | null | undefined) => {
+        const days = getDaysRemaining(expiresAt);
+
+        if (status === "EXPIRED" || (days !== null && days < 0)) {
+            return <span className="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400">Expired</span>;
+        }
+        if (status === "ACTIVE" && days !== null && days <= 7) {
+            return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">Expiring Soon</span>;
+        }
+        if (status === "ACTIVE") {
+            return <span className="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400">Active</span>;
+        }
+        return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">-</span>;
     };
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -131,8 +209,9 @@ export default function CompaniesPage() {
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Company</th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Subdomain</th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Owner</th>
-                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Services</th>
-                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Bookings</th>
+                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Tier</th>
+                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Status</th>
+                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Expires</th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Actions</th>
                         </tr>
                     </thead>
@@ -142,8 +221,33 @@ export default function CompaniesPage() {
                                 <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{company.name}</td>
                                 <td className="p-4 text-gray-700 dark:text-gray-300">{company.subdomain}</td>
                                 <td className="p-4 text-gray-700 dark:text-gray-300">{company.user?.email || "No owner"}</td>
-                                <td className="p-4 text-gray-700 dark:text-gray-300">{company._count.services}</td>
-                                <td className="p-4 text-gray-700 dark:text-gray-300">{company._count.bookings}</td>
+                                <td className="p-4">
+                                    <button
+                                        onClick={() => handleTierChange(company.id, company.name, company.tier?.id || null)}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                                    >
+                                        {company.tier?.name || "No Tier"}
+                                    </button>
+                                </td>
+                                <td className="p-4">
+                                    {getStatusBadge(company.subscriptionStatus, company.subscriptionExpiresAt)}
+                                </td>
+                                <td className="p-4 text-gray-700 dark:text-gray-300">
+                                    <div className="flex items-center gap-2">
+                                        <span>{formatDate(company.subscriptionExpiresAt)}</span>
+                                        {company.subscriptionExpiresAt && (
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => handleExtendSubscription(company.id, 30)}
+                                                    className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/30"
+                                                    title="Extend by 30 days"
+                                                >
+                                                    +30d
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="p-4">
                                     <button
                                         onClick={() => handleDeleteClick(company.id, company.name)}
@@ -221,6 +325,69 @@ export default function CompaniesPage() {
                                 </MuiButton>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Tier Assignment Modal */}
+            {tierModalData && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 max-w-md w-full">
+                        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Assign Tier</h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                            Assigning tier for: <strong>{tierModalData.companyName}</strong>
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Tier
+                                </label>
+                                <select
+                                    value={selectedTierId}
+                                    onChange={(e) => setSelectedTierId(e.target.value)}
+                                    className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                >
+                                    <option value="">No Tier</option>
+                                    {tiers.map((tier) => (
+                                        <option key={tier.id} value={tier.id}>
+                                            {tier.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Expiration Date (Optional)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={expirationDate}
+                                    onChange={(e) => setExpirationDate(e.target.value)}
+                                    className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                                />
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Leave empty for no expiration
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-6">
+                            <MuiButton
+                                variant="outlined"
+                                onClick={() => setTierModalData(null)}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </MuiButton>
+                            <MuiButton
+                                onClick={handleConfirmTierChange}
+                                className="flex-1"
+                            >
+                                Assign Tier
+                            </MuiButton>
+                        </div>
                     </div>
                 </div>
             )}

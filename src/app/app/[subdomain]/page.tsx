@@ -10,6 +10,7 @@ import SocialLinksBlock from "@/components/blocks/social-links-block";
 import LinksBlock from "@/components/blocks/links-block";
 import LocationBlock from "@/components/blocks/location-block";
 import GalleryBlock from "@/components/blocks/gallery-block";
+import DocumentsBlock from "@/components/blocks/documents-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
 import { getTextColorClass } from "@/lib/background-utils";
@@ -33,10 +34,28 @@ const getProfile = cache(async (subdomain: string) => {
                     }
                 },
                 orderBy: { order: 'asc' }
+            },
+            documents: {
+                orderBy: { order: 'asc' }
+            },
+            tier: {
+                include: {
+                    features: {
+                        include: {
+                            feature: true
+                        }
+                    }
+                }
             }
         },
     }) as ProfileCore | null;
 });
+
+// Helper to check if profile has access to a feature
+function hasFeatureAccess(profile: any, featureKey: string): boolean {
+    if (!profile.tier) return false;
+    return profile.tier.features.some((tf: any) => tf.feature.key === featureKey);
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }): Promise<Metadata> {
     const { subdomain } = await params;
@@ -103,9 +122,23 @@ export default async function ProfilePage({
         return notFound();
     }
 
+    // Enforce background image restrictions
+    let effectiveBgImage = profileData.bgImage;
+    if (effectiveBgImage) {
+        const isUnsplashImage = effectiveBgImage.includes('unsplash');
+        const isCustomImage = effectiveBgImage.startsWith('http') && !isUnsplashImage;
+
+        // Reset to dark-gray if user has restricted background but lacks access
+        if (isUnsplashImage && !hasFeatureAccess(profileData, 'component_background_images')) {
+            effectiveBgImage = 'dark-gray';
+        } else if (isCustomImage && !hasFeatureAccess(profileData, 'component_background_upload')) {
+            effectiveBgImage = 'dark-gray';
+        }
+    }
+
     // Extract language from profile
     const lang = (profileData.language || "sk") as "sk" | "cz" | "en" | "pl" | "hu";
-    const textColorClass = getTextColorClass(profileData.bgImage);
+    const textColorClass = getTextColorClass(effectiveBgImage || profileData.bgImage);
 
     // Helper function to convert day number to day name
     const getDayName = (dayOfWeek: number): string => {
@@ -175,32 +208,32 @@ export default async function ProfilePage({
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
                 <div className="animate-fade-up">
-                    <HeaderBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                    <HeaderBlock profile={profileData} lang={lang} bgImage={effectiveBgImage} />
                 </div>
 
                 {/* Contact Buttons */}
-                {(profileData.phone || profileData.email) && (
+                {(profileData.phone || profileData.email) && hasFeatureAccess(profileData, 'component_contact') && (
                     <div className="animate-fade-up delay-100">
-                        <ContactButtonsBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <ContactButtonsBlock profile={profileData} lang={lang} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
                 {/* Add to Wallet Button */}
-                {(profileData.phone || profileData.email) && profileData.showBusinessCard && (
+                {(profileData.phone || profileData.email) && profileData.showBusinessCard && hasFeatureAccess(profileData, 'component_business_card') && (
                     <div className="animate-fade-up delay-150">
-                        <AddToWalletButton profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <AddToWalletButton profile={profileData} lang={lang} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
                 {/* Custom Links */}
-                {profileData.links && profileData.links.length > 0 && (
+                {profileData.links && profileData.links.length > 0 && hasFeatureAccess(profileData, 'component_custom_links') && (
                     <div className="animate-fade-up delay-200">
-                        <LinksBlock links={profileData.links} bgImage={profileData.bgImage} />
+                        <LinksBlock links={profileData.links} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
                 {/* Services */}
-                {profileData.services && profileData.services.length > 0 && (
+                {profileData.services && profileData.services.length > 0 && hasFeatureAccess(profileData, 'page_services') && (
                     <div className="animate-fade-up delay-300">
                         <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Služby</h2>
                         <ServicesBlock
@@ -212,43 +245,63 @@ export default async function ProfilePage({
                                 }))
                             }}
                             lang={lang}
-                            bgImage={profileData.bgImage}
+                            bgImage={effectiveBgImage}
                         />
                     </div>
                 )}
 
+                {/* Documents */}
+                {profileData.documents && profileData.documents.length > 0 && hasFeatureAccess(profileData, 'component_documents') && (
+                    <div className="animate-fade-up delay-350 mb-4">
+                        <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Dokumenty</h2>
+                        <DocumentsBlock documents={profileData.documents} bgImage={effectiveBgImage} />
+                    </div>
+                )}
+
                 {/* Gallery */}
-                {profileData.albums && profileData.albums.length > 0 && (
-                    <div className="animate-fade-up delay-350">
+                {profileData.albums && profileData.albums.length > 0 && hasFeatureAccess(profileData, 'component_gallery') && (
+                    <div className="animate-fade-up delay-375">
                         <h2 className={`text-xl font-bold mb-3 px-1 ${textColorClass}`}>Galéria</h2>
-                        <GalleryBlock albums={profileData.albums} bgImage={profileData.bgImage} />
+                        <GalleryBlock albums={profileData.albums} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
                 {/* Hours */}
-                {profileData.hours && profileData.hours.length > 0 && (
+                {profileData.hours && profileData.hours.length > 0 && hasFeatureAccess(profileData, 'component_hours') && (
                     <div className="animate-fade-up delay-400">
-                        <HoursBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <HoursBlock profile={profileData} lang={lang} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
                 {/* Social Links */}
-                {profileData.socialLinks && profileData.socialLinks.length > 0 && (
+                {profileData.socialLinks && profileData.socialLinks.length > 0 && hasFeatureAccess(profileData, 'component_social_links') && (
                     <div className="animate-fade-up delay-500">
-                        <SocialLinksBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <SocialLinksBlock profile={profileData} lang={lang} bgImage={effectiveBgImage} />
                     </div>
                 )}
 
-                {/* Location */}
-                {(profileData.address || (profileData.locationLat && profileData.locationLng)) && (
+                {/* Location - check contact for address, map for iframe */}
+                {(profileData.address || (profileData.locationLat && profileData.locationLng)) && hasFeatureAccess(profileData, 'component_contact') && (
                     <div className="animate-fade-up delay-500">
-                        <LocationBlock profile={profileData} lang={lang} bgImage={profileData.bgImage} />
+                        <LocationBlock
+                            profile={{
+                                ...profileData,
+                                // Hide map embed if map feature is locked
+                                mapEmbed: hasFeatureAccess(profileData, 'component_map') ? profileData.mapEmbed : null
+                            }}
+                            lang={lang}
+                            bgImage={effectiveBgImage}
+                        />
                     </div>
                 )}
 
                 {/* Footer */}
                 <div className="animate-fade-up delay-500">
-                    <FooterBlock lang={lang} bgImage={profileData.bgImage} />
+                    <FooterBlock
+                        lang={lang}
+                        bgImage={effectiveBgImage}
+                        showBranding={!hasFeatureAccess(profileData, 'disable_branding')}
+                    />
                 </div>
             </div>
         </>

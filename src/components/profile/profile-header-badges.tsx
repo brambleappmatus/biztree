@@ -14,9 +14,10 @@ interface ProfileHeaderBadgesProps {
         about: string | null;
         theme: string;
     };
+    showBranding?: boolean;
 }
 
-export function ProfileHeaderBadges({ profile }: ProfileHeaderBadgesProps) {
+export function ProfileHeaderBadges({ profile, showBranding = true }: ProfileHeaderBadgesProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
     const [activeModal, setActiveModal] = useState<"none" | "share" | "biztree">("none");
@@ -57,25 +58,27 @@ export function ProfileHeaderBadges({ profile }: ProfileHeaderBadgesProps) {
 
     return (
         <>
-            {/* Left Badge: BizTree CTA */}
-            <button
-                onClick={() => setActiveModal("biztree")}
-                className={cn(
-                    "fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-black/5 backdrop-blur-sm border border-white/5 text-white transition-all duration-300 ease-in-out hover:bg-black/10 pt-safe",
-                    isVisible ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0 pointer-events-none"
-                )}
-                aria-label="Create your own BizTree"
-            >
-                <svg width="24" height="24" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
-                    <path d="M256 384V128" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M256 320L160 224" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M256 256L352 160" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="160" cy="224" r="24" fill="white" />
-                    <circle cx="352" cy="160" r="24" fill="white" />
-                    <circle cx="256" cy="128" r="24" fill="white" />
-                    <circle cx="256" cy="384" r="24" fill="white" />
-                </svg>
-            </button>
+            {/* Left Badge: BizTree CTA - Only show if branding is enabled */}
+            {showBranding && (
+                <button
+                    onClick={() => setActiveModal("biztree")}
+                    className={cn(
+                        "fixed top-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-black/5 backdrop-blur-sm border border-white/5 text-white transition-all duration-300 ease-in-out hover:bg-black/10 pt-safe",
+                        isVisible ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0 pointer-events-none"
+                    )}
+                    aria-label="Create your own BizTree"
+                >
+                    <svg width="24" height="24" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+                        <path d="M256 384V128" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M256 320L160 224" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M256 256L352 160" stroke="white" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="160" cy="224" r="24" fill="white" />
+                        <circle cx="352" cy="160" r="24" fill="white" />
+                        <circle cx="256" cy="128" r="24" fill="white" />
+                        <circle cx="256" cy="384" r="24" fill="white" />
+                    </svg>
+                </button>
+            )}
 
             {/* Right Badge: Share Button */}
             <button

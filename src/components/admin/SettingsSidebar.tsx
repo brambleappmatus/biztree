@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,11 +8,31 @@ interface NavItem {
     id: string;
     label: string;
     icon: string;
+    featureKey?: string;
 }
 
 export default function SettingsSidebar() {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [activeSection, setActiveSection] = useState("");
+    const [indicatorStyle, setIndicatorStyle] = useState({ top: 0, height: 0, opacity: 0 });
+    const [unlockedFeatures, setUnlockedFeatures] = useState<string[] | null>(null);
+    const itemsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+    // Fetch user features
+    useEffect(() => {
+        const fetchFeatures = async () => {
+            try {
+                const response = await fetch("/api/user/features");
+                if (response.ok) {
+                    const data = await response.json();
+                    setUnlockedFeatures(data.features || []);
+                }
+            } catch (error) {
+                console.error("Failed to fetch features:", error);
+            }
+        };
+        fetchFeatures();
+    }, []);
 
     // Auto-detect sections from DOM
     useEffect(() => {
@@ -21,7 +41,8 @@ export default function SettingsSidebar() {
             const items: NavItem[] = Array.from(sections).map(section => ({
                 id: section.id,
                 label: section.getAttribute('data-section-label') || section.id,
-                icon: section.getAttribute('data-section-icon') || 'Settings'
+                icon: section.getAttribute('data-section-icon') || 'Settings',
+                featureKey: section.getAttribute('data-feature-key') || undefined
             }));
             setNavItems(items);
             if (items.length > 0 && !activeSection) {
@@ -68,6 +89,20 @@ export default function SettingsSidebar() {
         };
     }, [navItems]);
 
+    // Update indicator position
+    useEffect(() => {
+        if (!activeSection) return;
+
+        const activeItem = itemsRef.current.get(activeSection);
+        if (activeItem) {
+            setIndicatorStyle({
+                top: activeItem.offsetTop + (activeItem.offsetHeight - 24) / 2, // Center the 24px indicator
+                height: 24,
+                opacity: 1
+            });
+        }
+    }, [activeSection, navItems]);
+
     const scrollToSection = (sectionId: string) => {
         const element = document.getElementById(sectionId);
         if (element) {
@@ -84,20 +119,15 @@ export default function SettingsSidebar() {
 
     if (navItems.length === 0) return null;
 
-    const activeIndex = navItems.findIndex(item => item.id === activeSection);
-    // Each button is py-2.5 (10px top + 10px bottom = 20px) + text height (~16px) = ~36px total
-    // Plus space-y-1 (4px gap) between items
-    // So each item takes up approximately 40px (36px + 4px gap)
-    // To center the 24px indicator: (40px - 24px) / 2 = 8px offset
-
     return (
         <nav className="relative">
             {/* Active indicator line */}
             <div
                 className="absolute left-0 w-1 bg-blue-600 rounded-full transition-all duration-300 ease-out"
                 style={{
-                    top: `${activeIndex * 40 + 8}px`, // 40px per item + 8px to center the 24px bar
-                    height: "24px"
+                    top: `${indicatorStyle.top}px`,
+                    height: `${indicatorStyle.height}px`,
+                    opacity: indicatorStyle.opacity
                 }}
             />
 
@@ -106,27 +136,36 @@ export default function SettingsSidebar() {
                 {navItems.map((item) => {
                     const IconComponent = (LucideIcons as any)[item.icon] || LucideIcons.Settings;
                     const isActive = activeSection === item.id;
+                    const isLocked = item.featureKey && unlockedFeatures && !unlockedFeatures.includes(item.featureKey);
 
                     return (
                         <li key={item.id}>
                             <button
+                                ref={(el) => {
+                                    if (el) itemsRef.current.set(item.id, el);
+                                }}
                                 onClick={() => scrollToSection(item.id)}
                                 className={cn(
-                                    "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left group",
+                                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-200 text-left group",
                                     isActive
                                         ? "text-blue-600 font-medium"
                                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800/50"
                                 )}
                             >
-                                <IconComponent
-                                    className={cn(
-                                        "w-4 h-4 transition-all duration-200",
-                                        isActive
-                                            ? "text-blue-600"
-                                            : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
-                                    )}
-                                />
-                                <span className="text-sm">{item.label}</span>
+                                <div className="flex items-center gap-3">
+                                    <IconComponent
+                                        className={cn(
+                                            "w-4 h-4 transition-all duration-200",
+                                            isActive
+                                                ? "text-blue-600"
+                                                : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                                        )}
+                                    />
+                                    <span className="text-sm">{item.label}</span>
+                                </div>
+                                {isLocked && (
+                                    <LucideIcons.Lock className="w-3 h-3 text-gray-400 opacity-70" />
+                                )}
                             </button>
                         </li>
                     );

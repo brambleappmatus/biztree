@@ -14,7 +14,9 @@ import { MuiCard } from "@/components/ui/mui-card";
 import LinksManager from "./links-manager";
 import SocialLinksManager from "./social-links-manager";
 import GalleryManager from "./gallery-manager";
+import DocumentsManager from "./documents-manager";
 import { useToast } from "@/components/ui/toast";
+import { LockedComponentWrapper } from "./LockedComponentWrapper";
 
 interface ProfileFormProps {
     profile: Profile & { socialLinks: any[], hours: WorkingHours[], links: any[], bgNoise?: boolean };
@@ -152,7 +154,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     });
 
     // Unsplash search state
-    const [bgType, setBgType] = useState<"gradient" | "image">("gradient");
+    const [bgType, setBgType] = useState<"gradient" | "image" | "upload">("gradient");
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [searching, setSearching] = useState(false);
@@ -330,146 +332,179 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             </div>
 
             {/* Contact Card */}
-            <div id="kontakt" data-section data-section-label="Kontakt" data-section-icon="Phone">
-                <MuiCard
-                    title="Kontakt"
-                    subtitle="Ako vás môžu zákazníci kontaktovať"
-                >
-                    <div className="grid gap-2 mt-2">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <MuiInput
-                                label="Telefón"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                startIcon={<Phone className="w-5 h-5" />}
-                            />
-                            <MuiInput
-                                label="Email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                startIcon={<Mail className="w-5 h-5" />}
-                            />
-                        </div>
-                        <MuiInput
-                            label="Adresa"
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            placeholder="Ulica 123, Mesto"
-                            startIcon={<MapPin className="w-5 h-5" />}
-                        />
-                        <MuiTextArea
-                            label="Google Maps Iframe"
-                            value={formData.mapEmbed}
-                            onChange={(e) => setFormData({ ...formData, mapEmbed: e.target.value })}
-                            placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'
-                            rows={3}
-                            className="font-mono text-xs"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            Vložte iframe kód z Google Maps (Zdieľať → Vložiť mapu)
-                        </p>
-
-                        {/* Business Card Toggle */}
-                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl mt-4">
-                            <div className="flex-1">
-                                <label htmlFor="showBusinessCard" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Zobraziť vizitku
-                                </label>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Umožniť návštevníkom stiahnuť vašu vizitku do telefónu
-                                </p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer ml-4">
-                                <input
-                                    type="checkbox"
-                                    id="showBusinessCard"
-                                    className="sr-only peer"
-                                    checked={formData.showBusinessCard}
-                                    onChange={(e) => setFormData({ ...formData, showBusinessCard: e.target.checked })}
+            <div id="kontakt" data-section data-section-label="Kontakt" data-section-icon="Phone" data-feature-key="component_contact">
+                <LockedComponentWrapper featureKey="component_contact">
+                    <MuiCard
+                        title="Kontakt"
+                        subtitle="Ako vás môžu zákazníci kontaktovať"
+                    >
+                        <div className="grid gap-2 mt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <MuiInput
+                                    label="Telefón"
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    startIcon={<Phone className="w-5 h-5" />}
                                 />
-                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            </label>
+                                <MuiInput
+                                    label="Email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    startIcon={<Mail className="w-5 h-5" />}
+                                />
+                            </div>
+                            <MuiInput
+                                label="Adresa"
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                placeholder="Ulica 123, Mesto"
+                                startIcon={<MapPin className="w-5 h-5" />}
+                            />
                         </div>
-                    </div>
-                </MuiCard>
+                    </MuiCard>
+                </LockedComponentWrapper>
+
+                {/* Google Maps - Separate Lock */}
+                <div className="mt-4" id="google-maps" data-section data-section-label="Google Maps" data-section-icon="Map" data-feature-key="component_map">
+                    <LockedComponentWrapper featureKey="component_map">
+                        <MuiCard title="Google Maps" subtitle="Vložte mapu vašej lokácie">
+                            <MuiTextArea
+                                label="Google Maps Iframe"
+                                value={formData.mapEmbed}
+                                onChange={(e) => setFormData({ ...formData, mapEmbed: e.target.value })}
+                                placeholder='<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>'
+                                rows={3}
+                                className="font-mono text-xs"
+                            />
+                            <p className="text-xs text-gray-500 dark:text-gray-400 ml-2 mt-2">
+                                Vložte iframe kód z Google Maps (Zdieľať → Vložiť mapu)
+                            </p>
+                        </MuiCard>
+                    </LockedComponentWrapper>
+                </div>
+
+                {/* Business Card Toggle - Separate Lock */}
+                <div className="mt-4" id="vizitka" data-section data-section-label="Vizitka" data-section-icon="Contact" data-feature-key="component_business_card">
+                    <LockedComponentWrapper featureKey="component_business_card">
+                        <MuiCard>
+                            <div className="flex items-center justify-between p-4">
+                                <div className="flex-1">
+                                    <label htmlFor="showBusinessCard" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Zobraziť vizitku
+                                    </label>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        Umožniť návštevníkom stiahnuť vašu vizitku do telefónu
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                    <input
+                                        type="checkbox"
+                                        id="showBusinessCard"
+                                        className="sr-only peer"
+                                        checked={formData.showBusinessCard}
+                                        onChange={(e) => setFormData({ ...formData, showBusinessCard: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </MuiCard>
+                    </LockedComponentWrapper>
+                </div>
             </div>
 
-            <div id="links" data-section data-section-label="Odkazy" data-section-icon="Link">
-                <LinksManager profile={profile} />
+            <div id="links" data-section data-section-label="Odkazy" data-section-icon="Link" data-feature-key="component_custom_links">
+                <LockedComponentWrapper featureKey="component_custom_links">
+                    <LinksManager profile={profile} />
+                </LockedComponentWrapper>
+            </div>
+
+            {/* Documents Section */}
+            <div id="documents" data-section data-section-label="Dokumenty" data-section-icon="FileText" data-feature-key="component_documents">
+                <LockedComponentWrapper
+                    featureKey="component_documents"
+                >
+                    <DocumentsManager profile={profile} />
+                </LockedComponentWrapper>
             </div>
 
             {/* Gallery Manager */}
-            <div id="gallery" data-section data-section-label="Galéria" data-section-icon="Image">
-                <GalleryManager profile={profile} />
+            <div id="gallery" data-section data-section-label="Galéria" data-section-icon="Image" data-feature-key="component_gallery">
+                <LockedComponentWrapper featureKey="component_gallery">
+                    <GalleryManager profile={profile} />
+                </LockedComponentWrapper>
             </div>
 
             {/* Social Media Manager */}
-            <div id="social-links" data-section data-section-label="Social links" data-section-icon="Share2">
-                <SocialLinksManager profile={profile} />
+            <div id="social-links" data-section data-section-label="Social links" data-section-icon="Share2" data-feature-key="component_social_links">
+                <LockedComponentWrapper featureKey="component_social_links">
+                    <SocialLinksManager profile={profile} />
+                </LockedComponentWrapper>
             </div>
 
             {/* Working Hours Card */}
-            <div id="hours" data-section data-section-label="Otváracie hodiny" data-section-icon="Clock">
-                <MuiCard
-                    title="Otváracie hodiny"
-                    subtitle="Nastavte si, kedy ste k dispozícii pre zákazníkov"
-                >
-                    <div className="space-y-1 mt-2">
-                        {hours.map((day) => {
-                            const dayName = DAYS.find((d) => d.id === day.dayOfWeek)?.name;
+            <div id="hours" data-section data-section-label="Otváracie hodiny" data-section-icon="Clock" data-feature-key="component_hours">
+                <LockedComponentWrapper featureKey="component_hours">
+                    <MuiCard
+                        title="Otváracie hodiny"
+                        subtitle="Nastavte si, kedy ste k dispozícii pre zákazníkov"
+                    >
+                        <div className="space-y-1 mt-2">
+                            {hours.map((day) => {
+                                const dayName = DAYS.find((d) => d.id === day.dayOfWeek)?.name;
 
-                            return (
-                                <div
-                                    key={day.dayOfWeek}
-                                    className={cn(
-                                        "flex items-center justify-between p-2 rounded-lg transition-colors",
-                                        day.isClosed ? "bg-gray-50 dark:bg-gray-900/50 opacity-70" : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                                    )}
-                                >
-                                    <div className="font-medium text-sm text-gray-900 dark:text-gray-100 w-24">
-                                        {dayName}
-                                    </div>
-
-                                    <div className="flex items-center gap-2 flex-1 justify-center">
-                                        {!day.isClosed ? (
-                                            <>
-                                                <input
-                                                    type="time"
-                                                    value={day.openTime}
-                                                    onChange={(e) => handleTimeChange(day.dayOfWeek, "openTime", e.target.value)}
-                                                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
-                                                />
-                                                <span className="text-gray-400 text-sm">–</span>
-                                                <input
-                                                    type="time"
-                                                    value={day.closeTime}
-                                                    onChange={(e) => handleTimeChange(day.dayOfWeek, "closeTime", e.target.value)}
-                                                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
-                                                />
-                                            </>
-                                        ) : (
-                                            <span className="text-sm text-gray-400 italic">
-                                                Zatvorené
-                                            </span>
+                                return (
+                                    <div
+                                        key={day.dayOfWeek}
+                                        className={cn(
+                                            "flex items-center justify-between p-2 rounded-lg transition-colors",
+                                            day.isClosed ? "bg-gray-50 dark:bg-gray-900/50 opacity-70" : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
                                         )}
-                                    </div>
+                                    >
+                                        <div className="font-medium text-sm text-gray-900 dark:text-gray-100 w-24">
+                                            {dayName}
+                                        </div>
 
-                                    <label className="relative inline-flex items-center cursor-pointer ml-4">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={!day.isClosed}
-                                            onChange={() => toggleClosed(day.dayOfWeek)}
-                                        />
-                                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                    </label>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </MuiCard>
+                                        <div className="flex items-center gap-2 flex-1 justify-center">
+                                            {!day.isClosed ? (
+                                                <>
+                                                    <input
+                                                        type="time"
+                                                        value={day.openTime}
+                                                        onChange={(e) => handleTimeChange(day.dayOfWeek, "openTime", e.target.value)}
+                                                        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
+                                                    />
+                                                    <span className="text-gray-400 text-sm">–</span>
+                                                    <input
+                                                        type="time"
+                                                        value={day.closeTime}
+                                                        onChange={(e) => handleTimeChange(day.dayOfWeek, "closeTime", e.target.value)}
+                                                        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-24"
+                                                    />
+                                                </>
+                                            ) : (
+                                                <span className="text-sm text-gray-400 italic">
+                                                    Zatvorené
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <label className="relative inline-flex items-center cursor-pointer ml-4">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={!day.isClosed}
+                                                onChange={() => toggleClosed(day.dayOfWeek)}
+                                            />
+                                            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        </label>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </MuiCard>
+                </LockedComponentWrapper>
             </div>
 
             {/* Appearance Card */}
@@ -563,6 +598,18 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                                 >
                                     Obrázky (Unsplash)
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setBgType("upload")}
+                                    className={cn(
+                                        "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                                        bgType === "upload"
+                                            ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100"
+                                            : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                    )}
+                                >
+                                    Vlastný obrázok
+                                </button>
                             </div>
 
                             {bgType === "gradient" && (
@@ -617,56 +664,134 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                             )}
 
                             {bgType === "image" && (
-                                <div className="space-y-4">
-                                    <MuiInput
-                                        label="Hľadať obrázky"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="napr. nature, office, abstract..."
-                                    />
+                                <LockedComponentWrapper featureKey="component_background_images">
+                                    <div className="space-y-4">
+                                        <MuiInput
+                                            label="Hľadať obrázky"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="napr. nature, office, abstract..."
+                                        />
 
-                                    {formData.bgImage?.startsWith("http") && (
-                                        <div className="flex items-center gap-2 mb-2">
+                                        {formData.bgImage?.startsWith("http") && (
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id="bgBlur"
+                                                    checked={formData.bgBlur}
+                                                    onChange={(e) => setFormData({ ...formData, bgBlur: e.target.checked })}
+                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                                />
+                                                <label htmlFor="bgBlur" className="text-sm text-gray-700 dark:text-gray-300">
+                                                    Rozmazať pozadie (pre lepšiu čitateľnosť textu)
+                                                </label>
+                                            </div>
+                                        )}
+
+
+                                        <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
+                                            {searchResults.map((photo) => (
+                                                <button
+                                                    key={photo.id}
+                                                    type="button"
+                                                    onClick={() => selectImage(photo.urls.regular)}
+                                                    className={cn(
+                                                        "relative h-24 rounded-xl border-2 transition-all overflow-hidden group hover:shadow-md",
+                                                        formData.bgImage === photo.urls.regular
+                                                            ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
+                                                            : "border-transparent"
+                                                    )}
+                                                >
+                                                    <img
+                                                        src={photo.urls.thumb}
+                                                        alt={photo.alt}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {searchResults.length === 0 && !searching && (
+                                            <p className="text-center text-sm text-gray-500 py-4">Žiadne obrázky sa nenašli.</p>
+                                        )}
+                                    </div>
+                                </LockedComponentWrapper>
+                            )}
+
+                            {bgType === "upload" && (
+                                <LockedComponentWrapper featureKey="component_background_upload">
+                                    <div className="space-y-4">
+                                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
                                             <input
-                                                type="checkbox"
-                                                id="bgBlur"
-                                                checked={formData.bgBlur}
-                                                onChange={(e) => setFormData({ ...formData, bgBlur: e.target.checked })}
-                                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+
+                                                    // Validate file size (max 5MB)
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        showToast("Obrázok je príliš veľký. Maximálna veľkosť je 5MB.", "error");
+                                                        return;
+                                                    }
+
+                                                    try {
+                                                        setLoading(true);
+                                                        const formData = new FormData();
+                                                        formData.append("file", file);
+                                                        formData.append("bucket", "backgrounds");
+
+                                                        const response = await fetch("/api/upload", {
+                                                            method: "POST",
+                                                            body: formData,
+                                                        });
+
+                                                        if (!response.ok) throw new Error("Upload failed");
+
+                                                        const data = await response.json();
+                                                        setFormData(prev => ({ ...prev, bgImage: data.url }));
+                                                        showToast("Pozadie nahrané", "success");
+                                                    } catch (error) {
+                                                        console.error("Error uploading background:", error);
+                                                        showToast("Nepodarilo sa nahrať obrázok", "error");
+                                                    } finally {
+                                                        setLoading(false);
+                                                    }
+                                                }}
+                                                className="hidden"
+                                                id="bg-upload"
                                             />
-                                            <label htmlFor="bgBlur" className="text-sm text-gray-700 dark:text-gray-300">
-                                                Rozmazať pozadie (pre lepšiu čitateľnosť textu)
+                                            <label htmlFor="bg-upload" className="cursor-pointer">
+                                                <ImageIcon className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    Kliknite pre nahratie vlastného pozadia
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    PNG, JPG (max. 5MB)
+                                                </p>
                                             </label>
                                         </div>
-                                    )}
 
-
-                                    <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
-                                        {searchResults.map((photo) => (
-                                            <button
-                                                key={photo.id}
-                                                type="button"
-                                                onClick={() => selectImage(photo.urls.regular)}
-                                                className={cn(
-                                                    "relative h-24 rounded-xl border-2 transition-all overflow-hidden group hover:shadow-md",
-                                                    formData.bgImage === photo.urls.regular
-                                                        ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800"
-                                                        : "border-transparent"
-                                                )}
-                                            >
+                                        {formData.bgImage?.startsWith("http") && !formData.bgImage.includes("unsplash") && (
+                                            <div className="relative rounded-xl overflow-hidden border-2 border-blue-500">
                                                 <img
-                                                    src={photo.urls.thumb}
-                                                    alt={photo.alt}
-                                                    className="w-full h-full object-cover"
+                                                    src={formData.bgImage}
+                                                    alt="Custom background"
+                                                    className="w-full h-48 object-cover"
                                                 />
-                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
-                                            </button>
-                                        ))}
+                                                <div className="absolute top-2 right-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFormData(prev => ({ ...prev, bgImage: "black" }))}
+                                                        className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                    {searchResults.length === 0 && !searching && (
-                                        <p className="text-center text-sm text-gray-500 py-4">Žiadne obrázky sa nenašli.</p>
-                                    )}
-                                </div>
+                                </LockedComponentWrapper>
                             )}
                         </div>
                     </div>

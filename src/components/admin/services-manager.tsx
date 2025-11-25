@@ -11,9 +11,10 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 interface ServicesManagerProps {
     profileId: string;
     services: Service[];
+    isGoogleConnected: boolean;
 }
 
-export default function ServicesManager({ profileId, services }: ServicesManagerProps) {
+export default function ServicesManager({ profileId, services, isGoogleConnected }: ServicesManagerProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -102,6 +103,57 @@ export default function ServicesManager({ profileId, services }: ServicesManager
                         <Plus size={16} />
                         Pridať službu
                     </button>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className="font-medium flex items-center gap-2">
+                            <img src="https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png" alt="Google Calendar" className="w-6 h-6" />
+                            Google Kalendár
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            {isGoogleConnected
+                                ? "Váš kalendár je prepojený. Rezervácie sa automaticky pridávajú."
+                                : "Prepojte svoj kalendár pre automatickú synchronizáciu rezervácií."}
+                        </p>
+                    </div>
+                    {isGoogleConnected ? (
+                        <button
+                            onClick={async () => {
+                                if (!confirm("Naozaj chcete odpojiť Google Kalendár?")) return;
+                                setLoading(true);
+                                try {
+                                    const res = await fetch("/api/google-calendar/disconnect", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ profileId }),
+                                    });
+                                    if (res.ok) {
+                                        showToast("Google Kalendár odpojený", "success");
+                                        router.refresh();
+                                    } else {
+                                        showToast("Chyba pri odpájaní", "error");
+                                    }
+                                } catch (error) {
+                                    console.error(error);
+                                    showToast("Chyba pri odpájaní", "error");
+                                } finally {
+                                    setLoading(false);
+                                }
+                            }}
+                            disabled={loading}
+                            className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+                        >
+                            Odpojiť
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => window.location.href = `/api/google-calendar/connect?profileId=${profileId}`}
+                            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            Prepojiť
+                        </button>
+                    )}
                 </div>
 
                 {(isCreating || editingId) && (

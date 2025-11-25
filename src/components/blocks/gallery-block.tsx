@@ -28,7 +28,7 @@ export default function GalleryBlock({ albums, bgImage }: GalleryBlockProps) {
                 albums.length === 1 && "grid grid-cols-1",
                 albums.length === 2 && "grid grid-cols-2",
                 albums.length === 3 && "grid grid-cols-3",
-                albums.length >= 4 && "flex overflow-x-auto snap-x scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent pb-2"
+                albums.length >= 4 && "flex overflow-x-auto snap-x scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
             )}>
                 {albums.map((album) => (
                     <button

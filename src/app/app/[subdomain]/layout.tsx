@@ -62,13 +62,27 @@ export default async function ProfileLayout({
             bgNoise: true,
             name: true,
             avatarUrl: true,
-            about: true
+            about: true,
+            tier: {
+                include: {
+                    features: {
+                        include: {
+                            feature: true
+                        }
+                    }
+                }
+            }
         },
     });
 
     if (!profile) {
         return notFound();
     }
+
+    // Check for disable_branding feature
+    const hasDisableBranding = profile.tier?.features.some(
+        (tf) => tf.feature.key === "disable_branding"
+    ) ?? false;
 
     // Check if bgImage is a URL (Unsplash image) or a gradient ID
     const isImageUrl = profile.bgImage?.startsWith("http");
@@ -130,7 +144,15 @@ export default async function ProfileLayout({
                 />
             )}
 
-            <ProfileHeaderBadges profile={profile} />
+            <ProfileHeaderBadges
+                profile={{
+                    name: profile.name,
+                    avatarUrl: profile.avatarUrl,
+                    about: profile.about,
+                    theme: profile.theme
+                }}
+                showBranding={!hasDisableBranding}
+            />
             <ProfileRefresher />
             <CookieConsent />
 

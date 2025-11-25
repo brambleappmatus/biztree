@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { LanguageProvider } from "@/contexts/language-context";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -42,10 +43,13 @@ export default function RootLayout({
   return (
     <html lang="sk">
       <body suppressHydrationWarning className={cn(inter.variable, "antialiased bg-gray-50 text-gray-900 font-sans")}>
-        <ToastProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ToastProvider>
+        <LanguageProvider>
+          <ToastProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ToastProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
 }
+
