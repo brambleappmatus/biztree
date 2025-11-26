@@ -3,6 +3,11 @@
 import prisma from "@/lib/prisma";
 import { addDays, format, isSameDay, parseISO, setHours, setMinutes } from "date-fns";
 import { getGoogleCalendarClient } from "@/lib/google-calendar";
+import { Resend } from "resend";
+import { BookingConfirmationEmail } from "@/components/emails/BookingConfirmationEmail";
+import { NewBookingNotificationEmail } from "@/components/emails/NewBookingNotificationEmail";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function getAvailability(serviceId: string, date: string) {
     // date is ISO string (YYYY-MM-DD)
@@ -126,7 +131,13 @@ export async function createBooking(data: {
 }) {
     const service = await prisma.service.findUnique({
         where: { id: data.serviceId },
-        include: { profile: true },
+        include: {
+            profile: {
+                include: {
+                    user: true
+                }
+            }
+        },
     });
 
     if (!service) throw new Error("Service not found");
@@ -194,6 +205,56 @@ export async function createBooking(data: {
         }
     } else {
         console.log("⚠️ No Google Calendar tokens, skipping sync");
+    }
+
+    // Send emails
+    try {
+        // 1. Send confirmation to customer
+        const formattedDate = format(startTime, "d.M.yyyy");
+        const formattedTime = format(startTime, "HH:mm");
+
+        // Create Google Calendar link
+        const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Rezervácia: ${service.name}`)}&dates=${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}&location=${encodeURIComponent(profile.address || '')}`;
+
+        await resend.emails.send({
+            from: 'BizTree <no-reply@biztree.bio>',
+            to: data.email,
+            subject: 'Potvrdenie rezervácie - BizTree',
+            react: BookingConfirmationEmail({
+                customerName: data.name,
+                serviceName: service.name,
+                date: formattedDate,
+                time: formattedTime,
+                location: profile.address || undefined,
+                googleCalendarLink
+            }) as React.ReactNode,
+        });
+
+        // 2. Send notification to owner
+        const ownerEmail = profile.email || profile.user?.email;
+
+        if (ownerEmail) {
+            await resend.emails.send({
+                from: 'BizTree <no-reply@biztree.bio>',
+                to: ownerEmail,
+                subject: 'Nová rezervácia! - BizTree',
+                react: NewBookingNotificationEmail({
+                    ownerName: profile.name, // Or user name if available
+                    customerName: data.name,
+                    customerEmail: data.email,
+                    customerPhone: data.phone,
+                    serviceName: service.name,
+                    date: formattedDate,
+                    time: formattedTime,
+                }) as React.ReactNode,
+            });
+        } else {
+            console.warn("⚠️ No owner email found for profile:", profile.id);
+        }
+
+    } catch (emailError) {
+        console.error("❌ Failed to send booking emails:", emailError);
+        // Don't fail the booking if email sending fails
     }
 
     return { success: true, bookingId: booking.id };

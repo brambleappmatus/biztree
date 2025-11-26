@@ -7,9 +7,10 @@ interface LocationBlockProps {
     profile: ProfileCore;
     lang: Language;
     bgImage: string | null;
+    themeColor?: string;
 }
 
-export default function LocationBlock({ profile, lang, bgImage }: LocationBlockProps) {
+export default function LocationBlock({ profile, lang, bgImage, themeColor }: LocationBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
     const isLight = isLightBackground(bgImage);
@@ -35,9 +36,10 @@ export default function LocationBlock({ profile, lang, bgImage }: LocationBlockP
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors ${isLight
-                            ? "bg-white/20 hover:bg-white/30 text-white"
-                            : "bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
+                        ? "bg-white/20 hover:bg-white/30 text-white"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
                         }`}
+                    style={themeColor ? { backgroundColor: `${themeColor}20`, color: themeColor } : undefined}
                 >
                     <span>Navigovať</span>
                 </a>

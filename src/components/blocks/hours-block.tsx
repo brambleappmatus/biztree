@@ -8,11 +8,12 @@ interface HoursBlockProps {
     profile: ProfileCore;
     lang: Language;
     bgImage: string | null;
+    themeColor?: string;
 }
 
 const DAYS = ["Nedeľa", "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota"];
 
-export default function HoursBlock({ profile, lang, bgImage }: HoursBlockProps) {
+export default function HoursBlock({ profile, lang, bgImage, themeColor }: HoursBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
     const isLight = isLightBackground(bgImage);
@@ -41,9 +42,12 @@ export default function HoursBlock({ profile, lang, bgImage }: HoursBlockProps) 
                         <div key={hour.id} className={cn(
                             "flex justify-between py-1 border-b last:border-0",
                             isLight ? "border-white/10 text-gray-200" : "border-gray-100 text-gray-700",
-                            isToday && "font-bold text-[var(--primary)]",
+                            isToday && !themeColor && "font-bold text-[var(--primary)]",
+                            isToday && themeColor && "font-bold",
                             hour.isClosed && "opacity-50"
-                        )}>
+                        )}
+                            style={isToday && themeColor ? { color: themeColor } : undefined}
+                        >
                             <span>{DAYS[hour.dayOfWeek]}</span>
                             <span>
                                 {hour.isClosed ? (

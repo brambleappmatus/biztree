@@ -2,6 +2,10 @@
 
 import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
+import { Resend } from "resend";
+import { WelcomeEmail } from "@/components/emails/WelcomeEmail";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function registerUser(data: {
     email: string;
@@ -30,6 +34,19 @@ export async function registerUser(data: {
             }
         });
 
+        // Send welcome email
+        try {
+            await resend.emails.send({
+                from: 'BizTree <no-reply@biztree.bio>',
+                to: data.email,
+                subject: 'Vitajte v BizTree!',
+                react: WelcomeEmail({ name: data.email.split('@')[0] }) as React.ReactNode, // Use part of email as name for now
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // Don't fail registration if email fails
+        }
+
         return { success: true, userId: user.id };
     } catch (error) {
         console.error("Registration error:", error);
@@ -55,6 +72,7 @@ export async function createProfileFromOnboarding(userId: string, data: {
     bgImage?: string;
     bgBlur?: boolean;
     address?: string;
+    language?: string;
     hours?: { day: number; isOpen: boolean; openTime: string; closeTime: string }[];
     socialLinks?: { platform: string; url: string }[];
 }) {
@@ -65,6 +83,22 @@ export async function createProfileFromOnboarding(userId: string, data: {
 
     if (existing) {
         return { error: "Subdoména už existuje" };
+    }
+
+    // Find or create FREE tier
+    let freeTier = await prisma.tier.findUnique({
+        where: { name: 'Free' }
+    });
+
+    if (!freeTier) {
+        // Create Free tier if it doesn't exist (safety fallback)
+        console.log("⚠️ Free tier not found, creating it...");
+        freeTier = await prisma.tier.create({
+            data: {
+                name: 'Free',
+                price: 0,
+            }
+        });
     }
 
     // Create profile with hours and social links
@@ -80,7 +114,8 @@ export async function createProfileFromOnboarding(userId: string, data: {
             bgImage: data.bgImage,
             bgBlur: data.bgBlur ?? false,
             address: data.address,
-            language: "sk",
+            language: data.language || "sk",
+            tierId: freeTier.id,
             // Create hours if provided
             hours: data.hours && data.hours.length > 0 ? {
                 create: data.hours

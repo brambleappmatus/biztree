@@ -8,9 +8,10 @@ interface SocialLinksBlockProps {
     profile: ProfileCore;
     lang: Language;
     bgImage: string | null;
+    themeColor?: string;
 }
 
-export default function SocialLinksBlock({ profile, lang, bgImage }: SocialLinksBlockProps) {
+export default function SocialLinksBlock({ profile, lang, bgImage, themeColor }: SocialLinksBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
     const isLight = isLightBackground(bgImage);

@@ -65,6 +65,16 @@ export const authOptions: NextAuthOptions = {
         signIn: "/login",
     },
     callbacks: {
+        async signIn({ user, account, profile }) {
+            if (account?.provider === "google") {
+                console.log("🔐 Google Sign In Attempt:", {
+                    userEmail: user.email,
+                    accountProvider: account.provider,
+                    profileEmail: profile?.email
+                });
+            }
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.role = (user as any).role;
@@ -79,6 +89,17 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).onboardingCompleted = token.onboardingCompleted as boolean;
             }
             return session;
+        }
+    },
+    events: {
+        async createUser({ user }) {
+            console.log("👤 User Created:", user);
+        },
+        async linkAccount({ user, account }) {
+            console.log("🔗 Account Linked:", { userId: user.id, provider: account.provider });
+        },
+        async signIn({ user, account, isNewUser }) {
+            console.log("✅ Sign In Successful:", { userId: user.id, isNewUser, provider: account?.provider });
         }
     },
     secret: process.env.NEXTAUTH_SECRET,

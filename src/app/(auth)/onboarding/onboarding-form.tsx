@@ -7,8 +7,9 @@ import { MuiInput } from "@/components/ui/mui-input";
 import { MuiTextArea } from "@/components/ui/mui-textarea";
 import { MuiButton } from "@/components/ui/mui-button";
 import { checkSubdomainAvailability, createProfileFromOnboarding } from "../actions";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Language } from "@/lib/i18n";
 import ContactButtonsBlock from "@/components/blocks/contact-buttons-block";
 import HoursBlock from "@/components/blocks/hours-block";
 import SocialLinksBlock from "@/components/blocks/social-links-block";
@@ -48,6 +49,7 @@ export default function OnboardingForm() {
         about: "",
         phone: "",
         email: "",
+        language: "sk" as Language,
         theme: "blue",
         bgType: "gradient" as "gradient" | "unsplash",
         bgImage: "black",
@@ -181,6 +183,36 @@ export default function OnboardingForm() {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                 Základné informácie
                             </h3>
+
+                            {/* Language Selector */}
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, language: "sk" })}
+                                    className={cn(
+                                        "flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all",
+                                        formData.language === "sk"
+                                            ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                    )}
+                                >
+                                    <span className="text-xl">🇸🇰</span>
+                                    <span className="font-medium">Slovensky</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, language: "en" })}
+                                    className={cn(
+                                        "flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all",
+                                        formData.language === "en"
+                                            ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                                    )}
+                                >
+                                    <span className="text-xl">🇺🇸</span>
+                                    <span className="font-medium">English</span>
+                                </button>
+                            </div>
 
                             <MuiInput
                                 label="Názov firmy / Meno *"
@@ -506,7 +538,8 @@ export default function OnboardingForm() {
                                 className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                                 style={{
                                     background: selectedBg?.gradient || BACKGROUNDS[0].gradient,
-                                }}
+                                    '--primary': selectedTheme?.color || '#007AFF',
+                                } as React.CSSProperties}
                             >
                                 <div className="min-h-full flex flex-col items-center p-6 pt-12 space-y-4">
                                     {/* Avatar Placeholder */}
@@ -542,8 +575,9 @@ export default function OnboardingForm() {
                                                     links: [],
                                                     hours: []
                                                 } as any}
-                                                lang="sk"
+                                                lang={formData.language}
                                                 bgImage={formData.bgImage}
+                                                themeColor={selectedTheme?.color}
                                             />
                                         </div>
                                     )}
@@ -565,8 +599,9 @@ export default function OnboardingForm() {
                                                     links: [],
                                                     hours: []
                                                 } as any}
-                                                lang="sk"
+                                                lang={formData.language}
                                                 bgImage={formData.bgImage}
+                                                themeColor={selectedTheme?.color}
                                             />
                                         </div>
                                     )}
@@ -592,6 +627,7 @@ export default function OnboardingForm() {
                                                 } as any}
                                                 lang="sk"
                                                 bgImage={formData.bgImage}
+                                                themeColor={selectedTheme?.color}
                                             />
                                         </div>
                                     )}
@@ -611,7 +647,9 @@ export default function OnboardingForm() {
                                                     hours: []
                                                 } as any}
                                                 lang="sk"
+
                                                 bgImage={formData.bgImage}
+                                                themeColor={selectedTheme?.color}
                                             />
                                         </div>
                                     )}

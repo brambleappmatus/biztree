@@ -8,9 +8,10 @@ interface ContactButtonsBlockProps {
     profile: ProfileCore;
     lang: Language;
     bgImage: string | null;
+    themeColor?: string;
 }
 
-export default function ContactButtonsBlock({ profile, lang, bgImage }: ContactButtonsBlockProps) {
+export default function ContactButtonsBlock({ profile, lang, bgImage, themeColor }: ContactButtonsBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
     const isLight = isLightBackground(bgImage);
@@ -49,8 +50,14 @@ export default function ContactButtonsBlock({ profile, lang, bgImage }: ContactB
                     href={button.href}
                     className={`${blockBgClass} p-4 rounded-2xl shadow-sm flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95`}
                 >
-                    <div className={`p-3 rounded-full ${button.bgColor}`}>
-                        <button.icon className={`w-5 h-5 ${button.color}`} />
+                    <div
+                        className={`p-3 rounded-full ${!themeColor ? button.bgColor : ''}`}
+                        style={themeColor ? { backgroundColor: `${themeColor}20` } : undefined}
+                    >
+                        <button.icon
+                            className={`w-5 h-5 ${!themeColor ? button.color : ''}`}
+                            style={themeColor ? { color: themeColor } : undefined}
+                        />
                     </div>
                     <span className={`text-sm font-medium ${isLight ? "text-white" : "text-gray-900"}`}>{button.label}</span>
                 </a>
