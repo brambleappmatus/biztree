@@ -81,6 +81,7 @@ export function PromoCodeModal({
                                         Zadajte kód kupónu pre získanie zľavy na predplatné.
                                     </p>
                                     <MuiInput
+                                        label="Kód kupónu"
                                         value={code}
                                         onChange={(e) => setCode(e.target.value.toUpperCase())}
                                         placeholder="napr. ZLAVA20"

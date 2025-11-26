@@ -15,6 +15,52 @@ import {
 import { signOut } from "next-auth/react";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/motion-primitives/dock";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
+import { LANGUAGES } from "@/lib/i18n";
+import { Globe, Check } from "lucide-react";
+
+function LanguageDockItem() {
+    const { language, setLanguage } = useLanguage();
+    const [isOpen, setIsOpen] = useState(false);
+
+    const currentLang = LANGUAGES.find(l => l.code === language) || LANGUAGES[0];
+
+    return (
+        <div className="relative z-50">
+            {isOpen && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-40 bg-white dark:bg-neutral-800 rounded-xl shadow-xl border border-gray-200 dark:border-neutral-700 overflow-hidden z-50">
+                    {LANGUAGES.map((lang) => (
+                        <button
+                            key={lang.code}
+                            onClick={() => {
+                                setLanguage(lang.code);
+                                setIsOpen(false);
+                            }}
+                            className={cn(
+                                "w-full text-left px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-neutral-700 flex items-center justify-between transition-colors dark:text-gray-200",
+                                language === lang.code && "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium"
+                            )}
+                        >
+                            <span className="flex items-center gap-2">
+                                <span>{lang.flag}</span> {lang.name}
+                            </span>
+                            {language === lang.code && <Check size={14} />}
+                        </button>
+                    ))}
+                </div>
+            )}
+            <DockItem
+                onClick={() => setIsOpen(!isOpen)}
+                className="aspect-square rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+            >
+                <DockLabel>{currentLang.name}</DockLabel>
+                <DockIcon>
+                    <Globe className="h-3/5 w-3/5" />
+                </DockIcon>
+            </DockItem>
+        </div>
+    );
+}
 
 export default function DockMenu() {
     const router = useRouter();
@@ -161,6 +207,8 @@ export default function DockMenu() {
                     })}
 
                     <div className="w-px h-8 bg-gray-200 dark:bg-neutral-800 mx-1 self-center" />
+
+                    <LanguageDockItem />
 
                     <DockItem
                         onClick={() => signOut({ callbackUrl: "/login" })}

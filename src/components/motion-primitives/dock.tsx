@@ -101,7 +101,7 @@ function Dock({
         height: height,
         scrollbarWidth: 'none',
       }}
-      className='mx-2 flex max-w-full items-end overflow-x-auto'
+      className='mx-2 flex max-w-full items-end overflow-x-auto md:overflow-visible'
     >
       <motion.div
         onMouseMove={({ pageX }) => {

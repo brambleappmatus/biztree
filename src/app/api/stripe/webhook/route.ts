@@ -93,7 +93,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const customerId = typeof customer === 'string' ? customer : customer.id;
 
     // Get subscription details from Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
 
     // Get tier from price ID
     const priceId = stripeSubscription.items.data[0].price.id;
@@ -114,7 +114,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const trialEnd = stripeSubscription.trial_end
         ? new Date(stripeSubscription.trial_end * 1000)
         : null;
-    const currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+    const currentPeriodEnd = new Date((stripeSubscription as any).current_period_end * 1000);
 
     // Create or update subscription record
     await prisma.subscription.upsert({
@@ -126,7 +126,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             stripeSubscriptionId: subscriptionId,
             stripePriceId: priceId,
             status: stripeSubscription.status.toUpperCase(),
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+            currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
             currentPeriodEnd,
         },
         update: {
@@ -163,7 +163,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-    const { id, customer, status, current_period_end, trial_end, items, metadata } = subscription;
+    const { id, customer, status, current_period_end, trial_end, items, metadata } = subscription as any;
 
     const existingSubscription = await prisma.subscription.findUnique({
         where: { stripeSubscriptionId: id },
@@ -294,7 +294,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-    const { subscription, customer } = invoice;
+    const { subscription, customer } = invoice as any;
 
     if (!subscription) return;
 
@@ -310,14 +310,14 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     }
 
     // Get updated subscription from Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-    const currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+    const currentPeriodEnd = new Date((stripeSubscription as any).current_period_end * 1000);
 
     // Update subscription period
     await prisma.subscription.update({
         where: { stripeSubscriptionId: subscriptionId },
         data: {
-            currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
+            currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
             currentPeriodEnd,
             status: "ACTIVE",
         }
@@ -346,7 +346,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-    const { subscription } = invoice;
+    const { subscription } = invoice as any;
 
     if (!subscription) return;
 

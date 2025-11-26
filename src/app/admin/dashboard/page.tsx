@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LockedFeatureGuard } from "@/components/admin/LockedFeatureGuard";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -32,7 +33,10 @@ export default async function AdminDashboard() {
     return (
         <LockedFeatureGuard featureKey="page_dashboard">
             <div>
-                <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Vitajte, {profile.name}</h1>
+                <PageHeader
+                    title={`Vitajte, ${profile.name}`}
+                    description="Prehľad vašich rezervácií a štatistík."
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">

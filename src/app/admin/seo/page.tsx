@@ -8,6 +8,7 @@ import { MuiTextArea } from "@/components/ui/mui-textarea";
 import { MuiButton } from "@/components/ui/mui-button";
 import { Save } from "lucide-react";
 import { LockedFeatureGuard } from "@/components/admin/LockedFeatureGuard";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface SEOFormData {
     seoTitle: string;
@@ -68,10 +69,10 @@ export default function SEOPage() {
     return (
         <LockedFeatureGuard featureKey="page_seo">
             <div className="max-w-2xl mx-auto space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold">SEO Nastavenia</h1>
-                    <p className="text-gray-500">Optimalizujte svoj profil pre vyhľadávače</p>
-                </div>
+                <PageHeader
+                    title="SEO Nastavenia"
+                    description="Optimalizujte svoj profil pre vyhľadávače."
+                />
 
                 <MuiCard title="Meta Tags">
                     <form onSubmit={handleSubmit} className="space-y-4">

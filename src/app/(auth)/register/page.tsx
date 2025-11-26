@@ -7,9 +7,12 @@ import { MuiInput } from "@/components/ui/mui-input";
 import { MuiButton } from "@/components/ui/mui-button";
 import Link from "next/link";
 import { registerUser } from "../actions";
+import { useLanguage } from "@/contexts/language-context";
+import LanguageSwitcher from "@/components/language-switcher";
 
 export default function RegisterPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [formData, setFormData] = useState({
@@ -24,13 +27,13 @@ export default function RegisterPage() {
         setError("");
 
         if (formData.password !== formData.confirmPassword) {
-            setError("Heslá sa nezhodujú");
+            setError(t.validation.passwordMismatch);
             setLoading(false);
             return;
         }
 
         if (formData.password.length < 6) {
-            setError("Heslo musí mať aspoň 6 znakov");
+            setError(t.auth.passwordTooShort);
             setLoading(false);
             return;
         }
@@ -47,7 +50,7 @@ export default function RegisterPage() {
                 router.push("/login?registered=true");
             }
         } catch (err) {
-            setError("Nastala chyba pri registrácii");
+            setError(t.messages.saveError);
         } finally {
             setLoading(false);
         }
@@ -55,6 +58,14 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-screen flex bg-white dark:bg-gray-900">
+            {/* Language Switcher */}
+            <div className="absolute top-4 right-4 z-50 lg:hidden">
+                <LanguageSwitcher />
+            </div>
+            <div className="absolute top-4 right-4 z-50 hidden lg:block">
+                <LanguageSwitcher variant="white" />
+            </div>
+
             {/* Left Side - Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16">
                 <div className="w-full max-w-md space-y-8">
@@ -65,10 +76,10 @@ export default function RegisterPage() {
                             </div>
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            Vytvorte si účet
+                            {t.auth.createYourAccount}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400">
-                            Začnite s vlastným online profilom
+                            {t.auth.startWithProfile}
                         </p>
                     </div>
 
@@ -102,7 +113,7 @@ export default function RegisterPage() {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            Pokračovať cez Google
+                            {t.auth.continueWithGoogle}
                         </button>
 
                         <div className="relative my-6">
@@ -111,7 +122,7 @@ export default function RegisterPage() {
                             </div>
                             <div className="relative flex justify-center text-sm">
                                 <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-                                    Alebo emailom
+                                    {t.auth.orEmail}
                                 </span>
                             </div>
                         </div>
@@ -119,7 +130,7 @@ export default function RegisterPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <MuiInput
-                            label="Email"
+                            label={t.auth.email}
                             type="email"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -127,7 +138,7 @@ export default function RegisterPage() {
                         />
 
                         <MuiInput
-                            label="Heslo"
+                            label={t.auth.password}
                             type="password"
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -135,7 +146,7 @@ export default function RegisterPage() {
                         />
 
                         <MuiInput
-                            label="Potvrďte heslo"
+                            label={t.auth.confirmPassword}
                             type="password"
                             value={formData.confirmPassword}
                             onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -148,7 +159,7 @@ export default function RegisterPage() {
                             loading={loading}
                             className="w-full py-6 text-lg"
                         >
-                            {loading ? "Registrácia..." : "Vytvoriť účet"}
+                            {loading ? t.auth.creating : t.auth.createAccount}
                         </MuiButton>
 
                         <div className="relative my-6">
@@ -157,17 +168,17 @@ export default function RegisterPage() {
                             </div>
                             <div className="relative flex justify-center text-sm">
                                 <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
-                                    Alebo
+                                    {t.auth.or}
                                 </span>
                             </div>
                         </div>
 
                         <div className="text-center text-sm">
                             <span className="text-gray-600 dark:text-gray-400">
-                                Už máte účet?{" "}
+                                {t.auth.haveAccount}{" "}
                             </span>
                             <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                                Prihláste sa
+                                {t.auth.signIn}
                             </Link>
                         </div>
                     </form>
@@ -178,18 +189,18 @@ export default function RegisterPage() {
             <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                 <div className="relative z-10 text-center text-white max-w-lg">
-                    <h2 className="text-4xl font-bold mb-6">Pridajte sa k BizTree</h2>
+                    <h2 className="text-4xl font-bold mb-6">{t.auth.joinBizTree}</h2>
                     <p className="text-xl text-blue-100 mb-8">
-                        Získajte profesionálnu prezentáciu, online rezervácie a správu klientov v jednom jednoduchom nástroji.
+                        {t.auth.joinDesc}
                     </p>
                     <div className="grid grid-cols-2 gap-4 opacity-80">
                         <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
-                            <div className="text-2xl font-bold mb-1">Zadarmo</div>
-                            <div className="text-sm text-blue-100">Základný plán</div>
+                            <div className="text-2xl font-bold mb-1">{t.auth.free}</div>
+                            <div className="text-sm text-blue-100">{t.auth.basicPlan}</div>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20">
-                            <div className="text-2xl font-bold mb-1">5 min</div>
-                            <div className="text-sm text-blue-100">Rýchle nastavenie</div>
+                            <div className="text-2xl font-bold mb-1">{t.auth.fiveMin}</div>
+                            <div className="text-sm text-blue-100">{t.auth.quickSetup}</div>
                         </div>
                     </div>
                 </div>

@@ -124,12 +124,4 @@ export async function deletePromoCode(id: string) {
     return { success: true };
 }
 
-// Generate random promo code
-export function generatePromoCode(length: number = 8): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-}
+

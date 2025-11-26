@@ -12,6 +12,16 @@ export type ProfileCore = Prisma.ProfileGetPayload<{
                 images: true;
             };
         };
+        documents: true;
+        tier: {
+            include: {
+                features: {
+                    include: {
+                        feature: true;
+                    };
+                };
+            };
+        };
         bookings: false;
     };
 }>;

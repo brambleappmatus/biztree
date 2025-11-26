@@ -29,6 +29,9 @@ const THEMES = [
     { id: "graphite", name: "Graphite", color: "#8E8E93" },
     { id: "lavender", name: "Lavender", color: "#AF52DE" },
     { id: "amber", name: "Amber", color: "#FF9500" },
+    { id: "sunshine", name: "Sunshine", color: "#FFD60A" },
+    { id: "teal", name: "Teal", color: "#30B0C7" },
+    { id: "indigo", name: "Indigo", color: "#5856D6" },
 ];
 
 const BACKGROUNDS = [
@@ -689,7 +692,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                                         )}
 
 
-                                        <div className="grid grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
+                                        <div className="grid grid-cols-3 gap-3 max-h-[600px] overflow-y-auto p-1">
                                             {searchResults.map((photo) => (
                                                 <button
                                                     key={photo.id}

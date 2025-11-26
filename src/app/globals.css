@@ -12,6 +12,10 @@
   /* Default Blue */
 }
 
+[data-theme="blue"] {
+  --primary: #007AFF;
+}
+
 [data-theme="emerald"] {
   --primary: #34C759;
 }
@@ -30,6 +34,18 @@
 
 [data-theme="amber"] {
   --primary: #FF9500;
+}
+
+[data-theme="sunshine"] {
+  --primary: #FFD60A;
+}
+
+[data-theme="teal"] {
+  --primary: #30B0C7;
+}
+
+[data-theme="indigo"] {
+  --primary: #5856D6;
 }
 
 body {

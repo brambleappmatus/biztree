@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPromoCodes, createPromoCode, togglePromoCodeStatus, deletePromoCode, generatePromoCode } from "./actions";
+import { getPromoCodes, createPromoCode, updatePromoCode, deletePromoCode, togglePromoCodeStatus } from "./actions";
+import { generatePromoCode } from "@/lib/utils";
 import { getTiersList } from "../actions";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";

@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
 
         if (query && query.trim()) {
             // Search for specific query
-            apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=12&orientation=landscape`;
+            apiUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=30&orientation=landscape`;
         } else {
             // Get trending/popular photos
-            apiUrl = `https://api.unsplash.com/photos?per_page=12&order_by=popular&orientation=landscape`;
+            apiUrl = `https://api.unsplash.com/photos?per_page=30&order_by=popular&orientation=landscape`;
         }
 
         const response = await fetch(apiUrl, {

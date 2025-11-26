@@ -14,6 +14,7 @@ import DocumentsBlock from "@/components/blocks/documents-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
 import { getTextColorClass } from "@/lib/background-utils";
+import { Language } from "@/lib/i18n";
 import { Metadata } from "next";
 
 import { cache } from "react";
@@ -136,8 +137,8 @@ export default async function ProfilePage({
         }
     }
 
-    // Extract language from profile
-    const lang = (profileData.language || "sk") as "sk" | "cz" | "en" | "pl" | "hu";
+    // Extract language from profile - fallback to supported languages only
+    const lang = (profileData.language === "sk" || profileData.language === "en" ? profileData.language : "sk") as Language;
     const textColorClass = getTextColorClass(effectiveBgImage || profileData.bgImage);
 
     // Helper function to convert day number to day name
@@ -241,8 +242,13 @@ export default async function ProfilePage({
                                 ...profileData,
                                 services: profileData.services.map(s => ({
                                     ...s,
-                                    price: Number(s.price)
-                                }))
+                                    price: s.price ? Number(s.price) : 0
+                                })),
+                                // Serialize tier to convert Decimal price field
+                                tier: profileData.tier ? {
+                                    ...profileData.tier,
+                                    price: profileData.tier.price ? Number(profileData.tier.price) : null,
+                                } as any : null
                             }}
                             lang={lang}
                             bgImage={effectiveBgImage}

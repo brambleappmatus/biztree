@@ -62,8 +62,11 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex bg-white dark:bg-gray-900">
             {/* Language Switcher - Top Right */}
-            <div className="absolute top-4 right-4 z-50">
+            <div className="absolute top-4 right-4 z-50 lg:hidden">
                 <LanguageSwitcher variant="compact" />
+            </div>
+            <div className="absolute top-4 right-4 z-50 hidden lg:block">
+                <LanguageSwitcher variant="white" />
             </div>
 
             {/* Left Side - Form */}

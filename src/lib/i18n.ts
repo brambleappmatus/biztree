@@ -1,11 +1,8 @@
-export type Language = "sk" | "cz" | "en" | "pl" | "hu";
+export type Language = "sk" | "en";
 
 export const LANGUAGES = [
     { code: "sk" as Language, name: "Slovenčina", flag: "🇸🇰" },
-    { code: "cz" as Language, name: "Čeština", flag: "🇨🇿" },
     { code: "en" as Language, name: "English", flag: "🇬🇧" },
-    { code: "pl" as Language, name: "Polski", flag: "🇵🇱" },
-    { code: "hu" as Language, name: "Magyar", flag: "🇭🇺" },
 ] as const;
 
 export const TRANSLATIONS = {
@@ -487,10 +484,6 @@ export const TRANSLATIONS = {
             unsavedChanges: "You have unsaved changes",
         },
     },
-    // Other languages use Slovak as template for now - can be refined later
-    get cz() { return this.sk; },
-    get pl() { return this.sk; },
-    get hu() { return this.sk; },
 } as const;
 
 export function getTranslation(lang: string) {
