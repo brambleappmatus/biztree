@@ -15,6 +15,83 @@ import HoursBlock from "@/components/blocks/hours-block";
 import SocialLinksBlock from "@/components/blocks/social-links-block";
 import LocationBlock from "@/components/blocks/location-block";
 
+const ONBOARDING_TRANSLATIONS = {
+    sk: {
+        title: "Vytvorte si profil",
+        subtitle: "Vyplňte základné informácie a vytvorte si profesionálny online profil",
+        basicInfo: "Základné informácie",
+        companyName: "Názov firmy / Meno *",
+        subdomain: "Subdoména (URL adresa) *",
+        checking: "Kontrolujem dostupnosť...",
+        available: "je dostupná",
+        subdomainTaken: "Táto subdoména už existuje",
+        subdomainWww: "Subdoména nemôže byť 'www'",
+        contactInfo: "Kontaktné informácie",
+        about: "O vás / firme",
+        phone: "Telefón",
+        email: "Email",
+        appearance: "Vzhľad",
+        colorTheme: "Farebná téma",
+        background: "Pozadie",
+        address: "Adresa",
+        addressOptional: "Adresa (voliteľné)",
+        addressPlaceholder: "napr. Hlavná 123, Bratislava",
+        socialMedia: "Sociálne siete",
+        socialMediaDesc: "Pridajte odkazy na vaše sociálne siete (voliteľné)",
+        openingHours: "Otváracie hodiny",
+        openingHoursDesc: "Nastavte otváracie hodiny (voliteľné)",
+        open: "Otvorené",
+        days: ["Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"],
+        submit: "Dokončiť a doplniť ďalšie",
+        submitDesc: "Ďalšie detaily môžete pridať v admin paneli",
+        livePreview: "Živý náhľad",
+        yourSubdomain: "vasa-subdomena.biztree.bio",
+        yourName: "Váš názov",
+        startFilling: "Začnite vypĺňovať formulár",
+        seePreview: "a uvidíte náhľad tu",
+        notLoggedIn: "Nie ste prihlásený",
+        fillRequired: "Vyplňte všetky povinné polia a vyberte dostupnú subdoménu",
+        errorCreating: "Nastala chyba pri vytváraní profilu"
+    },
+    en: {
+        title: "Create Your Profile",
+        subtitle: "Fill in basic information and create your professional online profile",
+        basicInfo: "Basic Information",
+        companyName: "Company / Name *",
+        subdomain: "Subdomain (URL address) *",
+        checking: "Checking availability...",
+        available: "is available",
+        subdomainTaken: "This subdomain is already taken",
+        subdomainWww: "Subdomain cannot be 'www'",
+        contactInfo: "Contact Information",
+        about: "About you / company",
+        phone: "Phone",
+        email: "Email",
+        appearance: "Appearance",
+        colorTheme: "Color Theme",
+        background: "Background",
+        address: "Address",
+        addressOptional: "Address (optional)",
+        addressPlaceholder: "e.g. Main St 123, Bratislava",
+        socialMedia: "Social Media",
+        socialMediaDesc: "Add links to your social media (optional)",
+        openingHours: "Opening Hours",
+        openingHoursDesc: "Set opening hours (optional)",
+        open: "Open",
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        submit: "Complete and Add More",
+        submitDesc: "You can add more details in the admin panel",
+        livePreview: "Live Preview",
+        yourSubdomain: "your-subdomain.biztree.bio",
+        yourName: "Your Name",
+        startFilling: "Start filling the form",
+        seePreview: "and you'll see a preview here",
+        notLoggedIn: "You are not logged in",
+        fillRequired: "Fill in all required fields and choose an available subdomain",
+        errorCreating: "An error occurred while creating the profile"
+    }
+};
+
 const THEMES = [
     { id: "blue", name: "Blue", color: "#007AFF" },
     { id: "emerald", name: "Emerald", color: "#34C759" },
@@ -104,14 +181,15 @@ export default function OnboardingForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const t = ONBOARDING_TRANSLATIONS[formData.language];
 
         if (!session?.user?.id) {
-            setError("Nie ste prihlásený");
+            setError(t.notLoggedIn);
             return;
         }
 
         if (!formData.subdomain || !formData.name || !subdomainAvailable) {
-            setError("Vyplňte všetky povinné polia a vyberte dostupnú subdoménu");
+            setError(t.fillRequired);
             return;
         }
 
@@ -143,13 +221,14 @@ export default function OnboardingForm() {
             }
         } catch (err) {
             console.error('Onboarding exception:', err);
-            setError("Nastala chyba pri vytváraní profilu");
+            setError(t.errorCreating);
             setLoading(false);
         }
     };
 
     const selectedTheme = THEMES.find(t => t.id === formData.theme);
     const selectedBg = BACKGROUNDS.find(b => b.id === formData.bgImage);
+    const t = ONBOARDING_TRANSLATIONS[formData.language];
 
     return (
         <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
@@ -164,10 +243,10 @@ export default function OnboardingForm() {
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BizTree</h1>
                         </div>
                         <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            Vytvorte si profil
+                            {t.title}
                         </h2>
                         <p className="text-gray-600 dark:text-gray-400">
-                            Vyplňte základné informácie a vytvorte si profesionálny online profil
+                            {t.subtitle}
                         </p>
                     </div>
 
@@ -181,7 +260,7 @@ export default function OnboardingForm() {
                         {/* Basic Info */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Základné informácie
+                                {t.basicInfo}
                             </h3>
 
                             {/* Language Selector */}
@@ -215,7 +294,7 @@ export default function OnboardingForm() {
                             </div>
 
                             <MuiInput
-                                label="Názov firmy / Meno *"
+                                label={t.companyName}
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 required
@@ -223,7 +302,7 @@ export default function OnboardingForm() {
 
                             <div>
                                 <MuiInput
-                                    label="Subdoména (URL adresa) *"
+                                    label={t.subdomain}
                                     value={formData.subdomain}
                                     onChange={(e) => handleSubdomainChange(e.target.value)}
                                     required
@@ -231,14 +310,14 @@ export default function OnboardingForm() {
                                 {formData.subdomain && (
                                     <div className="mt-2 text-sm">
                                         {subdomainChecking ? (
-                                            <span className="text-gray-500">Kontrolujem dostupnosť...</span>
+                                            <span className="text-gray-500">{t.checking}</span>
                                         ) : subdomainAvailable === true ? (
                                             <span className="text-green-600 dark:text-green-400">
-                                                ✓ {formData.subdomain}.biztree.bio je dostupná
+                                                ✓ {formData.subdomain}.biztree.bio {t.available}
                                             </span>
                                         ) : subdomainAvailable === false ? (
                                             <span className="text-red-600 dark:text-red-400">
-                                                {formData.subdomain === "www" ? "✗ Subdoména nemôže byť 'www'" : "✗ Táto subdoména už existuje"}
+                                                {formData.subdomain === "www" ? `✗ ${t.subdomainWww}` : `✗ ${t.subdomainTaken}`}
                                             </span>
                                         ) : null}
                                     </div>
@@ -249,11 +328,11 @@ export default function OnboardingForm() {
                         {/* Contact Info */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Kontaktné informácie
+                                {t.contactInfo}
                             </h3>
 
                             <MuiTextArea
-                                label="O vás / firme"
+                                label={t.about}
                                 value={formData.about}
                                 onChange={(e) => setFormData({ ...formData, about: e.target.value })}
                                 rows={3}
@@ -261,14 +340,14 @@ export default function OnboardingForm() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <MuiInput
-                                    label="Telefón"
+                                    label={t.phone}
                                     type="tel"
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 />
 
                                 <MuiInput
-                                    label="Email"
+                                    label={t.email}
                                     type="email"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -279,12 +358,12 @@ export default function OnboardingForm() {
                         {/* Appearance */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Vzhľad
+                                {t.appearance}
                             </h3>
 
                             {/* Theme Selection */}
                             <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Farebná téma</h4>
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t.colorTheme}</h4>
                                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                                     {THEMES.map((theme) => (
                                         <button
@@ -312,7 +391,7 @@ export default function OnboardingForm() {
 
                             {/* Background Selection */}
                             <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Pozadie</h4>
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t.background}</h4>
                                 <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
                                     {BACKGROUNDS.map((bg) => (
                                         <button
@@ -351,23 +430,23 @@ export default function OnboardingForm() {
                         {/* Address */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Adresa
+                                {t.address}
                             </h3>
                             <MuiInput
-                                label="Adresa (voliteľné)"
+                                label={t.addressOptional}
                                 value={formData.address}
                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                placeholder="napr. Hlavná 123, Bratislava"
+                                placeholder={t.addressPlaceholder}
                             />
                         </div>
 
                         {/* Social Media */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Sociálne siete
+                                {t.socialMedia}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Pridajte odkazy na vaše sociálne siete (voliteľné)
+                                {t.socialMediaDesc}
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <MuiInput
@@ -430,13 +509,13 @@ export default function OnboardingForm() {
                         {/* Opening Hours */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Otváracie hodiny
+                                {t.openingHours}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Nastavte otváracie hodiny (voliteľné)
+                                {t.openingHoursDesc}
                             </p>
                             <div className="space-y-3">
-                                {["Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota", "Nedeľa"].map((dayName, index) => {
+                                {t.days.map((dayName, index) => {
                                     const dayIndex = index === 6 ? 0 : index + 1; // Sunday is 0
                                     const dayData = formData.hours.find(h => h.day === dayIndex);
                                     if (!dayData) return null;
@@ -458,7 +537,7 @@ export default function OnboardingForm() {
                                                     }}
                                                     className="w-4 h-4 text-blue-600 rounded"
                                                 />
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">Otvorené</span>
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">{t.open}</span>
                                             </label>
                                             {dayData.isOpen && (
                                                 <>
@@ -504,10 +583,10 @@ export default function OnboardingForm() {
                                 startIcon={<Sparkles size={18} />}
                                 className="w-full"
                             >
-                                Dokončiť a doplniť ďalšie
+                                {t.submit}
                             </MuiButton>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
-                                Ďalšie detaily môžete pridať v admin paneli
+                                {t.submitDesc}
                             </p>
                         </div>
                     </form>
@@ -520,10 +599,10 @@ export default function OnboardingForm() {
                     <div className="mb-4">
                         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span>Živý náhľad</span>
+                            <span>{t.livePreview}</span>
                         </div>
                         <p className="text-xs text-gray-400 dark:text-gray-500">
-                            {formData.subdomain ? `${formData.subdomain}.biztree.bio` : "vasa-subdomena.biztree.bio"}
+                            {formData.subdomain ? `${formData.subdomain}.biztree.bio` : t.yourSubdomain}
                         </p>
                     </div>
 
@@ -551,7 +630,7 @@ export default function OnboardingForm() {
 
                                     {/* Name */}
                                     <h1 className="text-2xl font-bold text-white text-center">
-                                        {formData.name || "Váš názov"}
+                                        {formData.name || t.yourName}
                                     </h1>
 
                                     {/* About */}
@@ -657,8 +736,8 @@ export default function OnboardingForm() {
                                     {/* Empty state */}
                                     {!formData.name && !formData.about && (
                                         <div className="text-center text-white/40 text-sm mt-8">
-                                            <p>Začnite vyplňovať formulár</p>
-                                            <p>a uvidíte náhľad tu</p>
+                                            <p>{t.startFilling}</p>
+                                            <p>{t.seePreview}</p>
                                         </div>
                                     )}
                                 </div>
