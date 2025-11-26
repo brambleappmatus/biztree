@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
+import { useFeatures } from "@/contexts/features-context";
 
 interface LockedComponentWrapperProps {
     featureKey: string;
@@ -13,33 +14,13 @@ interface LockedComponentWrapperProps {
 export function LockedComponentWrapper({ featureKey, children }: LockedComponentWrapperProps) {
     const router = useRouter();
     const { showToast } = useToast();
-    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-    const [isHovered, setIsHovered] = useState(false);
+    const { hasAccess: checkAccess, isLoading } = useFeatures();
+    const hasAccess = checkAccess(featureKey);
 
-    // ... (useEffect remains the same)
-
-    useEffect(() => {
-        const checkAccess = async () => {
-            try {
-                const response = await fetch("/api/user/features");
-                if (response.ok) {
-                    const data = await response.json();
-                    const features = data.features || [];
-                    setHasAccess(features.includes(featureKey));
-                } else {
-                    setHasAccess(false);
-                }
-            } catch (error) {
-                console.error("Failed to check feature access:", error);
-                setHasAccess(false);
-            }
-        };
-
-        checkAccess();
-    }, [featureKey]);
+    // ... (useEffect removed as it's handled by context)
 
     // ... (loading state remains the same)
-    if (hasAccess === null) {
+    if (isLoading) {
         return (
             <div className="relative">
                 <div className="opacity-30 pointer-events-none">

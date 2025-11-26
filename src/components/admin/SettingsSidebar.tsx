@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFeatures } from "@/contexts/features-context";
 
 interface NavItem {
     id: string;
@@ -15,24 +16,9 @@ export default function SettingsSidebar() {
     const [navItems, setNavItems] = useState<NavItem[]>([]);
     const [activeSection, setActiveSection] = useState("");
     const [indicatorStyle, setIndicatorStyle] = useState({ top: 0, height: 0, opacity: 0 });
-    const [unlockedFeatures, setUnlockedFeatures] = useState<string[] | null>(null);
     const itemsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-    // Fetch user features
-    useEffect(() => {
-        const fetchFeatures = async () => {
-            try {
-                const response = await fetch("/api/user/features");
-                if (response.ok) {
-                    const data = await response.json();
-                    setUnlockedFeatures(data.features || []);
-                }
-            } catch (error) {
-                console.error("Failed to fetch features:", error);
-            }
-        };
-        fetchFeatures();
-    }, []);
+    const { hasAccess } = useFeatures();
 
     // Auto-detect sections from DOM
     useEffect(() => {
@@ -136,7 +122,7 @@ export default function SettingsSidebar() {
                 {navItems.map((item) => {
                     const IconComponent = (LucideIcons as any)[item.icon] || LucideIcons.Settings;
                     const isActive = activeSection === item.id;
-                    const isLocked = item.featureKey && unlockedFeatures && !unlockedFeatures.includes(item.featureKey);
+                    const isLocked = item.featureKey && !hasAccess(item.featureKey);
 
                     return (
                         <li key={item.id}>

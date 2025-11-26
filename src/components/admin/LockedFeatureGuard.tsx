@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Lock } from "lucide-react";
+import { useFeatures } from "@/contexts/features-context";
 
 interface LockedFeatureGuardProps {
     featureKey: string;
@@ -9,29 +10,12 @@ interface LockedFeatureGuardProps {
 }
 
 export function LockedFeatureGuard({ featureKey, children }: LockedFeatureGuardProps) {
-    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+    const { hasAccess: checkAccess, isLoading } = useFeatures();
+    const hasAccess = checkAccess(featureKey);
 
-    useEffect(() => {
-        const checkAccess = async () => {
-            try {
-                const response = await fetch("/api/user/features");
-                if (response.ok) {
-                    const data = await response.json();
-                    const features = data.features || [];
-                    setHasAccess(features.includes(featureKey));
-                } else {
-                    setHasAccess(false);
-                }
-            } catch (error) {
-                console.error("Failed to check feature access:", error);
-                setHasAccess(false);
-            }
-        };
+    // ... (useEffect removed as it's handled by context)
 
-        checkAccess();
-    }, [featureKey]);
-
-    if (hasAccess === null) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
