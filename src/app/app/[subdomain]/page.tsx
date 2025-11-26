@@ -68,9 +68,14 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
         };
     }
 
+    // Prioritize custom SEO settings if available
     const title = profile.seoTitle || `${profile.name} | BizTree`;
     const description = profile.seoDesc || profile.about || `Rezervujte si služby u ${profile.name} online.`;
-    const ogImage = profile.avatarUrl || profile.logo || 'https://biztree.bio/logo.svg';
+
+    // Generate dynamic OG image URL with profile details
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://biztree.bio';
+    const ogImageUrl = `${baseUrl}/api/og?name=${encodeURIComponent(profile.name)}&tag=${encodeURIComponent(subdomain)}&theme=${encodeURIComponent(profile.theme || 'blue')}${profile.avatarUrl ? `&image=${encodeURIComponent(profile.avatarUrl)}` : ''}`;
+
     const url = `https://${subdomain}.biztree.bio`;
 
     return {
@@ -88,7 +93,7 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
             siteName: 'BizTree',
             images: [
                 {
-                    url: ogImage,
+                    url: ogImageUrl,
                     width: 1200,
                     height: 630,
                     alt: profile.name,
@@ -101,7 +106,7 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
             card: 'summary_large_image',
             title,
             description,
-            images: [ogImage],
+            images: [ogImageUrl],
         },
         robots: {
             index: true,
