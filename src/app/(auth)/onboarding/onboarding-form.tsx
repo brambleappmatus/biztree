@@ -168,16 +168,29 @@ export default function OnboardingForm() {
 
         if (sanitized === "www") {
             setSubdomainAvailable(false);
+            setSubdomainChecking(false);
             return;
         }
 
-        if (sanitized.length >= 3) {
-            const timer = setTimeout(() => checkSubdomain(sanitized), 500);
-            return () => clearTimeout(timer);
-        } else {
+        if (sanitized.length < 3) {
             setSubdomainAvailable(null);
+            setSubdomainChecking(false);
         }
     };
+
+    // Debounced subdomain check
+    useEffect(() => {
+        if (!formData.subdomain || formData.subdomain.length < 3 || formData.subdomain === "www") {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            checkSubdomain(formData.subdomain);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [formData.subdomain]);
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
