@@ -106,13 +106,13 @@ export default function LandingContent({ showcases, serializedTiers }: LandingCo
                                     <div className="absolute -top-6 left-8 bg-white rounded-xl shadow-lg px-4 py-3 animate-float">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                            <span className="text-sm font-semibold text-gray-700">500+ {t.landing.activeCompanies}</span>
+                                            <span className="text-sm font-semibold text-gray-700">350+ {t.landing.activeCompanies}</span>
                                         </div>
                                     </div>
 
                                     <div className="absolute -bottom-6 right-8 bg-white rounded-xl shadow-lg px-4 py-3 animate-float" style={{ animationDelay: '1.5s' }}>
                                         <div className="text-sm">
-                                            <div className="font-bold text-blue-600 text-lg">10k+</div>
+                                            <div className="font-bold text-blue-600 text-lg">8k+</div>
                                             <div className="text-gray-600 text-xs">{t.landing.bookings}</div>
                                         </div>
                                     </div>
@@ -130,7 +130,7 @@ export default function LandingContent({ showcases, serializedTiers }: LandingCo
                         <ScrollAnimation animation="slide-up" delay={0}>
                             <div className="text-center group">
                                 <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent mb-2">
-                                    <AnimatedCounter end={500} suffix="+" />
+                                    <AnimatedCounter end={350} suffix="+" />
                                 </div>
                                 <div className="text-sm text-gray-600 font-medium">{t.landing.activeCompanies}</div>
                             </div>
@@ -139,7 +139,7 @@ export default function LandingContent({ showcases, serializedTiers }: LandingCo
                         <ScrollAnimation animation="slide-up" delay={100}>
                             <div className="text-center group">
                                 <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent mb-2">
-                                    <AnimatedCounter end={10} suffix="k+" />
+                                    <AnimatedCounter end={8} suffix="k+" />
                                 </div>
                                 <div className="text-sm text-gray-600 font-medium">{t.landing.bookings}</div>
                             </div>

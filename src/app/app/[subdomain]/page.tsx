@@ -83,6 +83,9 @@ export async function generateMetadata({ params }: { params: Promise<{ subdomain
         description,
         keywords: `${profile.name}, rezervácie, služby, online booking`,
         metadataBase: new URL(url),
+        icons: {
+            icon: `${baseUrl}/logo.svg`,
+        },
         alternates: {
             canonical: url,
         },
