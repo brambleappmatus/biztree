@@ -76,7 +76,7 @@ export default function RegisterPage() {
                             </div>
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            {t.auth.createYourAccount}
+                            {t.auth.createAccount}
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400">
                             {t.auth.startWithProfile}
