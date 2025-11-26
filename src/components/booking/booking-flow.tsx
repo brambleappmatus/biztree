@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
-import { sk, cs, enUS, pl, hu } from "date-fns/locale";
+import { sk, enUS } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Clock, User, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,10 +18,7 @@ import { getTranslation, Language } from "@/lib/i18n";
 
 const locales: Record<Language, any> = {
     sk: sk,
-    cz: cs,
     en: enUS,
-    pl: pl,
-    hu: hu,
 };
 
 interface BookingFlowProps {
