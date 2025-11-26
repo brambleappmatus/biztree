@@ -18,7 +18,16 @@ export default async function Icon() {
                     borderRadius: '6px',
                 }}
             >
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>B</div>
+                {/* BizTree logo - simplified tree icon */}
+                <svg width="24" height="24" viewBox="0 0 512 512" fill="none">
+                    <path d="M256 384V128" stroke="white" strokeWidth="48" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M256 320L160 224" stroke="white" strokeWidth="48" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M256 256L352 160" stroke="white" strokeWidth="48" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="160" cy="224" r="32" fill="white" />
+                    <circle cx="352" cy="160" r="32" fill="white" />
+                    <circle cx="256" cy="128" r="32" fill="white" />
+                    <circle cx="256" cy="384" r="32" fill="white" />
+                </svg>
             </div>
         ),
         {
