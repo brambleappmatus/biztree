@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MuiInput } from "@/components/ui/mui-input";
 import { MuiButton } from "@/components/ui/mui-button";
@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/language-context";
 import LanguageSwitcher from "@/components/language-switcher";
 import { resetPassword } from "../actions";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { t } = useLanguage();
@@ -201,5 +201,22 @@ export default function ResetPasswordPage() {
                 <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-indigo-500 rounded-full blur-3xl opacity-30"></div>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+                <div className="text-center">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <span className="text-white font-bold text-xl">B</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">Načítavam...</p>
+                </div>
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
     );
 }
