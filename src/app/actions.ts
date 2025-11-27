@@ -364,10 +364,47 @@ export async function deleteService(serviceId: string) {
 }
 
 export async function updateBookingStatus(bookingId: string, status: string) {
-    await prisma.booking.update({
+    const booking = await prisma.booking.update({
         where: { id: bookingId },
         data: { status },
+        include: {
+            service: true,
+            profile: true,
+        },
     });
+
+    // Send email notification to customer when status changes to CONFIRMED or CANCELLED
+    if ((status === "CONFIRMED" || status === "CANCELLED") && resend) {
+        try {
+            const formattedDate = format(booking.startTime, "d.M.yyyy");
+            const formattedTime = format(booking.startTime, "HH:mm");
+
+            const { BookingStatusUpdateEmail } = await import("@/components/emails/BookingStatusUpdateEmail");
+
+            await resend.emails.send({
+                from: 'BizTree <no-reply@biztree.bio>',
+                to: booking.customerEmail,
+                subject: status === "CONFIRMED"
+                    ? `✅ Rezervácia potvrdená - ${booking.service.name}`
+                    : `❌ Rezervácia zrušená - ${booking.service.name}`,
+                react: BookingStatusUpdateEmail({
+                    customerName: booking.customerName,
+                    businessName: booking.profile.name,
+                    serviceName: booking.service.name,
+                    date: formattedDate,
+                    time: formattedTime,
+                    status: status === "CONFIRMED" ? 'confirmed' : 'cancelled',
+                    location: booking.profile.address || undefined,
+                }) as React.ReactNode,
+            });
+
+            console.log(`✅ Status update email sent to ${booking.customerEmail} (${status})`);
+        } catch (emailError) {
+            console.error("❌ Failed to send status update email:", emailError);
+            // Don't fail the status update if email fails
+        }
+    }
+
     return { success: true };
 }
 
