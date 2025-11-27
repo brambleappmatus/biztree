@@ -114,7 +114,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const trialEnd = stripeSubscription.trial_end
         ? new Date(stripeSubscription.trial_end * 1000)
         : null;
-    const currentPeriodEnd = new Date((stripeSubscription as any).current_period_end * 1000);
+
+    // Handle trial subscriptions that may not have billing periods yet
+    const currentPeriodStart = (stripeSubscription as any).current_period_start
+        ? new Date((stripeSubscription as any).current_period_start * 1000)
+        : new Date(); // Fallback to now if not set
+
+    const currentPeriodEnd = (stripeSubscription as any).current_period_end
+        ? new Date((stripeSubscription as any).current_period_end * 1000)
+        : (trialEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)); // Fallback to trial end or 30 days from now
 
     // Create or update subscription record
     await prisma.subscription.upsert({
@@ -126,7 +134,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             stripeSubscriptionId: subscriptionId,
             stripePriceId: priceId,
             status: stripeSubscription.status.toUpperCase(),
-            currentPeriodStart: new Date((stripeSubscription as any).current_period_start * 1000),
+            currentPeriodStart,
             currentPeriodEnd,
         },
         update: {
