@@ -19,7 +19,11 @@ export async function getAvailability(serviceId: string, date: string) {
     if (!service) throw new Error("Service not found");
 
     const profile = service.profile;
-    const selectedDate = parseISO(date);
+
+    // Parse date manually to avoid timezone issues (treat as wall-clock time)
+    const [year, month, day] = date.split('-').map(Number);
+    // Create date at 00:00:00 system local time
+    const selectedDate = new Date(year, month - 1, day);
     const dayOfWeek = selectedDate.getDay(); // 0 = Sun
 
     // Find working hours for this day
@@ -56,8 +60,6 @@ export async function getAvailability(serviceId: string, date: string) {
     // Fetch Google Calendar busy slots
     let googleBusySlots: { start: Date; end: Date }[] = [];
     if (profile.googleAccessToken && profile.googleRefreshToken) {
-        console.log("🔍 Checking Google Calendar for busy slots...");
-        console.log("📅 Date range:", currentTime.toISOString(), "to", endTime.toISOString());
         try {
             const calendar = getGoogleCalendarClient(profile.googleAccessToken, profile.googleRefreshToken);
             const response = await calendar.freebusy.query({
@@ -69,22 +71,16 @@ export async function getAvailability(serviceId: string, date: string) {
             });
 
             const busy = response.data.calendars?.primary?.busy;
-            console.log("📊 Google Calendar response:", JSON.stringify(busy, null, 2));
             if (busy) {
                 googleBusySlots = busy.map((b) => ({
                     start: new Date(b.start!),
                     end: new Date(b.end!),
                 }));
-                console.log("🚫 Found busy slots:", googleBusySlots);
-            } else {
-                console.log("✅ No busy slots found");
             }
         } catch (error) {
             console.error("❌ Failed to fetch Google Calendar availability:", error);
             // Continue without Google Calendar slots if it fails
         }
-    } else {
-        console.log("⚠️ No Google Calendar tokens found");
     }
 
     while (currentTime < endTime) {
@@ -110,7 +106,11 @@ export async function getAvailability(serviceId: string, date: string) {
             );
         });
 
-        if (!isBooked && !isGoogleBusy) {
+        // Also check if slot is in the past (if date is today)
+        const now = new Date();
+        const isPast = currentTime < now;
+
+        if (!isBooked && !isGoogleBusy && !isPast) {
             slots.push(format(currentTime, "HH:mm"));
         }
 
