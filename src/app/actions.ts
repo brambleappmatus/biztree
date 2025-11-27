@@ -7,7 +7,7 @@ import { Resend } from "resend";
 import { BookingConfirmationEmail } from "@/components/emails/BookingConfirmationEmail";
 import { NewBookingNotificationEmail } from "@/components/emails/NewBookingNotificationEmail";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function getAvailability(serviceId: string, date: string) {
     // date is ISO string (YYYY-MM-DD)
@@ -216,38 +216,46 @@ export async function createBooking(data: {
         // Create Google Calendar link
         const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Rezervácia: ${service.name}`)}&dates=${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}&location=${encodeURIComponent(profile.address || '')}`;
 
-        await resend.emails.send({
-            from: 'BizTree <no-reply@biztree.bio>',
-            to: data.email,
-            subject: 'Potvrdenie rezervácie - BizTree',
-            react: BookingConfirmationEmail({
-                customerName: data.name,
-                serviceName: service.name,
-                date: formattedDate,
-                time: formattedTime,
-                location: profile.address || undefined,
-                googleCalendarLink
-            }) as React.ReactNode,
-        });
+        if (resend) {
+            await resend.emails.send({
+                from: 'BizTree <no-reply@biztree.bio>',
+                to: data.email,
+                subject: 'Potvrdenie rezervácie - BizTree',
+                react: BookingConfirmationEmail({
+                    customerName: data.name,
+                    serviceName: service.name,
+                    date: formattedDate,
+                    time: formattedTime,
+                    location: profile.address || undefined,
+                    googleCalendarLink
+                }) as React.ReactNode,
+            });
+        } else {
+            console.warn("⚠️ Resend API key missing, skipping confirmation email");
+        }
 
         // 2. Send notification to owner
         const ownerEmail = profile.email || profile.user?.email;
 
         if (ownerEmail) {
-            await resend.emails.send({
-                from: 'BizTree <no-reply@biztree.bio>',
-                to: ownerEmail,
-                subject: 'Nová rezervácia! - BizTree',
-                react: NewBookingNotificationEmail({
-                    ownerName: profile.name, // Or user name if available
-                    customerName: data.name,
-                    customerEmail: data.email,
-                    customerPhone: data.phone,
-                    serviceName: service.name,
-                    date: formattedDate,
-                    time: formattedTime,
-                }) as React.ReactNode,
-            });
+            if (resend) {
+                await resend.emails.send({
+                    from: 'BizTree <no-reply@biztree.bio>',
+                    to: ownerEmail,
+                    subject: 'Nová rezervácia! - BizTree',
+                    react: NewBookingNotificationEmail({
+                        ownerName: profile.name, // Or user name if available
+                        customerName: data.name,
+                        customerEmail: data.email,
+                        customerPhone: data.phone,
+                        serviceName: service.name,
+                        date: formattedDate,
+                        time: formattedTime,
+                    }) as React.ReactNode,
+                });
+            } else {
+                console.warn("⚠️ Resend API key missing, skipping owner notification email");
+            }
         } else {
             console.warn("⚠️ No owner email found for profile:", profile.id);
         }
