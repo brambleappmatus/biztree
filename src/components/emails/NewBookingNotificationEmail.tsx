@@ -152,14 +152,34 @@ export const NewBookingNotificationEmail: React.FC<NewBookingNotificationEmailPr
                     </div>
                 </div>
 
+                {/* Manage Booking Button */}
+                <div style={{ marginTop: '32px', textAlign: 'center' }}>
+                    <a
+                        href="https://biztree.bio/admin/bookings"
+                        style={{
+                            display: 'inline-block',
+                            backgroundColor: '#667eea',
+                            color: '#ffffff',
+                            padding: '14px 32px',
+                            textDecoration: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            fontSize: '16px',
+                            boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)'
+                        }}
+                    >
+                        📋 Spravovať rezerváciu
+                    </a>
+                </div>
+
                 <p style={{
                     fontSize: '14px',
                     lineHeight: '1.6',
                     color: '#64748b',
                     textAlign: 'center',
-                    margin: '24px 0 0 0'
+                    margin: '16px 0 0 0'
                 }}>
-                    Rezerváciu môžete spravovať vo svojom dashboarde.
+                    Kliknutím na tlačidlo sa dostanete priamo do vášho dashboardu.
                 </p>
             </div>
 
