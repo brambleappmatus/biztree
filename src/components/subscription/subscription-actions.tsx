@@ -19,6 +19,7 @@ interface SubscriptionActionsProps {
     mode?: 'subscription' | 'payment';
     buttonText?: string;
     redirectUrl?: string;
+    stripeSubscriptionId?: string | null;
 }
 
 export function SubscriptionActions({
@@ -31,7 +32,8 @@ export function SubscriptionActions({
     isFree = false,
     mode = 'subscription',
     buttonText = "Zmeniť",
-    redirectUrl
+    redirectUrl,
+    stripeSubscriptionId
 }: SubscriptionActionsProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -141,8 +143,32 @@ export function SubscriptionActions({
         );
     }
 
-    // Case 2: Downgrade to Paid Tier (Redirect to Portal)
+    // Case 2: Downgrade to Paid Tier
     if (isDowngrade && !isFree) {
+        // If it's a trial (no Stripe subscription), start a new checkout
+        if (!stripeSubscriptionId) {
+            return (
+                <div className="pt-4">
+                    <MuiButton
+                        onClick={() => handleCheckout()}
+                        disabled={loading}
+                        variant="outlined"
+                        className="w-full h-10 text-sm rounded-xl normal-case bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <div className="flex items-center justify-center gap-2 w-full">
+                                <ArrowDown className="w-4 h-4 opacity-60" />
+                                <span>Zmeniť</span>
+                            </div>
+                        )}
+                    </MuiButton>
+                </div>
+            );
+        }
+
+        // If it's a paid subscription, use Stripe portal
         return (
             <div className="pt-4">
                 <MuiButton

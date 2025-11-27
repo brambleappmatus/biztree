@@ -232,6 +232,7 @@ export function PricingSection({
                                             mode={billingCycle === 'lifetime' ? 'payment' : 'subscription'}
                                             buttonText={buttonText}
                                             redirectUrl={redirectUrl}
+                                            stripeSubscriptionId={activeSubscription?.stripeSubscriptionId}
                                         />
                                     ) : (
                                         <div className="w-full py-2.5 text-center text-gray-400 text-sm">
