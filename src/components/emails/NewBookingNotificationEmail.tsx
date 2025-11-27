@@ -64,7 +64,7 @@ export const NewBookingNotificationEmail: React.FC<NewBookingNotificationEmailPr
                     lineHeight: '1.6',
                     color: '#334155'
                 }}>
-                    Máte novú rezerváciu od zákazníka <strong>{customerName}</strong>.
+                    Máte novú rezerváciu od zákazníka <strong>{customerName}</strong>. Prosím, potvrďte alebo zrušte túto rezerváciu v administrácii.
                 </p>
 
                 {/* Booking Details Card */}

@@ -45,7 +45,7 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
                     fontWeight: '700',
                     letterSpacing: '-0.5px'
                 }}>
-                    ✓ Rezervácia potvrdená
+                    ✓ Rezervácia prijatá
                 </h1>
             </div>
 
@@ -64,7 +64,7 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
                     lineHeight: '1.6',
                     color: '#334155'
                 }}>
-                    Vaša rezervácia bola úspešne potvrdená. Tešíme sa na stretnutie s Vami!
+                    Vaša rezervácia bola úspešne prijatá a čaká na potvrdenie poskytovateľom.
                 </p>
 
                 {/* Booking Details Card */}

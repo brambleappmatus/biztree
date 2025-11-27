@@ -228,7 +228,7 @@ export async function createBooking(data: {
             const result = await resend.emails.send({
                 from: 'BizTree <no-reply@biztree.bio>',
                 to: data.email,
-                subject: 'Potvrdenie rezervácie - BizTree',
+                subject: 'Rezervácia prijatá - BizTree',
                 react: BookingConfirmationEmail({
                     customerName: data.name,
                     serviceName: service.name,
@@ -385,8 +385,8 @@ export async function updateBookingStatus(bookingId: string, status: string) {
                 from: 'BizTree <no-reply@biztree.bio>',
                 to: booking.customerEmail,
                 subject: status === "CONFIRMED"
-                    ? `✅ Rezervácia potvrdená - ${booking.service.name}`
-                    : `❌ Rezervácia zrušená - ${booking.service.name}`,
+                    ? `Rezervácia potvrdená - ${booking.service.name}`
+                    : `Rezervácia zrušená - ${booking.service.name}`,
                 react: BookingStatusUpdateEmail({
                     customerName: booking.customerName,
                     businessName: booking.profile.name,
