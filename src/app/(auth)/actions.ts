@@ -148,3 +148,98 @@ export async function createProfileFromOnboarding(userId: string, data: {
     return { success: true };
 }
 
+export async function requestPasswordReset(email: string) {
+    try {
+        // Find user by email
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: { accounts: true }
+        });
+
+        if (!user) {
+            // Don't reveal if user exists or not for security
+            return { success: true };
+        }
+
+        // Check if user has a password (not OAuth-only)
+        if (!user.password) {
+            // User only has OAuth accounts, can't reset password
+            return { success: true }; // Still return success to not reveal account info
+        }
+
+        // Generate reset token
+        const crypto = require('crypto');
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+        // Save token to database
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetToken,
+                resetTokenExpiry
+            }
+        });
+
+        // Send reset email
+        const { ForgotPasswordEmail } = await import("@/components/emails/ForgotPasswordEmail");
+        const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
+
+        try {
+            await resend.emails.send({
+                from: 'BizTree <no-reply@biztree.bio>',
+                to: email,
+                subject: 'Reset hesla - BizTree',
+                react: ForgotPasswordEmail({
+                    name: user.name || email.split('@')[0],
+                    resetLink
+                }) as React.ReactNode,
+            });
+        } catch (emailError) {
+            console.error("Failed to send password reset email:", emailError);
+            return { error: "Nepodarilo sa odoslať email. Skúste to prosím neskôr." };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error("Password reset request error:", error);
+        return { error: "Nastala chyba. Skúste to prosím neskôr." };
+    }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+    try {
+        // Find user with valid token
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetTokenExpiry: {
+                    gt: new Date() // Token must not be expired
+                }
+            }
+        });
+
+        if (!user) {
+            return { error: "Neplatný alebo expirovaný token. Požiadajte o nový reset hesla." };
+        }
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+
+        // Update password and clear reset token
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Password reset error:", error);
+        return { error: "Nastala chyba pri resetovaní hesla. Skúste to prosím neskôr." };
+    }
+}
+

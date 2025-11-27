@@ -2,9 +2,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { Check, Crown, Sparkles, CreditCard, Calendar, Shield, Star, Zap } from "lucide-react";
-import { SubscriptionActions } from "@/components/subscription/subscription-actions";
-import { PricingFeaturesList } from "@/components/subscription/pricing-features-list";
+import { Crown, Sparkles, Calendar, Shield, Star } from "lucide-react";
+import { PricingSection } from "@/components/subscription/pricing-section";
+import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
+import { SubscriptionSuccessHandler } from "@/components/subscription/subscription-success-handler";
 
 export default async function SubscriptionPage() {
     const session = await getServerSession(authOptions);
@@ -52,12 +53,6 @@ export default async function SubscriptionPage() {
     const expiresAt = profile.subscriptionExpiresAt;
     const activeSubscription = profile.subscriptions[0];
 
-    // Map tier names to Stripe price IDs
-    const tierPriceMap: Record<string, string> = {
-        'Business': process.env.STRIPE_BUSINESS_PRICE_ID || '',
-        'Pro': process.env.STRIPE_PRO_PRICE_ID || '',
-    };
-
     // Get all tiers with features
     const tiers = await prisma.tier.findMany({
         include: {
@@ -74,6 +69,46 @@ export default async function SubscriptionPage() {
     const allFeatures = await prisma.feature.findMany({
         orderBy: { name: 'asc' }
     });
+
+    // Define pricing structure
+    const priceIds = {
+        monthly: {
+            'Business': process.env.STRIPE_BUSINESS_PRICE_ID || '',
+            'Pro': process.env.STRIPE_PRO_PRICE_ID || '',
+        },
+        yearly: {
+            'Business': process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID || '',
+            'Pro': process.env.STRIPE_PRO_YEARLY_PRICE_ID || '',
+        },
+        lifetime: {
+            'Business': process.env.STRIPE_BUSINESS_LIFETIME_PRICE_ID || '',
+            'Pro': process.env.STRIPE_PRO_LIFETIME_PRICE_ID || '',
+        }
+    };
+
+    // Define prices
+    const monthlyPrices = {
+        'Free': 0,
+        'Business': 3.90,
+        'Pro': 8.90,
+    };
+
+    const prices = {
+        monthly: monthlyPrices,
+        yearly: {
+            'Free': 0,
+            'Business': 35.00,  // €35/year from Stripe
+            'Pro': 79.00,       // €79/year from Stripe
+        },
+        lifetime: {
+            'Free': 0,
+            'Business': parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69'),
+            'Pro': parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119'),
+        }
+    };
+
+    // Check if lifetime deals are enabled
+    const enableLifetime = process.env.ENABLE_LIFETIME_DEALS === 'true';
 
     return (
         <div className="max-w-7xl mx-auto space-y-12 pb-20">
@@ -151,104 +186,22 @@ export default async function SubscriptionPage() {
                 </div>
             </div>
 
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 pt-8">
-                {tiers.map((tier) => {
-                    const isCurrentTier = currentTier?.id === tier.id;
-                    const isPro = tier.name === 'Pro';
-                    const isBusiness = tier.name === 'Business';
+            {/* Pricing Section */}
+            <PricingSection
+                tiers={tiers}
+                currentTier={currentTier}
+                activeSubscription={activeSubscription}
+                allFeatures={allFeatures}
+                priceIds={priceIds}
+                prices={prices}
+                enableLifetime={enableLifetime}
+            />
 
-                    // Logic for downgrade detection
-                    // Assuming price is a good proxy for rank. Free (0) < Business (3.9) < Pro (8.9)
-                    // If current tier price > tier price, it's a downgrade option
-                    const currentPrice = currentTier?.price ? Number(currentTier.price) : 0;
-                    const tierPrice = tier.price ? Number(tier.price) : 0;
-                    const isDowngrade = currentPrice > tierPrice;
-                    const isFree = tier.name === 'Free';
+            {/* Cancel Subscription/Trial Button */}
+            <CancelSubscriptionButton subscriptionStatus={subscriptionStatus} />
 
-                    return (
-                        <div
-                            key={tier.id}
-                            className={`relative flex flex-col rounded-2xl transition-all duration-300 ${isBusiness
-                                ? 'bg-white dark:bg-gray-800 ring-2 ring-blue-600 shadow-2xl scale-105 z-10'
-                                : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 shadow-xl'
-                                }`}
-                        >
-                            {isBusiness && (
-                                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit">
-                                    <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                                        <Star className="w-3 h-3 fill-current" />
-                                        Najpopulárnejšie
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="p-5 md:p-6 flex-1">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h3 className={`text-xl font-bold ${isBusiness ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                                        {tier.name}
-                                    </h3>
-                                    {isPro && <Crown className="w-5 h-5 text-yellow-500" />}
-                                    {isBusiness && <Sparkles className="w-5 h-5 text-blue-400" />}
-                                </div>
-
-                                <div className="mb-4">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-bold text-gray-900 dark:text-white">€{tier.price?.toString()}</span>
-                                        <span className="text-sm text-gray-500">/mesiac</span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {tier.name === 'Free' && "Ideálne pre začiatok"}
-                                        {tier.name === 'Business' && "Pre rastúce firmy"}
-                                        {tier.name === 'Pro' && "Pre profesionálov"}
-                                    </p>
-                                </div>
-
-                                <div className="mb-4">
-                                    <PricingFeaturesList
-                                        allFeatures={allFeatures}
-                                        tierFeatures={tier.features}
-                                        tierName={tier.name}
-                                        allTiers={tiers}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="p-5 md:p-6 pt-0 mt-auto">
-                                {isCurrentTier ? (
-                                    // Current Tier
-                                    activeSubscription && tierPriceMap[tier.name] ? (
-                                        <SubscriptionActions
-                                            tierId={tier.id}
-                                            tierName={tier.name}
-                                            priceId={tierPriceMap[tier.name]}
-                                            hasActiveSubscription={true}
-                                            cancelAtPeriodEnd={activeSubscription.cancelAtPeriodEnd || false}
-                                        />
-                                    ) : (
-                                        <div className="w-full py-2.5 text-center text-gray-500 text-sm font-medium bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            Váš aktuálny plán
-                                        </div>
-                                    )
-                                ) : (
-                                    // Not Current Tier (Upgrade or Downgrade)
-                                    (tierPriceMap[tier.name] || isFree) && (
-                                        <SubscriptionActions
-                                            tierId={tier.id}
-                                            tierName={tier.name}
-                                            priceId={tierPriceMap[tier.name] || ''}
-                                            hasActiveSubscription={false} // Always false for non-current tiers in this context (we want upgrade/downgrade buttons)
-                                            cancelAtPeriodEnd={false}
-                                            isDowngrade={isDowngrade}
-                                            isFree={isFree}
-                                        />
-                                    )
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            {/* Success/Cancel Handler */}
+            <SubscriptionSuccessHandler />
         </div>
     );
 }

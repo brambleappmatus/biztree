@@ -1,6 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import prisma from "@/lib/prisma";
+import { getProfile } from "@/lib/data-profile";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -53,27 +53,7 @@ export default async function ProfileLayout({
 }) {
     const { subdomain } = await params;
 
-    const profile = await prisma.profile.findUnique({
-        where: { subdomain },
-        select: {
-            theme: true,
-            bgImage: true,
-            bgBlur: true,
-            bgNoise: true,
-            name: true,
-            avatarUrl: true,
-            about: true,
-            tier: {
-                include: {
-                    features: {
-                        include: {
-                            feature: true
-                        }
-                    }
-                }
-            }
-        },
-    });
+    const profile = await getProfile(subdomain);
 
     if (!profile) {
         return notFound();

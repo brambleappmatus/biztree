@@ -17,40 +17,7 @@ import { getTextColorClass } from "@/lib/background-utils";
 import { Language } from "@/lib/i18n";
 import { Metadata } from "next";
 
-import { cache } from "react";
-
-// Cached data fetcher to deduplicate requests
-const getProfile = cache(async (subdomain: string) => {
-    return await prisma.profile.findUnique({
-        where: { subdomain },
-        include: {
-            services: true,
-            socialLinks: true,
-            hours: true,
-            links: true,
-            albums: {
-                include: {
-                    images: {
-                        orderBy: { order: 'asc' }
-                    }
-                },
-                orderBy: { order: 'asc' }
-            },
-            documents: {
-                orderBy: { order: 'asc' }
-            },
-            tier: {
-                include: {
-                    features: {
-                        include: {
-                            feature: true
-                        }
-                    }
-                }
-            }
-        },
-    }) as ProfileCore | null;
-});
+import { getProfile } from "@/lib/data-profile";
 
 // Helper to check if profile has access to a feature
 function hasFeatureAccess(profile: any, featureKey: string): boolean {

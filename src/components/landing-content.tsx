@@ -8,13 +8,26 @@ import ScrollAnimation from "@/components/scroll-animation";
 import AnimatedCounter from "@/components/animated-counter";
 import MagneticButton from "@/components/magnetic-button";
 import { useLanguage } from "@/contexts/language-context";
+import { PricingSection } from "@/components/subscription/pricing-section";
 
 interface LandingContentProps {
     showcases: any[];
     serializedTiers: any[];
+    allFeatures: any[];
+    priceIds: {
+        monthly: Record<string, string>;
+        yearly: Record<string, string>;
+        lifetime: Record<string, string>;
+    };
+    prices: {
+        monthly: Record<string, number>;
+        yearly: Record<string, number>;
+        lifetime: Record<string, number>;
+    };
+    enableLifetime: boolean;
 }
 
-export default function LandingContent({ showcases, serializedTiers }: LandingContentProps) {
+export default function LandingContent({ showcases, serializedTiers, allFeatures, priceIds, prices, enableLifetime }: LandingContentProps) {
     const { t } = useLanguage();
 
     return (
@@ -257,64 +270,17 @@ export default function LandingContent({ showcases, serializedTiers }: LandingCo
                         </div>
                     </ScrollAnimation>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                        {serializedTiers.map((tier, index) => {
-                            const isBusiness = tier.name === 'Business';
-
-                            return (
-                                <ScrollAnimation key={tier.id} animation="slide-up" delay={index * 100}>
-                                    <div
-                                        className={`relative rounded-2xl p-8 transition-all duration-300 h-full flex flex-col ${isBusiness
-                                            ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-2xl scale-105 border-4 border-blue-500 hover:scale-110'
-                                            : 'bg-white border-2 border-gray-200 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1'
-                                            }`}
-                                    >
-                                        {isBusiness && (
-                                            <div className="absolute -top-4 left-0 right-0 mx-auto w-fit">
-                                                <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 animate-pulse">
-                                                    <Sparkles className="w-3 h-3" />
-                                                    {t.landing.mostPopular}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        <div className="mb-6">
-                                            <h3 className={`text-2xl font-bold mb-2 ${isBusiness ? 'text-white' : 'text-gray-900'}`}>
-                                                {tier.name}
-                                            </h3>
-                                            <div className="flex items-baseline gap-2">
-                                                <span className={`text-5xl font-bold ${isBusiness ? 'text-white' : 'text-gray-900'}`}>
-                                                    €{tier.price?.toString() || '0'}
-                                                </span>
-                                                <span className={isBusiness ? 'text-blue-100' : 'text-gray-500'}>{t.landing.perMonth}</span>
-                                            </div>
-                                        </div>
-
-                                        <ul className="space-y-3 mb-8 flex-grow">
-                                            {tier.features.slice(0, 6).map((tf: any) => (
-                                                <li key={tf.feature.id} className="flex items-start gap-3">
-                                                    <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isBusiness ? 'text-blue-200' : 'text-green-600'}`} />
-                                                    <span className={`text-sm ${isBusiness ? 'text-blue-50' : 'text-gray-700'}`}>
-                                                        {tf.feature.name}
-                                                    </span>
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        <Link
-                                            href="/register"
-                                            className={`block w-full text-center py-3 px-6 rounded-xl font-semibold transition-all ${isBusiness
-                                                ? 'bg-white text-blue-600 hover:bg-blue-50 hover:scale-105'
-                                                : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105'
-                                                }`}
-                                        >
-                                            {t.landing.startNow}
-                                        </Link>
-                                    </div>
-                                </ScrollAnimation>
-                            );
-                        })}
-                    </div>
+                    <PricingSection
+                        tiers={serializedTiers}
+                        currentTier={null}
+                        activeSubscription={null}
+                        allFeatures={allFeatures}
+                        priceIds={priceIds}
+                        prices={prices}
+                        enableLifetime={enableLifetime}
+                        buttonText="Začať"
+                        redirectUrl="/admin/subscription"
+                    />
                 </div>
             </section>
 

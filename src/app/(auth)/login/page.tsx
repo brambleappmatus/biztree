@@ -150,9 +150,9 @@ export default function LoginPage() {
 
                         <div className="flex items-center justify-between">
                             <div className="text-sm">
-                                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                                <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
                                     {t.auth.forgotPassword}
-                                </a>
+                                </Link>
                             </div>
                         </div>
 

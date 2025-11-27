@@ -2,6 +2,7 @@ import React from "react";
 import prisma from "@/lib/prisma";
 import LandingNav from "@/components/landing-nav";
 import LandingContent from "@/components/landing-content";
+import LandingFooter from "@/components/landing-footer";
 
 export default async function LandingPage() {
   // Fetch active showcases from database with layers
@@ -27,11 +28,54 @@ export default async function LandingPage() {
     orderBy: { price: 'asc' }
   });
 
+  // Get all features for comparison
+  const allFeatures = await prisma.feature.findMany({
+    orderBy: { name: 'asc' }
+  });
+
   // Convert Decimal to number for client components
   const serializedTiers = tiers.map(tier => ({
     ...tier,
     price: tier.price ? Number(tier.price) : 0
   }));
+
+  // Define pricing structure for PricingSection
+  const priceIds = {
+    monthly: {
+      'Business': process.env.STRIPE_BUSINESS_PRICE_ID || '',
+      'Pro': process.env.STRIPE_PRO_PRICE_ID || '',
+    },
+    yearly: {
+      'Business': process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID || '',
+      'Pro': process.env.STRIPE_PRO_YEARLY_PRICE_ID || '',
+    },
+    lifetime: {
+      'Business': process.env.STRIPE_BUSINESS_LIFETIME_PRICE_ID || '',
+      'Pro': process.env.STRIPE_PRO_LIFETIME_PRICE_ID || '',
+    }
+  };
+
+  const monthlyPrices = {
+    'Free': 0,
+    'Business': 3.90,
+    'Pro': 8.90,
+  };
+
+  const prices = {
+    monthly: monthlyPrices,
+    yearly: {
+      'Free': 0,
+      'Business': 35.00,
+      'Pro': 79.00,
+    },
+    lifetime: {
+      'Free': 0,
+      'Business': parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69'),
+      'Pro': parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119'),
+    }
+  };
+
+  const enableLifetime = process.env.ENABLE_LIFETIME_DEALS === 'true';
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 overflow-hidden">
@@ -46,12 +90,17 @@ export default async function LandingPage() {
       </div>
 
       {/* Client-side content with language context */}
-      <LandingContent showcases={showcases} serializedTiers={serializedTiers} />
+      <LandingContent
+        showcases={showcases}
+        serializedTiers={serializedTiers}
+        allFeatures={allFeatures}
+        priceIds={priceIds}
+        prices={prices}
+        enableLifetime={enableLifetime}
+      />
 
       {/* Footer */}
-      <footer className="py-12 border-t border-gray-100 text-center text-gray-400 text-sm bg-white">
-        <p>&copy; 2024 BizTree. All rights reserved.</p>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

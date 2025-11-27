@@ -127,6 +127,28 @@ export const authOptions: NextAuthOptions = {
     events: {
         async createUser({ user }) {
             console.log("👤 User Created:", user);
+
+            // Send welcome email for new users (including OAuth users)
+            try {
+                const { Resend } = await import("resend");
+                const { WelcomeEmail } = await import("@/components/emails/WelcomeEmail");
+
+                const resend = new Resend(process.env.RESEND_API_KEY);
+
+                await resend.emails.send({
+                    from: 'BizTree <no-reply@biztree.bio>',
+                    to: user.email!,
+                    subject: 'Vitajte v BizTree!',
+                    react: WelcomeEmail({
+                        name: user.name || user.email!.split('@')[0]
+                    }) as React.ReactNode,
+                });
+
+                console.log("✅ Welcome email sent to:", user.email);
+            } catch (emailError) {
+                console.error("❌ Failed to send welcome email:", emailError);
+                // Don't fail user creation if email fails
+            }
         },
         async linkAccount({ user, account }) {
             console.log("🔗 Account Linked:", { userId: user.id, provider: account.provider });

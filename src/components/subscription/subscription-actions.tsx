@@ -16,6 +16,9 @@ interface SubscriptionActionsProps {
     cancelAtPeriodEnd: boolean;
     isDowngrade?: boolean;
     isFree?: boolean;
+    mode?: 'subscription' | 'payment';
+    buttonText?: string;
+    redirectUrl?: string;
 }
 
 export function SubscriptionActions({
@@ -25,7 +28,10 @@ export function SubscriptionActions({
     hasActiveSubscription,
     cancelAtPeriodEnd,
     isDowngrade = false,
-    isFree = false
+    isFree = false,
+    mode = 'subscription',
+    buttonText = "Zmeniť",
+    redirectUrl
 }: SubscriptionActionsProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -34,9 +40,14 @@ export function SubscriptionActions({
     const [showPromoModal, setShowPromoModal] = useState(false);
 
     const handleCheckout = async (code?: string) => {
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return;
+        }
+
         setLoading(true);
         try {
-            const url = await createCheckoutSession(priceId, code || promoCode || undefined);
+            const url = await createCheckoutSession(priceId, code || promoCode || undefined, mode);
             if (url) {
                 window.location.href = url;
             } else {
@@ -216,30 +227,32 @@ export function SubscriptionActions({
     // Case 4: Upgrade / New Subscription
     return (
         <div className="space-y-4 pt-4">
-            {/* Promo Code Trigger */}
-            {promoCode ? (
-                <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-900/30">
-                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
-                        <Tag className="w-4 h-4" />
-                        <span className="font-medium">{promoCode}</span>
-                        <span className="text-xs opacity-75">(Aplikovaný)</span>
+            {/* Promo Code Trigger - Hide if redirectUrl is present (landing page) */}
+            {!redirectUrl && (
+                promoCode ? (
+                    <div className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-900/30">
+                        <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                            <Tag className="w-4 h-4" />
+                            <span className="font-medium">{promoCode}</span>
+                            <span className="text-xs opacity-75">(Aplikovaný)</span>
+                        </div>
+                        <button
+                            onClick={() => setPromoCode("")}
+                            className="text-xs text-green-600 hover:text-green-800 dark:hover:text-green-300 px-2 py-1"
+                        >
+                            Zmeniť
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setPromoCode("")}
-                        className="text-xs text-green-600 hover:text-green-800 dark:hover:text-green-300 px-2 py-1"
-                    >
-                        Zmeniť
-                    </button>
-                </div>
-            ) : (
-                <div className="flex justify-center">
-                    <button
-                        onClick={() => setShowPromoModal(true)}
-                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline decoration-dotted underline-offset-4"
-                    >
-                        Máte promo kód?
-                    </button>
-                </div>
+                ) : (
+                    <div className="flex justify-center">
+                        <button
+                            onClick={() => setShowPromoModal(true)}
+                            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline decoration-dotted underline-offset-4"
+                        >
+                            Máte promo kód?
+                        </button>
+                    </div>
+                )
             )}
 
             {/* Main Action Button */}
@@ -253,19 +266,21 @@ export function SubscriptionActions({
                         <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                         <div className="flex items-center justify-center gap-2 w-full">
-                            <span>Zmeniť</span>
+                            <span>{buttonText}</span>
                             <ArrowRight className="w-4 h-4 opacity-90" />
                         </div>
                     )}
                 </MuiButton>
 
-                {/* Trial Badge - moved inside button container */}
-                <div className="flex justify-center">
-                    <span className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-xs">
-                        <Check className="w-3 h-3" />
-                        7 dní zadarmo
-                    </span>
-                </div>
+                {/* Trial Badge - only show for subscriptions, not lifetime */}
+                {mode === 'subscription' && (
+                    <div className="flex justify-center">
+                        <span className="inline-flex items-center gap-1.5 text-blue-600 dark:text-blue-400 text-xs">
+                            <Check className="w-3 h-3" />
+                            7 dní zadarmo
+                        </span>
+                    </div>
+                )}
             </div>
 
             <PromoCodeModal

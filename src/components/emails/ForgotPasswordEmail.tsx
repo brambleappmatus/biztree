@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-interface WelcomeEmailProps {
+interface ForgotPasswordEmailProps {
     name: string;
+    resetLink: string;
 }
 
-export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name }) => (
+export const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({ name, resetLink }) => (
     <div style={{
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         backgroundColor: '#f8fafc',
@@ -31,7 +32,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name }) => (
                     fontWeight: '700',
                     letterSpacing: '-0.5px'
                 }}>
-                    🎉 Vitajte v BizTree!
+                    🔐 Reset hesla
                 </h1>
             </div>
 
@@ -50,49 +51,31 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name }) => (
                     lineHeight: '1.6',
                     color: '#334155'
                 }}>
-                    Sme radi, že ste sa pridali k BizTree! Váš účet bol úspešne vytvorený a môžete začať budovať svoju online prítomnosť.
+                    Dostali sme požiadavku na reset hesla pre váš BizTree účet. Ak ste túto požiadavku nevykonali, môžete tento email ignorovať.
                 </p>
 
-                {/* Features Card */}
+                {/* Info Card */}
                 <div style={{
-                    backgroundColor: '#f1f5f9',
+                    backgroundColor: '#fef3c7',
                     borderRadius: '12px',
-                    padding: '24px',
+                    padding: '20px',
                     margin: '24px 0',
-                    border: '1px solid #e2e8f0'
+                    border: '1px solid #fbbf24'
                 }}>
-                    <h2 style={{
-                        margin: '0 0 16px 0',
-                        fontSize: '18px',
-                        fontWeight: '600',
-                        color: '#1e293b'
+                    <p style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        color: '#92400e',
+                        lineHeight: '1.6'
                     }}>
-                        ✨ Čo môžete robiť s BizTree?
-                    </h2>
-
-                    <div style={{ marginBottom: '12px' }}>
-                        <div style={{ color: '#1e293b', fontSize: '15px', marginBottom: '8px' }}>
-                            🌐 <strong>Vytvorte si vlastný profil</strong> – Vaša personalizovaná stránka
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '12px' }}>
-                        <div style={{ color: '#1e293b', fontSize: '15px', marginBottom: '8px' }}>
-                            📅 <strong>Prijímajte rezervácie</strong> – Jednoduché online objednávanie
-                        </div>
-                    </div>
-
-                    <div>
-                        <div style={{ color: '#1e293b', fontSize: '15px' }}>
-                            💼 <strong>Spravujte svoje služby</strong> – Všetko na jednom mieste
-                        </div>
-                    </div>
+                        ⚠️ <strong>Dôležité:</strong> Tento odkaz je platný len 1 hodinu. Po uplynutí času budete musieť požiadať o nový reset hesla.
+                    </p>
                 </div>
 
-                {/* Get Started Button */}
+                {/* Reset Button */}
                 <div style={{ marginTop: '32px', textAlign: 'center' }}>
                     <a
-                        href="https://biztree.bio/admin"
+                        href={resetLink}
                         style={{
                             display: 'inline-block',
                             backgroundColor: '#667eea',
@@ -105,7 +88,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name }) => (
                             boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)'
                         }}
                     >
-                        🚀 Začať teraz
+                        🔑 Resetovať heslo
                     </a>
                 </div>
 
@@ -116,7 +99,43 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({ name }) => (
                     textAlign: 'center',
                     margin: '16px 0 0 0'
                 }}>
-                    Kliknutím na tlačidlo sa dostanete priamo do vášho dashboardu.
+                    Kliknutím na tlačidlo sa dostanete na stránku pre nastavenie nového hesla.
+                </p>
+
+                {/* Alternative Link */}
+                <div style={{
+                    backgroundColor: '#f1f5f9',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    margin: '24px 0',
+                    border: '1px solid #e2e8f0'
+                }}>
+                    <p style={{
+                        margin: '0 0 8px 0',
+                        fontSize: '13px',
+                        color: '#64748b',
+                        fontWeight: '600'
+                    }}>
+                        Ak tlačidlo nefunguje, skopírujte tento odkaz:
+                    </p>
+                    <p style={{
+                        margin: 0,
+                        fontSize: '12px',
+                        color: '#667eea',
+                        wordBreak: 'break-all',
+                        fontFamily: 'monospace'
+                    }}>
+                        {resetLink}
+                    </p>
+                </div>
+
+                <p style={{
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    color: '#64748b',
+                    margin: '24px 0 0 0'
+                }}>
+                    Ak ste nepožiadali o reset hesla, váš účet je stále v bezpečí. Môžete tento email ignorovať.
                 </p>
             </div>
 

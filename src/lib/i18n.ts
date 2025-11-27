@@ -256,6 +256,16 @@ export const TRANSLATIONS = {
             confirmDelete: "Naozaj chcete vymazať?",
             unsavedChanges: "Máte neuložené zmeny",
         },
+        footer: {
+            legal: "Právne informácie",
+            terms: "Obchodné podmienky",
+            privacy: "Ochrana súkromia",
+            cookies: "Cookies",
+            contact: "Kontakt",
+            support: "Podpora",
+            rights: "Všetky práva vyhradené.",
+            description: "Profesionálne riešenie pre správu vašich online rezervácií a prezentáciu vášho podnikania.",
+        },
     },
     en: {
         common: {
@@ -506,6 +516,16 @@ export const TRANSLATIONS = {
             updateError: "Error updating",
             confirmDelete: "Are you sure you want to delete?",
             unsavedChanges: "You have unsaved changes",
+        },
+        footer: {
+            legal: "Legal",
+            terms: "Terms of Service",
+            privacy: "Privacy Policy",
+            cookies: "Cookies",
+            contact: "Contact",
+            support: "Support",
+            rights: "All rights reserved.",
+            description: "Professional solution for managing your online bookings and presenting your business.",
         },
     },
 } as const;

@@ -88,7 +88,7 @@ export default function SuperAdminDashboard() {
 
             <div className="mt-8 bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Quick Actions</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <a
                         href="/superadmin/companies"
                         className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-colors"
@@ -102,6 +102,13 @@ export default function SuperAdminDashboard() {
                     >
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Manage Users</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">View, assign, and delete users</p>
+                    </a>
+                    <a
+                        href="/superadmin/settings"
+                        className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-500 dark:hover:border-purple-400 transition-colors"
+                    >
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Settings</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Configure lifetime deals and more</p>
                     </a>
                 </div>
             </div>

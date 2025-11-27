@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { ProfileCore } from "@/types";
-import BookingFlow from "../booking/booking-flow";
+// import BookingFlow from "../booking/booking-flow"; // Removed static import
+const BookingFlow = dynamic(() => import("../booking/booking-flow"), { ssr: false });
 import { getTranslation, Language } from "@/lib/i18n";
 import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
 

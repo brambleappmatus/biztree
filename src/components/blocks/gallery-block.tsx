@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { GalleryAlbum, GalleryImage } from "@prisma/client";
 import { Folder, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import GalleryModal from "@/components/profile/gallery-modal";
+// import GalleryModal from "@/components/profile/gallery-modal"; // Removed static import
+const GalleryModal = dynamic(() => import("@/components/profile/gallery-modal"), { ssr: false });
 
 interface GalleryBlockProps {
     albums: (GalleryAlbum & { images: GalleryImage[] })[];
