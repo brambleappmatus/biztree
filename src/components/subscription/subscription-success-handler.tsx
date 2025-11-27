@@ -15,6 +15,12 @@ export function SubscriptionSuccessHandler() {
         const sessionId = searchParams.get('session_id');
         const canceled = searchParams.get('canceled');
 
+        // If no params, hide the modal
+        if (!success && !sessionId && !canceled) {
+            setStatus('checking');
+            return;
+        }
+
         if (canceled === 'true') {
             setStatus('error');
             setMessage('Platba bola zrušená');
