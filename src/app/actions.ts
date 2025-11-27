@@ -177,6 +177,8 @@ export async function createBooking(data: {
         },
     });
 
+    console.log("✅ Booking created in DB:", booking.id);
+
     // Add to Google Calendar
     const profile = service.profile;
     console.log("📝 Attempting to add booking to Google Calendar...");
@@ -208,6 +210,8 @@ export async function createBooking(data: {
     }
 
     // Send emails
+    console.log("📧 Starting email sending process...");
+    console.log("📧 Resend client initialized?", !!resend);
     try {
         // 1. Send confirmation to customer
         const formattedDate = format(startTime, "d.M.yyyy");
@@ -216,8 +220,12 @@ export async function createBooking(data: {
         // Create Google Calendar link
         const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Rezervácia: ${service.name}`)}&dates=${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}&location=${encodeURIComponent(profile.address || '')}`;
 
+        // Create Apple Calendar (.ics) link
+        const appleCalendarLink = `data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ADTEND:${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ASUMMARY:${encodeURIComponent(`Rezervácia: ${service.name}`)}%0ADESCRIPTION:${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}%0ALOCATION:${encodeURIComponent(profile.address || '')}%0AEND:VEVENT%0AEND:VCALENDAR`;
+
         if (resend) {
-            await resend.emails.send({
+            console.log(`📧 Sending confirmation email to ${data.email}...`);
+            const result = await resend.emails.send({
                 from: 'BizTree <no-reply@biztree.bio>',
                 to: data.email,
                 subject: 'Potvrdenie rezervácie - BizTree',
@@ -227,19 +235,23 @@ export async function createBooking(data: {
                     date: formattedDate,
                     time: formattedTime,
                     location: profile.address || undefined,
-                    googleCalendarLink
+                    googleCalendarLink,
+                    appleCalendarLink
                 }) as React.ReactNode,
             });
+            console.log("✅ Confirmation email sent:", result.data?.id || result.error);
         } else {
             console.warn("⚠️ Resend API key missing, skipping confirmation email");
         }
 
-        // 2. Send notification to owner
-        const ownerEmail = profile.email || profile.user?.email;
+        // 2. Send notification to owner (prioritize login email over business email)
+        const ownerEmail = profile.user?.email || profile.email;
+        console.log(`📧 Owner email: ${ownerEmail}`);
 
         if (ownerEmail) {
             if (resend) {
-                await resend.emails.send({
+                console.log(`📧 Sending notification email to owner ${ownerEmail}...`);
+                const result = await resend.emails.send({
                     from: 'BizTree <no-reply@biztree.bio>',
                     to: ownerEmail,
                     subject: 'Nová rezervácia! - BizTree',
@@ -253,6 +265,7 @@ export async function createBooking(data: {
                         time: formattedTime,
                     }) as React.ReactNode,
                 });
+                console.log("✅ Owner notification email sent:", result.data?.id || result.error);
             } else {
                 console.warn("⚠️ Resend API key missing, skipping owner notification email");
             }
