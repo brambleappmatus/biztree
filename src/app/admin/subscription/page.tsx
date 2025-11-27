@@ -34,7 +34,7 @@ export default async function SubscriptionPage() {
                     },
                     subscriptions: {
                         where: {
-                            status: { in: ['ACTIVE', 'TRIAL', 'PAST_DUE'] }
+                            status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
                         },
                         take: 1
                     }
@@ -151,7 +151,7 @@ export default async function SubscriptionPage() {
                                     Aktívne predplatné
                                 </span>
                             )}
-                            {subscriptionStatus === "TRIAL" && (
+                            {(subscriptionStatus === "TRIAL" || subscriptionStatus === "TRIALING") && (
                                 <span className="px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-sm font-medium flex items-center gap-2">
                                     <Star className="w-4 h-4" />
                                     Skúšobná doba

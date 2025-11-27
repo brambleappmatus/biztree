@@ -176,7 +176,7 @@ export async function cancelSubscription() {
                     include: {
                         subscriptions: {
                             where: {
-                                status: { in: ['ACTIVE', 'TRIAL'] }
+                                status: { in: ['ACTIVE', 'TRIAL', 'TRIALING'] }
                             },
                             take: 1
                         },
@@ -330,7 +330,7 @@ export async function getSubscriptionDetails() {
                 include: {
                     subscriptions: {
                         where: {
-                            status: { in: ['ACTIVE', 'TRIAL', 'PAST_DUE'] }
+                            status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
                         },
                         take: 1
                     }
