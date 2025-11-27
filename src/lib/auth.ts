@@ -66,12 +66,45 @@ export const authOptions: NextAuthOptions = {
     },
     callbacks: {
         async signIn({ user, account, profile }) {
-            if (account?.provider === "google") {
-                console.log("🔐 Google Sign In Attempt:", {
+            if (account?.provider === "google" || account?.provider === "apple") {
+                console.log(`🔐 ${account.provider} Sign In Attempt:`, {
                     userEmail: user.email,
                     accountProvider: account.provider,
                     profileEmail: profile?.email
                 });
+
+                // Check if user exists with this email
+                const existingUser = await prisma.user.findUnique({
+                    where: { email: user.email! },
+                    include: { accounts: true }
+                });
+
+                if (existingUser) {
+                    // Check if this OAuth provider is already linked
+                    const isLinked = existingUser.accounts.some(
+                        acc => acc.provider === account.provider
+                    );
+
+                    if (!isLinked) {
+                        // Link the account
+                        console.log("🔗 Linking OAuth account to existing user");
+                        await prisma.account.create({
+                            data: {
+                                userId: existingUser.id,
+                                type: account.type,
+                                provider: account.provider,
+                                providerAccountId: account.providerAccountId,
+                                refresh_token: account.refresh_token,
+                                access_token: account.access_token,
+                                expires_at: account.expires_at,
+                                token_type: account.token_type,
+                                scope: account.scope,
+                                id_token: account.id_token,
+                                session_state: account.session_state,
+                            }
+                        });
+                    }
+                }
             }
             return true;
         },
