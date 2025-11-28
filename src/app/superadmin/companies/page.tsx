@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getAllCompanies, deleteCompany, createCompany, getTiersList, updateCompanyTier, extendSubscription } from "../actions";
+import { getCompanies, getCompanyStats, deleteCompany, createCompany, getTiersList, updateCompanyTier, extendSubscription } from "../actions";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";
-import { Trash2, Plus, Building2, Calendar, Clock } from "lucide-react";
+import { Trash2, Plus, Building2, Calendar, Clock, Search, TrendingUp, Users, Crown, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
@@ -35,11 +35,24 @@ interface Tier {
     name: string;
 }
 
+interface Stats {
+    freeCount: number;
+    proCount: number;
+    businessCount: number;
+    lifetimeCount: number;
+    mrr: number;
+}
+
 export default function CompaniesPage() {
     const { showToast } = useToast();
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [stats, setStats] = useState<Stats | null>(null);
     const [tiers, setTiers] = useState<Tier[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
     const [error, setError] = useState("");
@@ -55,23 +68,32 @@ export default function CompaniesPage() {
     const [expirationDate, setExpirationDate] = useState<string>("");
 
     useEffect(() => {
-        loadCompanies();
-    }, []);
+        loadData();
+    }, [currentPage, searchQuery]);
 
-    const loadCompanies = async () => {
+    const loadData = async () => {
         try {
-            const [companiesData, tiersData] = await Promise.all([
-                getAllCompanies(),
+            const [companiesData, statsData, tiersData] = await Promise.all([
+                getCompanies({ page: currentPage, limit: 20, search: searchQuery }),
+                getCompanyStats(),
                 getTiersList()
             ]);
-            setCompanies(companiesData);
+            setCompanies(companiesData.companies);
+            setTotalPages(companiesData.pagination.totalPages);
+            setTotal(companiesData.pagination.total);
+            setStats(statsData);
             setTiers(tiersData);
         } catch (error) {
-            console.error("Failed to load companies:", error);
-            showToast("Failed to load companies", "error");
+            console.error("Failed to load data:", error);
+            showToast("Failed to load data", "error");
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = (value: string) => {
+        setSearchQuery(value);
+        setCurrentPage(1); // Reset to first page on new search
     };
 
     const handleDeleteClick = (id: string, name: string) => {
@@ -86,7 +108,7 @@ export default function CompaniesPage() {
 
         try {
             await deleteCompany(id);
-            await loadCompanies();
+            await loadData();
             showToast("Company deleted", "success");
         } catch (error) {
             showToast("Failed to delete company", "error");
@@ -105,7 +127,7 @@ export default function CompaniesPage() {
         try {
             const expiresAt = expirationDate ? new Date(expirationDate) : null;
             await updateCompanyTier(tierModalData.companyId, selectedTierId || null, expiresAt);
-            await loadCompanies();
+            await loadData();
             showToast("Tier updated successfully", "success");
             setTierModalData(null);
         } catch (error) {
@@ -116,7 +138,7 @@ export default function CompaniesPage() {
     const handleExtendSubscription = async (companyId: string, days: number) => {
         try {
             await extendSubscription(companyId, days);
-            await loadCompanies();
+            await loadData();
             showToast(`Subscription extended by ${days} days`, "success");
         } catch (error) {
             showToast("Failed to extend subscription", "error");
@@ -182,7 +204,7 @@ export default function CompaniesPage() {
             } else {
                 setShowCreateModal(false);
                 setFormData({ email: "", password: "", subdomain: "", name: "" });
-                await loadCompanies();
+                await loadData();
                 showToast("Company created", "success");
             }
         } catch (err) {
@@ -199,13 +221,74 @@ export default function CompaniesPage() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Companies</h1>
-                <MuiButton onClick={() => setShowCreateModal(true)} startIcon={<Plus size={18} />}>
-                    Create Company
-                </MuiButton>
+            {/* Header with Stats */}
+            <div className="mb-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Companies</h1>
+                    <MuiButton onClick={() => setShowCreateModal(true)} startIcon={<Plus size={18} />}>
+                        Create Company
+                    </MuiButton>
+                </div>
+
+                {/* Stats Cards */}
+                {stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium opacity-90">MRR</span>
+                                <TrendingUp size={20} className="opacity-75" />
+                            </div>
+                            <div className="text-2xl font-bold">€{stats.mrr.toFixed(2)}</div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Free</span>
+                                <Users size={20} className="text-gray-400" />
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.freeCount}</div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Pro</span>
+                                <Crown size={20} className="text-yellow-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.proCount}</div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Business</span>
+                                <Building2 size={20} className="text-blue-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.businessCount}</div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Lifetime</span>
+                                <Zap size={20} className="text-purple-500" />
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.lifetimeCount}</div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Search Bar */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search by name, subdomain, or email..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
             </div>
 
+            {/* Table */}
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
@@ -265,6 +348,36 @@ export default function CompaniesPage() {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Showing {companies.length} of {total} companies
+                    </div>
+                    <div className="flex gap-2">
+                        <MuiButton
+                            variant="outlined"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </MuiButton>
+                        <div className="flex items-center gap-2 px-4">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                        </div>
+                        <MuiButton
+                            variant="outlined"
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </MuiButton>
+                    </div>
+                </div>
+            )}
 
             {/* Create Modal */}
             {showCreateModal && (

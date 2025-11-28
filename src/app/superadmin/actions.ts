@@ -13,36 +13,163 @@ async function checkSuperAdmin() {
     return session;
 }
 
-// Get all companies
-export async function getAllCompanies() {
+// Get companies with pagination and search
+export async function getCompanies(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+}) {
     await checkSuperAdmin();
 
-    return await prisma.profile.findMany({
-        select: {
-            id: true,
-            name: true,
-            subdomain: true,
-            createdAt: true,
-            subscriptionStatus: true,
-            subscriptionExpiresAt: true,
-            user: {
-                select: {
-                    id: true,
-                    email: true,
-                    role: true,
-                    createdAt: true
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const skip = (page - 1) * limit;
+    const search = params.search?.trim() || '';
+
+    // Build where clause for search
+    const where = search ? {
+        OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { subdomain: { contains: search, mode: 'insensitive' as const } },
+            { user: { email: { contains: search, mode: 'insensitive' as const } } }
+        ]
+    } : {};
+
+    const [companies, total] = await Promise.all([
+        prisma.profile.findMany({
+            where,
+            select: {
+                id: true,
+                name: true,
+                subdomain: true,
+                createdAt: true,
+                subscriptionStatus: true,
+                subscriptionExpiresAt: true,
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        createdAt: true
+                    }
+                },
+                tier: true,
+                subscriptions: {
+                    where: { status: 'ACTIVE' },
+                    select: {
+                        stripePriceId: true,
+                        currentPeriodEnd: true
+                    },
+                    take: 1
+                },
+                _count: {
+                    select: {
+                        services: true,
+                        bookings: true
+                    }
                 }
             },
-            tier: true,
-            _count: {
-                select: {
-                    services: true,
-                    bookings: true
-                }
+            orderBy: { createdAt: "desc" },
+            skip,
+            take: limit
+        }),
+        prisma.profile.count({ where })
+    ]);
+
+    return {
+        companies,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        }
+    };
+}
+
+// Get company statistics including MRR
+export async function getCompanyStats() {
+    await checkSuperAdmin();
+
+    // Get tier counts
+    const [freeTier, proTier, businessTier] = await Promise.all([
+        prisma.tier.findFirst({ where: { name: 'Free' } }),
+        prisma.tier.findFirst({ where: { name: 'Pro' } }),
+        prisma.tier.findFirst({ where: { name: 'Business' } })
+    ]);
+
+    const [freeCount, proCount, businessCount, lifetimeCount] = await Promise.all([
+        prisma.profile.count({
+            where: {
+                tierId: freeTier?.id,
+                subscriptionStatus: 'ACTIVE'
             }
+        }),
+        prisma.profile.count({
+            where: {
+                tierId: proTier?.id,
+                subscriptionStatus: 'ACTIVE',
+                subscriptionExpiresAt: { not: null }
+            }
+        }),
+        prisma.profile.count({
+            where: {
+                tierId: businessTier?.id,
+                subscriptionStatus: 'ACTIVE',
+                subscriptionExpiresAt: { not: null }
+            }
+        }),
+        prisma.profile.count({
+            where: {
+                subscriptionStatus: 'ACTIVE',
+                subscriptionExpiresAt: null,
+                tierId: { not: freeTier?.id }
+            }
+        })
+    ]);
+
+    // Calculate MRR from active subscriptions
+    const activeSubscriptions = await prisma.subscription.findMany({
+        where: {
+            status: 'ACTIVE',
+            currentPeriodEnd: { gte: new Date() }
         },
-        orderBy: { createdAt: "desc" }
+        include: {
+            tier: true
+        }
     });
+
+    // Price IDs for monthly plans
+    const monthlyPriceIds = [
+        process.env.STRIPE_PRO_PRICE_ID,
+        process.env.STRIPE_BUSINESS_PRICE_ID
+    ].filter((id): id is string => Boolean(id));
+
+    // Calculate MRR
+    let mrr = 0;
+    for (const sub of activeSubscriptions) {
+        if (sub.stripePriceId && monthlyPriceIds.includes(sub.stripePriceId)) {
+            // Monthly subscription
+            mrr += Number(sub.tier?.price || 0);
+        } else {
+            // Yearly subscription - divide by 12 for MRR
+            mrr += Number(sub.tier?.price || 0) / 12;
+        }
+    }
+
+    return {
+        freeCount,
+        proCount,
+        businessCount,
+        lifetimeCount,
+        mrr: Math.round(mrr * 100) / 100
+    };
+}
+
+// Legacy function for backwards compatibility
+export async function getAllCompanies() {
+    const result = await getCompanies({ page: 1, limit: 1000 });
+    return result.companies;
 }
 
 // Get all users
