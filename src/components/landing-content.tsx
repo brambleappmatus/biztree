@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Calendar, Globe2, Zap, Check, Shield, Palette, TrendingUp, Users, Rocket, BarChart3 } from "lucide-react";
+import { ArrowRight, Sparkles, Calendar, Globe2, Zap, Check, Shield, Palette, TrendingUp, Users, Rocket, BarChart3, Image as ImageIcon, Bell, Link2, Layout, Smartphone } from "lucide-react";
 import ShowcaseCarousel from "@/components/showcase-carousel";
 import ScrollAnimation from "@/components/scroll-animation";
 import AnimatedCounter from "@/components/animated-counter";
@@ -28,7 +28,7 @@ interface LandingContentProps {
 }
 
 export default function LandingContent({ showcases, serializedTiers, allFeatures, priceIds, prices, enableLifetime }: LandingContentProps) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
 
     return (
         <>
@@ -100,35 +100,114 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
 
                         {/* Right Column - Product Showcase */}
                         <ScrollAnimation animation="slide-left" delay={200}>
-                            <div className="relative">
-                                {/* Placeholder for product image */}
-                                <div className="relative rounded-3xl bg-gradient-to-br from-blue-50 to-purple-50 p-8 border border-gray-200 shadow-2xl">
-                                    <div className="absolute -top-4 -right-4 w-24 h-24 bg-blue-500 rounded-2xl opacity-20 blur-xl animate-float" />
-                                    <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-purple-500 rounded-2xl opacity-20 blur-xl animate-float" style={{ animationDelay: '1s' }} />
+                            <div className="relative flex flex-col items-center">
+                                {/* Main Image Container */}
+                                <div className="relative flex justify-center items-center w-full">
+                                    {/* Main Image */}
+                                    <div className="relative z-10 w-full max-w-[580px]">
+                                        <img
+                                            src="/hero-mockup.png"
+                                            alt="BizTree App Interface"
+                                            className="w-full h-auto drop-shadow-2xl transform hover:scale-[1.02] transition-transform duration-500"
+                                        />
+                                    </div>
 
-                                    <div className="relative aspect-[4/3] bg-white rounded-2xl shadow-lg flex items-center justify-center overflow-hidden">
-                                        <div className="text-center p-8">
-                                            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                                                <img src="/logo.svg" alt="BizTree" className="w-12 h-12" />
+                                    {/* Background Glow */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] bg-gradient-to-tr from-blue-200/30 via-purple-200/30 to-pink-200/30 blur-3xl rounded-full -z-10" />
+
+                                    {/* Desktop Floaters */}
+                                    <div className="hidden md:block">
+                                        {[
+                                            {
+                                                icon: <Link2 size={20} />,
+                                                title: language === 'sk' ? "Všetko v jednom" : "All in One",
+                                                desc: language === 'sk' ? "Web, rezervácie a kontakt" : "Web, bookings & contact",
+                                                colorClass: "bg-blue-100 text-blue-600",
+                                                position: "top-[15%] -left-12",
+                                                delay: 0
+                                            },
+                                            {
+                                                icon: <Bell size={16} />,
+                                                title: language === 'sk' ? "Notifikácie" : "Notifications",
+                                                desc: language === 'sk' ? "Automatické potvrdenia a pripomenutia" : "Auto confirmations & reminders",
+                                                colorClass: "bg-green-100 text-green-600",
+                                                position: "top-[10%] -right-12",
+                                                delay: 2.5
+                                            },
+                                            {
+                                                icon: <Zap size={20} />,
+                                                title: language === 'sk' ? "Rýchle nastavenie" : "Quick Setup",
+                                                desc: language === 'sk' ? "Hotový web do 5 minút" : "Website ready in 5 mins",
+                                                colorClass: "bg-purple-100 text-purple-600",
+                                                position: "bottom-[20%] -right-8",
+                                                delay: 1.5
+                                            },
+                                            {
+                                                icon: <Smartphone size={20} />,
+                                                title: language === 'sk' ? "Responzívny dizajn" : "Responsive Design",
+                                                desc: language === 'sk' ? "Funguje na mobile aj PC" : "Works on mobile & PC",
+                                                colorClass: "bg-orange-100 text-orange-600",
+                                                position: "bottom-[15%] -left-8",
+                                                delay: 2
+                                            }
+                                        ].map((benefit, index) => (
+                                            <div
+                                                key={index}
+                                                className={`absolute ${benefit.position} bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-xl border border-white/50 animate-float z-20 max-w-[240px]`}
+                                                style={{ animationDelay: `${benefit.delay}s` }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${benefit.colorClass}`}>
+                                                        {benefit.icon}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 font-medium">{benefit.title}</p>
+                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{benefit.desc}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p className="text-gray-400 text-sm">Your product screenshot here</p>
-                                            <p className="text-gray-300 text-xs mt-2">Recommended: 1200x900px</p>
-                                        </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    <div className="absolute -top-6 left-8 bg-white rounded-xl shadow-lg px-4 py-3 animate-float">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                            <span className="text-sm font-semibold text-gray-700">350+ {t.landing.activeCompanies}</span>
+                                {/* Mobile Benefits Grid */}
+                                <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 w-full">
+                                    {[
+                                        {
+                                            icon: <Link2 size={20} />,
+                                            title: language === 'sk' ? "Všetko v jednom" : "All in One",
+                                            desc: language === 'sk' ? "Web, rezervácie a kontakt" : "Web, bookings & contact",
+                                            colorClass: "bg-blue-100 text-blue-600"
+                                        },
+                                        {
+                                            icon: <Bell size={16} />,
+                                            title: language === 'sk' ? "Notifikácie" : "Notifications",
+                                            desc: language === 'sk' ? "Automatické potvrdenia a pripomenutia" : "Auto confirmations & reminders",
+                                            colorClass: "bg-green-100 text-green-600"
+                                        },
+                                        {
+                                            icon: <Zap size={20} />,
+                                            title: language === 'sk' ? "Rýchle nastavenie" : "Quick Setup",
+                                            desc: language === 'sk' ? "Hotový web do 5 minút" : "Website ready in 5 mins",
+                                            colorClass: "bg-purple-100 text-purple-600"
+                                        },
+                                        {
+                                            icon: <Smartphone size={20} />,
+                                            title: language === 'sk' ? "Responzívny dizajn" : "Responsive Design",
+                                            desc: language === 'sk' ? "Funguje na mobile aj PC" : "Works on mobile & PC",
+                                            colorClass: "bg-orange-100 text-orange-600"
+                                        }
+                                    ].map((benefit, index) => (
+                                        <div key={index} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${benefit.colorClass}`}>
+                                                {benefit.icon}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-500 font-medium">{benefit.title}</p>
+                                                <p className="text-sm font-bold text-gray-900 leading-tight">{benefit.desc}</p>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="absolute -bottom-6 right-8 bg-white rounded-xl shadow-lg px-4 py-3 animate-float" style={{ animationDelay: '1.5s' }}>
-                                        <div className="text-sm">
-                                            <div className="font-bold text-blue-600 text-lg">8k+</div>
-                                            <div className="text-gray-600 text-xs">{t.landing.bookings}</div>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
                         </ScrollAnimation>
