@@ -5,6 +5,8 @@ import LandingContent from "@/components/landing-content";
 import LandingFooter from "@/components/landing-footer";
 import { getStripePrices } from "@/lib/stripe";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingPage() {
   // Fetch active showcases from database with layers
   const showcases = await prisma.showcase.findMany({
