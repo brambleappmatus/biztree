@@ -137,7 +137,7 @@ export default function CompaniesPage() {
         return days;
     };
 
-    const getStatusBadge = (status: string | null | undefined, expiresAt: Date | null | undefined) => {
+    const getStatusBadge = (status: string | null | undefined, expiresAt: Date | null | undefined, tierName: string | null | undefined) => {
         const days = getDaysRemaining(expiresAt);
 
         if (status === "EXPIRED" || (days !== null && days < 0)) {
@@ -145,6 +145,10 @@ export default function CompaniesPage() {
         }
         if (status === "ACTIVE" && days !== null && days <= 7) {
             return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">Expiring Soon</span>;
+        }
+        // Show "Lifetime" for paid tiers (Pro, Business) with no expiry date
+        if (status === "ACTIVE" && !expiresAt && tierName && tierName !== "Free") {
+            return <span className="px-2 py-1 text-xs rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">Lifetime</span>;
         }
         if (status === "ACTIVE") {
             return <span className="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400">Active</span>;
@@ -230,7 +234,7 @@ export default function CompaniesPage() {
                                     </button>
                                 </td>
                                 <td className="p-4">
-                                    {getStatusBadge(company.subscriptionStatus, company.subscriptionExpiresAt)}
+                                    {getStatusBadge(company.subscriptionStatus, company.subscriptionExpiresAt, company.tier?.name)}
                                 </td>
                                 <td className="p-4 text-gray-700 dark:text-gray-300">
                                     <div className="flex items-center gap-2">
