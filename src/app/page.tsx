@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import LandingNav from "@/components/landing-nav";
 import LandingContent from "@/components/landing-content";
 import LandingFooter from "@/components/landing-footer";
+import { getStripePrices } from "@/lib/stripe";
 
 export default async function LandingPage() {
   // Fetch active showcases from database with layers
@@ -55,23 +56,40 @@ export default async function LandingPage() {
     }
   };
 
+  // Fetch prices from Stripe
+  const allPriceIds = [
+    priceIds.monthly['Business'],
+    priceIds.monthly['Pro'],
+    priceIds.yearly['Business'],
+    priceIds.yearly['Pro'],
+    priceIds.lifetime['Business'],
+    priceIds.lifetime['Pro'],
+  ].filter(Boolean);
+
+  const stripePrices = await getStripePrices(allPriceIds);
+
+  const getPriceAmount = (id: string, fallback: number) => {
+    const price = stripePrices.find(p => p.id === id);
+    return price && price.unit_amount ? price.unit_amount / 100 : fallback;
+  };
+
   const monthlyPrices = {
     'Free': 0,
-    'Business': 3.90,
-    'Pro': 8.90,
+    'Business': getPriceAmount(priceIds.monthly['Business'], 3.90),
+    'Pro': getPriceAmount(priceIds.monthly['Pro'], 8.90),
   };
 
   const prices = {
     monthly: monthlyPrices,
     yearly: {
       'Free': 0,
-      'Business': 35.00,
-      'Pro': 79.00,
+      'Business': getPriceAmount(priceIds.yearly['Business'], 35.00),
+      'Pro': getPriceAmount(priceIds.yearly['Pro'], 79.00),
     },
     lifetime: {
       'Free': 0,
-      'Business': parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69'),
-      'Pro': parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119'),
+      'Business': getPriceAmount(priceIds.lifetime['Business'], parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69')),
+      'Pro': getPriceAmount(priceIds.lifetime['Pro'], parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119')),
     }
   };
 

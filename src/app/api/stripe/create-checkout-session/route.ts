@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
                 profiles: {
                     select: {
                         id: true,
+                        trialEndsAt: true,
                         subscriptions: {
                             where: {
                                 stripeCustomerId: { not: null }
@@ -89,8 +90,25 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Create checkout session with 7-day trial
-        const checkoutSession = await stripe.checkout.sessions.create({
+        // Check if this is a yearly or lifetime plan (no trial)
+        const isYearly = [
+            process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID,
+            process.env.STRIPE_PRO_YEARLY_PRICE_ID
+        ].includes(priceId);
+
+        const isLifetime = [
+            process.env.STRIPE_BUSINESS_LIFETIME_PRICE_ID,
+            process.env.STRIPE_PRO_LIFETIME_PRICE_ID
+        ].includes(priceId);
+
+        // Check if user has already used a trial
+        const hasUsedTrial = !!profile.trialEndsAt;
+
+        // Determine if trial should be applied
+        const shouldApplyTrial = !isYearly && !isLifetime && !hasUsedTrial;
+
+        // Create checkout session
+        const sessionConfig: any = {
             customer: customerId,
             line_items: [
                 {
@@ -100,7 +118,6 @@ export async function POST(request: NextRequest) {
             ],
             mode: 'subscription',
             subscription_data: {
-                trial_period_days: 7,
                 metadata: {
                     profileId: profile.id,
                     userId: user.id,
@@ -113,7 +130,13 @@ export async function POST(request: NextRequest) {
             allow_promotion_codes: true,
             payment_method_types: ['card'],
             billing_address_collection: 'auto',
-        });
+        };
+
+        if (shouldApplyTrial) {
+            sessionConfig.subscription_data.trial_period_days = 7;
+        }
+
+        const checkoutSession = await stripe.checkout.sessions.create(sessionConfig);
 
         return NextResponse.json({
             url: checkoutSession.url

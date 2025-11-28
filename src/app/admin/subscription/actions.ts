@@ -20,6 +20,7 @@ export async function createCheckoutSession(priceId: string, promoCode?: string,
                 profiles: {
                     select: {
                         id: true,
+                        trialEndsAt: true,
                         subscriptions: {
                             where: {
                                 stripeCustomerId: { not: null }
@@ -55,6 +56,26 @@ export async function createCheckoutSession(priceId: string, promoCode?: string,
             customerId = customer.id;
         }
 
+        // Check if this is a yearly or lifetime plan (no trial)
+        const isYearly = [
+            process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID,
+            process.env.STRIPE_PRO_YEARLY_PRICE_ID
+        ].includes(priceId);
+
+        const isLifetime = [
+            process.env.STRIPE_BUSINESS_LIFETIME_PRICE_ID,
+            process.env.STRIPE_PRO_LIFETIME_PRICE_ID
+        ].includes(priceId);
+
+        // Check if user has already used a trial
+        // If trialEndsAt is set (even in the past), they have used a trial
+        const hasUsedTrial = !!profile.trialEndsAt;
+
+        // Determine if trial should be applied
+        // No trial for yearly/lifetime plans
+        // No trial if user has already used one
+        const shouldApplyTrial = !isYearly && !isLifetime && !hasUsedTrial;
+
         // Prepare session configuration
         const sessionConfig: any = {
             customer: customerId,
@@ -80,13 +101,17 @@ export async function createCheckoutSession(priceId: string, promoCode?: string,
         // Add subscription-specific data only if mode is subscription
         if (mode === 'subscription') {
             sessionConfig.subscription_data = {
-                trial_period_days: 7,
                 metadata: {
                     profileId: profile.id,
                     userId: user.id,
                     promoCode: promoCode || ''
                 },
             };
+
+            // Only add trial period if eligible
+            if (shouldApplyTrial) {
+                sessionConfig.subscription_data.trial_period_days = 7;
+            }
         } else {
             // For one-time payments (lifetime), we might want to store metadata on the payment intent
             sessionConfig.payment_intent_data = {

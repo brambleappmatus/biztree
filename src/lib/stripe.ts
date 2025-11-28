@@ -110,3 +110,37 @@ export async function createBillingPortalSession(customerId: string, returnUrl: 
         return_url: returnUrl,
     });
 }
+
+/**
+ * Retrieve prices from Stripe
+ */
+export async function getStripePrices(priceIds: string[]) {
+    // Filter out empty IDs
+    const validIds = priceIds.filter(id => id && id.length > 0);
+
+    if (validIds.length === 0) return [];
+
+    try {
+        // Use list to fetch multiple prices efficiently if possible, but retrieve is safer for specific IDs
+        // For a small number of IDs, parallel retrieve is fine
+        const prices = await Promise.all(
+            validIds.map(async (id) => {
+                try {
+                    const price = await stripe.prices.retrieve(id);
+                    return {
+                        id,
+                        unit_amount: price.unit_amount,
+                        currency: price.currency,
+                    };
+                } catch (error) {
+                    console.error(`Error fetching price ${id}:`, error);
+                    return null;
+                }
+            })
+        );
+        return prices.filter((p): p is NonNullable<typeof p> => p !== null);
+    } catch (error) {
+        console.error("Error fetching Stripe prices:", error);
+        return [];
+    }
+}

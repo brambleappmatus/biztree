@@ -79,11 +79,20 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.log("=== WEBHOOK: Checkout Completed ===");
-    const { customer, subscription, metadata } = session;
+    const { customer, subscription, metadata, mode } = session;
     console.log("Customer:", customer);
     console.log("Subscription:", subscription);
     console.log("Metadata:", metadata);
+    console.log("Mode:", mode);
 
+    // Check if this is a lifetime payment (one-time payment)
+    if (mode === 'payment') {
+        console.log("🔄 Detected lifetime payment, routing to handleLifetimePayment");
+        await handleLifetimePayment(session);
+        return;
+    }
+
+    // For subscription mode, we need subscription object
     if (!customer || !subscription || !metadata?.profileId) {
         console.error("Missing required data in checkout session", { customer, subscription, metadata });
         return;
@@ -150,7 +159,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
             tierId: tier.id,
             subscriptionStatus: trialEnd ? "TRIAL" : "ACTIVE",
             subscriptionExpiresAt: currentPeriodEnd,
-            trialEndsAt: trialEnd,
+            ...(trialEnd ? { trialEndsAt: trialEnd } : {}),
         }
     });
 
@@ -168,6 +177,99 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     console.log(`✅ Checkout completed successfully for profile ${metadata.profileId}`);
     console.log(`✅ Updated to tier: ${tier.name}`);
+}
+
+async function handleLifetimePayment(session: Stripe.Checkout.Session) {
+    console.log("=== WEBHOOK: Lifetime Payment ===");
+    const { customer, metadata } = session;
+
+    if (!customer || !metadata?.profileId) {
+        console.error("Missing required data for lifetime payment", { customer, metadata });
+        return;
+    }
+
+    const customerId = typeof customer === 'string' ? customer : customer.id;
+
+    // Get the line items to determine which tier was purchased
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+    const priceId = lineItems.data[0]?.price?.id;
+
+    console.log("Price ID from line items:", priceId);
+
+    if (!priceId) {
+        console.error("No price ID found in checkout session");
+        return;
+    }
+
+    // Get tier from price ID
+    const tier = await getTierFromPriceId(priceId);
+    console.log("Found tier:", tier);
+
+    if (!tier) {
+        console.error("Could not find tier for price:", priceId);
+        return;
+    }
+
+    // Create or update subscription record for lifetime
+    // Note: We use a far future date for currentPeriodEnd since lifetime never expires
+    const farFutureDate = new Date('2099-12-31');
+
+    // Find existing subscription for this profile
+    const existingSubscription = await prisma.subscription.findFirst({
+        where: { profileId: metadata.profileId }
+    });
+
+    if (existingSubscription) {
+        // Update existing subscription
+        await prisma.subscription.update({
+            where: { id: existingSubscription.id },
+            data: {
+                tierId: tier.id,
+                status: "ACTIVE",
+                stripePriceId: priceId,
+                stripeCustomerId: customerId,
+                currentPeriodEnd: farFutureDate,
+            }
+        });
+    } else {
+        // Create new subscription
+        await prisma.subscription.create({
+            data: {
+                profileId: metadata.profileId,
+                tierId: tier.id,
+                stripeCustomerId: customerId,
+                stripePriceId: priceId,
+                status: "ACTIVE",
+                currentPeriodStart: new Date(),
+                currentPeriodEnd: farFutureDate,
+            }
+        });
+    }
+
+    // Update profile with lifetime status
+    await prisma.profile.update({
+        where: { id: metadata.profileId },
+        data: {
+            tierId: tier.id,
+            subscriptionStatus: "LIFETIME",
+            subscriptionExpiresAt: null, // Lifetime never expires
+        }
+    });
+
+    // Create history record
+    await prisma.subscriptionHistory.create({
+        data: {
+            profileId: metadata.profileId,
+            action: "UPGRADED",
+            newTierId: tier.id,
+            performedBy: "USER",
+            performedByUserId: metadata.userId,
+            notes: `Purchased ${tier.name} lifetime license`
+        }
+    });
+
+    console.log(`✅ Lifetime payment processed for profile ${metadata.profileId}`);
+    console.log(`✅ Upgraded to tier: ${tier.name} (LIFETIME)`);
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
@@ -213,7 +315,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
             tierId: tier.id,
             subscriptionStatus: trialEnd ? "TRIAL" : status.toUpperCase(),
             subscriptionExpiresAt: currentPeriodEnd,
-            trialEndsAt: trialEnd,
+            ...(trialEnd ? { trialEndsAt: trialEnd } : {}),
         }
     });
 
@@ -281,7 +383,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
             tierId: freeTier.id,
             subscriptionStatus: "CANCELLED",
             subscriptionExpiresAt: null,
-            trialEndsAt: null,
             bgImage: "dark-gray", // Reset background
         }
     });
@@ -395,14 +496,25 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
 }
 
 async function getTierFromPriceId(priceId: string): Promise<{ id: string; name: string } | null> {
-    // Map Stripe price IDs to tiers
+    // Map Stripe price IDs to tiers (monthly, yearly, and lifetime)
     const priceToTierMap: Record<string, string> = {
+        // Monthly
         [process.env.STRIPE_BUSINESS_PRICE_ID!]: "Business",
         [process.env.STRIPE_PRO_PRICE_ID!]: "Pro",
+        // Yearly
+        [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID!]: "Business",
+        [process.env.STRIPE_PRO_YEARLY_PRICE_ID!]: "Pro",
+        // Lifetime
+        [process.env.STRIPE_BUSINESS_LIFETIME_PRICE_ID!]: "Business",
+        [process.env.STRIPE_PRO_LIFETIME_PRICE_ID!]: "Pro",
     };
 
     const tierName = priceToTierMap[priceId];
-    if (!tierName) return null;
+    if (!tierName) {
+        console.error("❌ Unknown price ID:", priceId);
+        console.error("Available price mappings:", Object.keys(priceToTierMap).filter(k => k !== 'undefined'));
+        return null;
+    }
 
     return await prisma.tier.findUnique({
         where: { name: tierName },

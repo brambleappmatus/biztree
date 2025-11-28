@@ -6,6 +6,7 @@ import { Crown, Sparkles, Calendar, Shield, Star } from "lucide-react";
 import { PricingSection } from "@/components/subscription/pricing-section";
 import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 import { SubscriptionSuccessHandler } from "@/components/subscription/subscription-success-handler";
+import { getStripePrices } from "@/lib/stripe";
 
 export default async function SubscriptionPage() {
     const session = await getServerSession(authOptions);
@@ -22,6 +23,7 @@ export default async function SubscriptionPage() {
                     id: true,
                     subscriptionStatus: true,
                     subscriptionExpiresAt: true,
+                    trialEndsAt: true,
                     createdAt: true,
                     tier: {
                         include: {
@@ -86,24 +88,41 @@ export default async function SubscriptionPage() {
         }
     };
 
+    // Fetch prices from Stripe
+    const allPriceIds = [
+        priceIds.monthly['Business'],
+        priceIds.monthly['Pro'],
+        priceIds.yearly['Business'],
+        priceIds.yearly['Pro'],
+        priceIds.lifetime['Business'],
+        priceIds.lifetime['Pro'],
+    ].filter(Boolean);
+
+    const stripePrices = await getStripePrices(allPriceIds);
+
+    const getPriceAmount = (id: string, fallback: number) => {
+        const price = stripePrices.find(p => p.id === id);
+        return price && price.unit_amount ? price.unit_amount / 100 : fallback;
+    };
+
     // Define prices
     const monthlyPrices = {
         'Free': 0,
-        'Business': 3.90,
-        'Pro': 8.90,
+        'Business': getPriceAmount(priceIds.monthly['Business'], 3.90),
+        'Pro': getPriceAmount(priceIds.monthly['Pro'], 8.90),
     };
 
     const prices = {
         monthly: monthlyPrices,
         yearly: {
             'Free': 0,
-            'Business': 35.00,  // €35/year from Stripe
-            'Pro': 79.00,       // €79/year from Stripe
+            'Business': getPriceAmount(priceIds.yearly['Business'], 35.00),
+            'Pro': getPriceAmount(priceIds.yearly['Pro'], 79.00),
         },
         lifetime: {
             'Free': 0,
-            'Business': parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69'),
-            'Pro': parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119'),
+            'Business': getPriceAmount(priceIds.lifetime['Business'], parseFloat(process.env.STRIPE_BUSINESS_LIFETIME_PRICE || '69')),
+            'Pro': getPriceAmount(priceIds.lifetime['Pro'], parseFloat(process.env.STRIPE_PRO_LIFETIME_PRICE || '119')),
         }
     };
 
@@ -145,36 +164,52 @@ export default async function SubscriptionPage() {
                                     )}
                                 </h2>
                             </div>
-                            {subscriptionStatus === "ACTIVE" && (
+                            {activeSubscription?.cancelAtPeriodEnd && expiresAt && new Date(expiresAt) > new Date() ? (
+                                <span className="px-4 py-1.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-sm font-medium flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    Zrušené
+                                </span>
+                            ) : subscriptionStatus === "ACTIVE" ? (
                                 <span className="px-4 py-1.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 text-sm font-medium flex items-center gap-2">
                                     <Shield className="w-4 h-4" />
                                     Aktívne predplatné
                                 </span>
-                            )}
-                            {(subscriptionStatus === "TRIAL" || subscriptionStatus === "TRIALING") && (
+                            ) : (subscriptionStatus === "TRIAL" || subscriptionStatus === "TRIALING") ? (
                                 <span className="px-4 py-1.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-sm font-medium flex items-center gap-2">
                                     <Star className="w-4 h-4" />
                                     Skúšobná doba
                                 </span>
-                            )}
+                            ) : null}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-white/10 pt-8">
                             <div>
                                 <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Cena</p>
                                 <p className="text-xl font-semibold">
-                                    {currentTier ? `€${currentTier.price}/mesiac` : 'Zdarma'}
+                                    {subscriptionStatus === "LIFETIME"
+                                        ? 'Lifetime'
+                                        : currentTier?.name === 'Free'
+                                            ? 'Zdarma'
+                                            : `€${currentTier?.price}/mesiac`
+                                    }
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Ďalšia platba</p>
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    <p className="text-lg">
-                                        {expiresAt ? new Date(expiresAt).toLocaleDateString('sk-SK') : 'Navždy'}
+                            {currentTier?.name !== 'Free' && subscriptionStatus !== "LIFETIME" && (
+                                <div>
+                                    <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">
+                                        {activeSubscription?.cancelAtPeriodEnd ? 'Platné do' : 'Ďalšia platba'}
                                     </p>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                        <p className="text-lg">
+                                            {expiresAt
+                                                ? new Date(expiresAt).toLocaleDateString('sk-SK')
+                                                : 'Navždy'
+                                            }
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                             <div>
                                 <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Členom od</p>
                                 <p className="text-lg">
@@ -195,6 +230,7 @@ export default async function SubscriptionPage() {
                 priceIds={priceIds}
                 prices={prices}
                 enableLifetime={enableLifetime}
+                trialEndsAt={profile.trialEndsAt}
             />
 
             {/* Cancel Subscription/Trial Button */}

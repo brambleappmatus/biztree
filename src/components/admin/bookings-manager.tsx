@@ -121,7 +121,7 @@ export default function BookingsManager({ bookings: initialBookings }: BookingsM
                         <select
                             value={sortMode}
                             onChange={(e) => setSortMode(e.target.value as 'recent' | 'upcoming')}
-                            className="ml-2 px-2 py-1 border rounded bg-white text-sm"
+                            className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                             <option value="recent">Najnovšie</option>
                             <option value="upcoming">Najbližšie</option>

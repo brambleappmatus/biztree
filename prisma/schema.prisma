@@ -112,6 +112,7 @@ model Profile {
   documents     Document[]
   subscriptions Subscription[]
   subscriptionHistory SubscriptionHistory[]
+  pageViews     PageView[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -386,5 +387,39 @@ model SubscriptionHistory {
   createdAt       DateTime @default(now())
   
   @@index([profileId])
+  @@index([createdAt])
+}
+
+model PageView {
+  id            String   @id @default(cuid())
+  profileId     String
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  // Visitor information
+  visitorId     String   // Anonymous visitor ID (cookie/fingerprint)
+  sessionId     String   // Session ID for grouping page views
+  
+  // Page information
+  path          String   // Page path visited
+  referrer      String?  // Where the visitor came from
+  
+  // Time tracking
+  timeSpent     Int?     // Time spent on page in seconds
+  
+  // Device/Browser information
+  userAgent     String?
+  device        String?  // mobile, tablet, desktop
+  browser       String?  // chrome, firefox, safari, etc.
+  os            String?  // windows, mac, linux, ios, android
+  
+  // Location (optional, can be added later with IP geolocation)
+  country       String?
+  city          String?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([profileId])
+  @@index([visitorId])
+  @@index([sessionId])
   @@index([createdAt])
 }

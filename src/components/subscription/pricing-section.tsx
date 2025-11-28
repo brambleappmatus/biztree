@@ -24,6 +24,7 @@ interface PricingSectionProps {
     enableLifetime: boolean;
     buttonText?: string;
     redirectUrl?: string;
+    trialEndsAt?: Date | null;
 }
 
 export function PricingSection({
@@ -35,9 +36,13 @@ export function PricingSection({
     prices,
     enableLifetime,
     buttonText,
-    redirectUrl
+    redirectUrl,
+    trialEndsAt
 }: PricingSectionProps) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'lifetime'>('monthly');
+
+    // Check if user has already used a trial
+    const hasUsedTrial = !!trialEndsAt;
 
     return (
         <div className="space-y-8">
@@ -66,7 +71,7 @@ export function PricingSection({
                     >
                         Ročne
                         <span className="text-[10px] font-bold px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full">
-                            -20%
+                            -25%
                         </span>
                     </button>
                     {enableLifetime && (
@@ -150,7 +155,13 @@ export function PricingSection({
                         const currentTierIndex = tierOrder.indexOf(currentTierName);
                         const targetTierIndex = tierOrder.indexOf(tier.name);
                         const isDowngrade = targetTierIndex < currentTierIndex;
-                        const hasActiveSubscription = !!activeSubscription;
+
+                        // Treat cancelled subscriptions as inactive for OTHER tiers
+                        // This allows switching from cancelled Business to Pro trial
+                        const isCurrentTierCard = tier.name === currentTierName;
+                        const isCancelled = activeSubscription?.cancelAtPeriodEnd || false;
+                        const hasActiveSubscription = !!activeSubscription && (!isCancelled || isCurrentTierCard);
+
 
                         return (
                             <div
@@ -233,6 +244,9 @@ export function PricingSection({
                                             buttonText={buttonText}
                                             redirectUrl={redirectUrl}
                                             stripeSubscriptionId={activeSubscription?.stripeSubscriptionId}
+                                            isYearly={billingCycle === 'yearly'}
+                                            hasUsedTrial={hasUsedTrial}
+                                            isCurrentTier={isCurrentTierCard}
                                         />
                                     ) : (
                                         <div className="w-full py-2.5 text-center text-gray-400 text-sm">

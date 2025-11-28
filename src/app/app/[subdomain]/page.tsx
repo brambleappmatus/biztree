@@ -18,6 +18,7 @@ import { Language } from "@/lib/i18n";
 import { Metadata } from "next";
 
 import { getProfile } from "@/lib/data-profile";
+import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
 
 // Helper to check if profile has access to a feature
 function hasFeatureAccess(profile: any, featureKey: string): boolean {
@@ -180,6 +181,9 @@ export default async function ProfilePage({
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+
+            {/* Analytics Tracking */}
+            <AnalyticsTracker profileId={profileData.id} />
 
             <div className="flex flex-col gap-4 p-4">
                 {/* Header */}
