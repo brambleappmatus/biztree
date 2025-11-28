@@ -69,7 +69,7 @@ export default function AdminLayoutClient({
                 </header>
 
                 {/* Desktop Dock - Replaces Sidebar */}
-                <div className="hidden md:block">
+                <div>
                     <DockMenu />
                 </div>
 
@@ -121,76 +121,6 @@ export default function AdminLayoutClient({
                         </aside>
                     )}
                 </main>
-
-                {/* Mobile Bottom Navigation */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-inset-bottom">
-                    <div className="flex items-center justify-around px-2 py-2 pb-safe">
-                        <Link
-                            href="/admin"
-                            className={cn(
-                                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
-                                pathname === "/admin"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                            )}
-                        >
-                            <Settings size={22} className={pathname === "/admin" ? "text-blue-600" : ""} />
-                            <span className="text-[10px] font-medium">Biztree</span>
-                        </Link>
-
-                        <Link
-                            href="/admin/dashboard"
-                            className={cn(
-                                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
-                                pathname === "/admin/dashboard"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                            )}
-                        >
-                            <LayoutDashboard size={22} className={pathname === "/admin/dashboard" ? "text-blue-600" : ""} />
-                            <span className="text-[10px] font-medium">Prehľad</span>
-                        </Link>
-
-                        <Link
-                            href="/admin/services"
-                            className={cn(
-                                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
-                                pathname === "/admin/services"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                            )}
-                        >
-                            <Users size={22} className={pathname === "/admin/services" ? "text-blue-600" : ""} />
-                            <span className="text-[10px] font-medium">Služby</span>
-                        </Link>
-
-                        <Link
-                            href="/admin/bookings"
-                            className={cn(
-                                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
-                                pathname === "/admin/bookings"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                            )}
-                        >
-                            <Calendar size={22} className={pathname === "/admin/bookings" ? "text-blue-600" : ""} />
-                            <span className="text-[10px] font-medium">Rezervácie</span>
-                        </Link>
-
-                        <Link
-                            href="/admin/seo"
-                            className={cn(
-                                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all active:scale-95 min-w-[60px]",
-                                pathname === "/admin/seo"
-                                    ? "text-blue-600"
-                                    : "text-gray-500"
-                            )}
-                        >
-                            <Settings size={22} className={pathname === "/admin/seo" ? "text-blue-600" : ""} />
-                            <span className="text-[10px] font-medium">SEO</span>
-                        </Link>
-                    </div>
-                </nav>
             </div>
         </FeaturesProvider>
     );

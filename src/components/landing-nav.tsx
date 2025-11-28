@@ -57,7 +57,8 @@ export default function LandingNav() {
                                 : "bg-gray-900 text-white hover:bg-gray-800"
                         )}
                     >
-                        {t.landing.ctaStart}
+                        <span className="sm:hidden">{t.landing.startNow}</span>
+                        <span className="hidden sm:inline">{t.landing.ctaStart}</span>
                     </Link>
                 </div>
             </div>
