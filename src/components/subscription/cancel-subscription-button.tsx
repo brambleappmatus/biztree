@@ -29,8 +29,9 @@ export function CancelSubscriptionButton({
     const [showModal, setShowModal] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Only show if user has an active subscription or trial
-    if (!subscriptionStatus || (subscriptionStatus !== 'ACTIVE' && subscriptionStatus !== 'TRIAL')) {
+    // Only show if user has an active subscription (not trial)
+    // Trial users don't have Stripe customer ID yet
+    if (!subscriptionStatus || subscriptionStatus === 'TRIAL' || !activeSubscription?.stripeCustomerId) {
         return null;
     }
 
@@ -149,18 +150,20 @@ export function CancelSubscriptionButton({
                                         >
                                             Zatvoriť
                                         </button>
-                                        <button
-                                            onClick={handleManage}
-                                            disabled={loading}
-                                            className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                        >
-                                            {loading ? "Načítavam..." : (
-                                                <>
-                                                    Spravovať platby
-                                                    <ExternalLink size={16} />
-                                                </>
-                                            )}
-                                        </button>
+                                        {activeSubscription?.stripeCustomerId && (
+                                            <button
+                                                onClick={handleManage}
+                                                disabled={loading}
+                                                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100 shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            >
+                                                {loading ? "Načítavam..." : (
+                                                    <>
+                                                        Spravovať platby
+                                                        <ExternalLink size={16} />
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>

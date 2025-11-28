@@ -25,6 +25,7 @@ export async function createCheckoutSession(priceId: string, promoCode?: string,
                             where: {
                                 stripeCustomerId: { not: null }
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         }
                     }
@@ -152,6 +153,7 @@ export async function createPortalSession() {
                                 stripeCustomerId: { not: null },
                                 status: { in: ['ACTIVE', 'PAST_DUE'] }
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         }
                     }
@@ -203,6 +205,7 @@ export async function cancelSubscription() {
                             where: {
                                 status: { in: ['ACTIVE', 'TRIAL', 'TRIALING'] }
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         },
                         tier: true
@@ -298,6 +301,7 @@ export async function reactivateSubscription() {
                             where: {
                                 cancelAtPeriodEnd: true
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         }
                     }
@@ -357,6 +361,7 @@ export async function getSubscriptionDetails() {
                         where: {
                             status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
                         },
+                        orderBy: { createdAt: 'desc' },
                         take: 1
                     }
                 }
@@ -384,6 +389,9 @@ export async function syncSubscriptionStatus() {
                         where: {
                             stripeSubscriptionId: { not: null },
                             status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
+                        },
+                        orderBy: {
+                            createdAt: 'desc'
                         },
                         take: 1
                     }

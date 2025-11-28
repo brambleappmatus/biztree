@@ -97,6 +97,7 @@ export async function getCompanies(params: {
                         currentPeriodEnd: true,
                         cancelAtPeriodEnd: true
                     },
+                    orderBy: { createdAt: 'desc' },
                     take: 1
                 },
                 _count: {

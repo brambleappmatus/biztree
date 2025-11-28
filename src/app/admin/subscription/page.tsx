@@ -39,6 +39,9 @@ export default async function SubscriptionPage() {
                         where: {
                             status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
                         },
+                        orderBy: {
+                            createdAt: 'desc'
+                        },
                         take: 1
                     }
                 }

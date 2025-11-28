@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
                                 stripeCustomerId: { not: null },
                                 status: { in: ['ACTIVE', 'PAST_DUE'] }
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         }
                     }

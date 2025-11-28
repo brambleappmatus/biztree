@@ -240,14 +240,16 @@ export function SubscriptionActions({
                     </>
                 ) : (
                     <div className="flex flex-col items-center gap-3">
-                        <button
-                            onClick={handleManageSubscription}
-                            disabled={loading}
-                            className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1.5"
-                        >
-                            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                            Spravovať fakturáciu
-                        </button>
+                        {stripeSubscriptionId && stripeSubscriptionId !== null && stripeSubscriptionId !== '' && (
+                            <button
+                                onClick={handleManageSubscription}
+                                disabled={loading}
+                                className="text-xs text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1.5"
+                            >
+                                {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                                Spravovať fakturáciu
+                            </button>
+                        )}
 
                         <button
                             onClick={() => setShowCancelModal(true)}

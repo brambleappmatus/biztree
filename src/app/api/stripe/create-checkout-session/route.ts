@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
                             where: {
                                 stripeCustomerId: { not: null }
                             },
+                            orderBy: { createdAt: 'desc' },
                             take: 1
                         }
                     }
