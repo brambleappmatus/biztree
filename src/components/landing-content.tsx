@@ -180,7 +180,7 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
             </section>
 
             {/* Features Section */}
-            <section className="py-24 px-4 bg-gradient-to-b from-white via-gray-50/50 to-white">
+            <section id="features" className="py-24 px-4 bg-gradient-to-b from-white via-gray-50/50 to-white">
                 <div className="max-w-6xl mx-auto">
                     <ScrollAnimation animation="slide-up">
                         <div className="text-center mb-16">
@@ -285,7 +285,7 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
             </section>
 
             {/* Demo Showcase Section */}
-            <section className="py-24 bg-white">
+            <section id="showcase" className="py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-4">
                     <ScrollAnimation animation="slide-up">
                         <div className="text-center mb-16">
