@@ -103,7 +103,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     // Get subscription details from Stripe
     const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-    console.log(`Stripe Subscription retrieved: ${stripeSubscription.id}, status: ${stripeSubscription.status}, end: ${(stripeSubscription as any).current_period_end}`);
+    console.log(`Stripe Subscription retrieved: ${stripeSubscription.id}, status: ${stripeSubscription.status}`);
+    console.log(`Raw current_period_end: ${(stripeSubscription as any).current_period_end}`);
 
     // Get tier from price ID
     const priceId = stripeSubscription.items.data[0].price.id;

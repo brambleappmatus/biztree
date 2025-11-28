@@ -7,7 +7,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(stripeKey, {
-    apiVersion: "2025-11-17.clover",
+    apiVersion: "2023-10-16" as any,
     typescript: true,
 });
 

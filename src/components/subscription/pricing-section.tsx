@@ -39,7 +39,29 @@ export function PricingSection({
     redirectUrl,
     trialEndsAt
 }: PricingSectionProps) {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'lifetime'>('monthly');
+    // Detect the user's current billing cycle from their subscription
+    const detectBillingCycle = (): 'monthly' | 'yearly' | 'lifetime' => {
+        if (!activeSubscription?.stripePriceId) return 'monthly';
+
+        const priceId = activeSubscription.stripePriceId;
+
+        // Check if it's a lifetime subscription
+        const lifetimePriceIds = Object.values(priceIds.lifetime);
+        if (lifetimePriceIds.includes(priceId)) {
+            return 'lifetime';
+        }
+
+        // Check if it's a yearly subscription
+        const yearlyPriceIds = Object.values(priceIds.yearly);
+        if (yearlyPriceIds.includes(priceId)) {
+            return 'yearly';
+        }
+
+        // Default to monthly
+        return 'monthly';
+    };
+
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'lifetime'>(detectBillingCycle());
 
     // Check if user has already used a trial
     const hasUsedTrial = !!trialEndsAt;
@@ -109,9 +131,28 @@ export function PricingSection({
                         return true;
                     })
                     .map((tier) => {
-                        const isCurrentTier = currentTier?.id === tier.id && billingCycle === 'monthly'; // Simplification: current tier is usually monthly unless we track cycle
-                        // Actually, we should check if the user has a lifetime subscription if billingCycle is lifetime
-                        // But for now, let's stick to the basic logic and refine.
+                        // Check if this is the user's current tier AND billing cycle
+                        const isCurrentTierAndCycle = (() => {
+                            if (currentTier?.id !== tier.id) return false;
+
+                            // If user has an active subscription, check if the billing cycle matches
+                            if (activeSubscription?.stripePriceId) {
+                                const priceId = activeSubscription.stripePriceId;
+
+                                if (billingCycle === 'lifetime') {
+                                    return Object.values(priceIds.lifetime).includes(priceId);
+                                } else if (billingCycle === 'yearly') {
+                                    return Object.values(priceIds.yearly).includes(priceId);
+                                } else {
+                                    return Object.values(priceIds.monthly).includes(priceId);
+                                }
+                            }
+
+                            // If no active subscription, only match on monthly Free tier
+                            return billingCycle === 'monthly' && tier.name === 'Free';
+                        })();
+
+                        const isCurrentTier = isCurrentTierAndCycle;
 
                         const isPro = tier.name === 'Pro';
                         const isBusiness = tier.name === 'Business';
