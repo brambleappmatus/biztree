@@ -280,19 +280,14 @@ async function handleLifetimePayment(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-    const { id, customer, status, current_period_end, trial_end, items, metadata } = subscription as any;
+    console.log("=== WEBHOOK: Subscription Update/Create ===");
+    const { id, customer, status, current_period_end, current_period_start, trial_end, items, metadata } = subscription as any;
+    console.log(`Subscription ID: ${id}, Status: ${status}, Period End: ${current_period_end}`);
 
-    const existingSubscription = await prisma.subscription.findUnique({
-        where: { stripeSubscriptionId: id },
-        include: { profile: true }
-    });
-
-    if (!existingSubscription) {
-        console.error("Subscription not found:", id);
-        return;
-    }
-
+    const customerId = typeof customer === 'string' ? customer : customer.id;
     const priceId = items.data[0].price.id;
+    console.log(`Price ID: ${priceId}, Customer: ${customerId}`);
+
     const tier = await getTierFromPriceId(priceId);
 
     if (!tier) {
@@ -302,22 +297,56 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 
     const trialEnd = trial_end ? new Date(trial_end * 1000) : null;
     const currentPeriodEnd = new Date(current_period_end * 1000);
-    const isTrialEnding = existingSubscription.profile.subscriptionStatus === "TRIAL" && !trialEnd;
+    const currentPeriodStart = current_period_start ? new Date(current_period_start * 1000) : new Date();
 
-    // Update subscription
-    await prisma.subscription.update({
+    console.log(`Calculated dates - Period End: ${currentPeriodEnd.toISOString()}, Trial End: ${trialEnd?.toISOString() || 'none'}`);
+
+    // Find existing subscription or get profileId from metadata
+    const existingSubscription = await prisma.subscription.findUnique({
         where: { stripeSubscriptionId: id },
-        data: {
+        include: { profile: true }
+    });
+
+    let profileId: string;
+
+    if (existingSubscription) {
+        profileId = existingSubscription.profileId;
+        console.log(`Found existing subscription for profile: ${profileId}`);
+    } else if (metadata?.profileId) {
+        profileId = metadata.profileId;
+        console.log(`New subscription, using profileId from metadata: ${profileId}`);
+    } else {
+        console.error("Cannot determine profileId for subscription:", id);
+        return;
+    }
+
+    const isTrialEnding = existingSubscription?.profile.subscriptionStatus === "TRIAL" && !trialEnd;
+
+    // Upsert subscription (handles both create and update)
+    await prisma.subscription.upsert({
+        where: { stripeSubscriptionId: id },
+        create: {
+            profileId,
+            tierId: tier.id,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: id,
+            stripePriceId: priceId,
+            status: status.toUpperCase(),
+            currentPeriodStart,
+            currentPeriodEnd,
+        },
+        update: {
             status: status.toUpperCase(),
             tierId: tier.id,
             stripePriceId: priceId,
             currentPeriodEnd,
+            currentPeriodStart,
         }
     });
 
     // Update profile
     await prisma.profile.update({
-        where: { id: existingSubscription.profileId },
+        where: { id: profileId },
         data: {
             tierId: tier.id,
             subscriptionStatus: trialEnd ? "TRIAL" : status.toUpperCase(),
@@ -327,10 +356,10 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     });
 
     // Create history record
-    if (existingSubscription.tierId !== tier.id) {
+    if (existingSubscription && existingSubscription.tierId !== tier.id) {
         await prisma.subscriptionHistory.create({
             data: {
-                profileId: existingSubscription.profileId,
+                profileId,
                 action: "UPGRADED",
                 previousTierId: existingSubscription.tierId,
                 newTierId: tier.id,
@@ -341,15 +370,25 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     } else if (isTrialEnding) {
         await prisma.subscriptionHistory.create({
             data: {
-                profileId: existingSubscription.profileId,
+                profileId,
                 action: "RENEWED",
                 performedBy: "SYSTEM",
                 notes: "Trial ended, subscription activated"
             }
         });
+    } else if (!existingSubscription) {
+        await prisma.subscriptionHistory.create({
+            data: {
+                profileId,
+                action: "UPGRADED",
+                newTierId: tier.id,
+                performedBy: "USER",
+                notes: `Subscribed to ${tier.name}${trialEnd ? ' with trial' : ''}`
+            }
+        });
     }
 
-    console.log(`Subscription updated: ${id}`);
+    console.log(`✅ Subscription ${existingSubscription ? 'updated' : 'created'} for profile ${profileId}, tier: ${tier.name}, expires: ${currentPeriodEnd.toISOString()}`);
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
