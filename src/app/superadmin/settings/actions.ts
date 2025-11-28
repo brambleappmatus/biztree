@@ -1,26 +1,17 @@
 "use server";
 
-import fs from 'fs/promises';
-import path from 'path';
+import prisma from "@/lib/prisma";
 
 export async function toggleLifetimeDeals(enabled: boolean) {
     try {
-        const envPath = path.join(process.cwd(), '.env');
-        let envContent = await fs.readFile(envPath, 'utf-8');
-
-        // Check if ENABLE_LIFETIME_DEALS exists
-        if (envContent.includes('ENABLE_LIFETIME_DEALS=')) {
-            // Replace existing value
-            envContent = envContent.replace(
-                /ENABLE_LIFETIME_DEALS=(true|false)/,
-                `ENABLE_LIFETIME_DEALS=${enabled}`
-            );
-        } else {
-            // Add new line
-            envContent += `\nENABLE_LIFETIME_DEALS=${enabled}\n`;
-        }
-
-        await fs.writeFile(envPath, envContent, 'utf-8');
+        await prisma.systemSettings.upsert({
+            where: { key: 'ENABLE_LIFETIME_DEALS' },
+            update: { value: String(enabled) },
+            create: {
+                key: 'ENABLE_LIFETIME_DEALS',
+                value: String(enabled)
+            }
+        });
 
         return { success: true };
     } catch (error: any) {
@@ -30,5 +21,13 @@ export async function toggleLifetimeDeals(enabled: boolean) {
 }
 
 export async function getLifetimeDealsStatus() {
-    return process.env.ENABLE_LIFETIME_DEALS === 'true';
+    try {
+        const setting = await prisma.systemSettings.findUnique({
+            where: { key: 'ENABLE_LIFETIME_DEALS' }
+        });
+        return setting?.value === 'true';
+    } catch (error) {
+        console.error('Error fetching lifetime deals status:', error);
+        return false;
+    }
 }

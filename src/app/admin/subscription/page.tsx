@@ -126,8 +126,11 @@ export default async function SubscriptionPage() {
         }
     };
 
-    // Check if lifetime deals are enabled
-    const enableLifetime = process.env.ENABLE_LIFETIME_DEALS === 'true';
+    // Check if lifetime deals are enabled from database
+    const lifetimeSetting = await prisma.systemSettings.findUnique({
+        where: { key: 'ENABLE_LIFETIME_DEALS' }
+    });
+    const enableLifetime = lifetimeSetting?.value === 'true';
 
     return (
         <div className="max-w-7xl mx-auto space-y-12 pb-20">

@@ -61,7 +61,7 @@ export default function CookiesPolicyPage() {
                             Ak máte otázky týkajúce sa používania cookies, kontaktujte nás na:
                         </p>
                         <p className="text-gray-700">
-                            <strong>Email:</strong> support@biztree.sk
+                            <strong>Email:</strong> hello@biztree.bio
                         </p>
                     </section>
                 </div>

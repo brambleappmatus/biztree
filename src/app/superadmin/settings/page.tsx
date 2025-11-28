@@ -33,8 +33,8 @@ export default function SettingsPage() {
             setLifetimeEnabled(enabled);
             showToast(
                 enabled
-                    ? "Lifetime deals enabled! Restart server to apply changes."
-                    : "Lifetime deals disabled! Restart server to apply changes.",
+                    ? "Lifetime deals enabled successfully!"
+                    : "Lifetime deals disabled successfully!",
                 "success"
             );
         } catch (error: any) {
@@ -75,12 +75,6 @@ export default function SettingsPage() {
                             Enable or disable lifetime deal pricing options on the subscription page.
                             When enabled, users will see a "Lifetime" toggle option alongside Monthly and Yearly pricing.
                         </p>
-                        <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                            <p className="text-xs text-amber-800 dark:text-amber-200">
-                                ⚠️ <strong>Important:</strong> After changing this setting, you must restart the development server
-                                for changes to take effect.
-                            </p>
-                        </div>
                     </div>
 
                     <div className="ml-6">
@@ -88,8 +82,8 @@ export default function SettingsPage() {
                             onClick={() => handleToggle(!lifetimeEnabled)}
                             disabled={saving}
                             className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${lifetimeEnabled
-                                    ? 'bg-blue-600'
-                                    : 'bg-gray-200 dark:bg-gray-700'
+                                ? 'bg-blue-600'
+                                : 'bg-gray-200 dark:bg-gray-700'
                                 } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <span
@@ -104,8 +98,8 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 dark:text-gray-400">Current Status:</span>
                         <span className={`font-semibold ${lifetimeEnabled
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-gray-600 dark:text-gray-400'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-gray-600 dark:text-gray-400'
                             }`}>
                             {lifetimeEnabled ? '✓ Enabled' : '✗ Disabled'}
                         </span>
