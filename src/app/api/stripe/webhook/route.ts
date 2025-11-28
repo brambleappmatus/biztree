@@ -102,7 +102,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const customerId = typeof customer === 'string' ? customer : customer.id;
 
     // Get subscription details from Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+    console.log(`Stripe Subscription retrieved: ${stripeSubscription.id}, status: ${stripeSubscription.status}, end: ${stripeSubscription.current_period_end}`);
 
     // Get tier from price ID
     const priceId = stripeSubscription.items.data[0].price.id;
@@ -125,13 +126,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         : null;
 
     // Handle trial subscriptions that may not have billing periods yet
-    const currentPeriodStart = (stripeSubscription as any).current_period_start
-        ? new Date((stripeSubscription as any).current_period_start * 1000)
+    const currentPeriodStart = stripeSubscription.current_period_start
+        ? new Date(stripeSubscription.current_period_start * 1000)
         : new Date(); // Fallback to now if not set
 
-    const currentPeriodEnd = (stripeSubscription as any).current_period_end
-        ? new Date((stripeSubscription as any).current_period_end * 1000)
-        : (trialEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)); // Fallback to trial end or 30 days from now
+    let currentPeriodEnd: Date;
+    if (stripeSubscription.current_period_end) {
+        currentPeriodEnd = new Date(stripeSubscription.current_period_end * 1000);
+    } else if (trialEnd) {
+        currentPeriodEnd = trialEnd;
+    } else {
+        console.warn(`⚠️ Missing current_period_end for subscription ${subscriptionId}, falling back to 30 days`);
+        currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    }
 
     // Create or update subscription record
     await prisma.subscription.upsert({
