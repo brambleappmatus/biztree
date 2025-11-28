@@ -193,7 +193,17 @@ export default async function SubscriptionPage() {
                                         ? 'Lifetime'
                                         : currentTier?.name === 'Free'
                                             ? 'Zdarma'
-                                            : `€${currentTier?.price}/mesiac`
+                                            : (() => {
+                                                const isYearly = activeSubscription?.stripePriceId &&
+                                                    Object.values(priceIds.yearly).includes(activeSubscription.stripePriceId);
+
+                                                const tierName = (currentTier?.name || 'Free') as keyof typeof prices.monthly;
+
+                                                if (isYearly) {
+                                                    return `€${prices.yearly[tierName]}/rok`;
+                                                }
+                                                return `€${prices.monthly[tierName]}/mesiac`;
+                                            })()
                                     }
                                 </p>
                             </div>
