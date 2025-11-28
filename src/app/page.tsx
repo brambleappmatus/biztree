@@ -93,7 +93,11 @@ export default async function LandingPage() {
     }
   };
 
-  const enableLifetime = process.env.ENABLE_LIFETIME_DEALS === 'true';
+  // Check if lifetime deals are enabled from database
+  const lifetimeSetting = await prisma.systemSettings.findUnique({
+    where: { key: 'ENABLE_LIFETIME_DEALS' }
+  });
+  const enableLifetime = lifetimeSetting?.value === 'true';
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 overflow-hidden">

@@ -27,17 +27,17 @@ export default function LandingFooter() {
                         <h3 className="font-semibold text-gray-900 mb-4">{t.footer.legal}</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link href="/legal/business-policy" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
+                                <Link href="/business-policy" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
                                     {t.footer.terms}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/legal/privacy" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
+                                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
                                     {t.footer.privacy}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/legal/cookies" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
+                                <Link href="/cookies" className="text-gray-600 hover:text-blue-600 text-sm transition-colors">
                                     {t.footer.cookies}
                                 </Link>
                             </li>
