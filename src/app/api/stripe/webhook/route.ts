@@ -282,8 +282,8 @@ async function handleLifetimePayment(session: Stripe.Checkout.Session) {
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     console.log("=== WEBHOOK: Subscription Update/Create ===");
-    const { id, customer, status, current_period_end, current_period_start, trial_end, items, metadata } = subscription as any;
-    console.log(`Subscription ID: ${id}, Status: ${status}, Period End: ${current_period_end}`);
+    const { id, customer, status, current_period_end, current_period_start, trial_end, items, metadata, cancel_at_period_end } = subscription as any;
+    console.log(`Subscription ID: ${id}, Status: ${status}, Period End: ${current_period_end}, Cancel At Period End: ${cancel_at_period_end}`);
 
     const customerId = typeof customer === 'string' ? customer : customer.id;
     const priceId = items.data[0].price.id;
@@ -335,6 +335,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
             status: status.toUpperCase(),
             currentPeriodStart,
             currentPeriodEnd,
+            cancelAtPeriodEnd: cancel_at_period_end || false,
         },
         update: {
             status: status.toUpperCase(),
@@ -342,6 +343,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
             stripePriceId: priceId,
             currentPeriodEnd,
             currentPeriodStart,
+            cancelAtPeriodEnd: cancel_at_period_end || false,
         }
     });
 

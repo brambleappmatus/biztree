@@ -370,3 +370,46 @@ export async function getSubscriptionDetails() {
 
     return user.profiles[0].subscriptions[0] || null;
 }
+
+export async function syncSubscriptionStatus() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return;
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: {
+            profiles: {
+                include: {
+                    subscriptions: {
+                        where: {
+                            stripeSubscriptionId: { not: null },
+                            status: { in: ['ACTIVE', 'TRIAL', 'TRIALING', 'PAST_DUE'] }
+                        },
+                        take: 1
+                    }
+                }
+            }
+        }
+    });
+
+    const subscription = user?.profiles[0]?.subscriptions[0];
+    if (!subscription?.stripeSubscriptionId) return;
+
+    try {
+        const stripeSub = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+
+        await prisma.subscription.update({
+            where: { id: subscription.id },
+            data: {
+                cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+                status: stripeSub.status.toUpperCase(),
+                currentPeriodEnd: new Date((stripeSub as any).current_period_end * 1000)
+            }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to sync subscription:", error);
+        return { error: "Failed to sync" };
+    }
+}

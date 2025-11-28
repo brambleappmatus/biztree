@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getCompanies, getCompanyStats, deleteCompany, createCompany, getTiersList, updateCompanyTier, extendSubscription } from "../actions";
 import { MuiButton } from "@/components/ui/mui-button";
 import { MuiInput } from "@/components/ui/mui-input";
-import { Trash2, Plus, Building2, Calendar, Clock, Search, TrendingUp, Users, Crown, Zap } from "lucide-react";
+import { Trash2, Plus, Building2, Calendar, Clock, Search, TrendingUp, Users, Crown, Zap, Download, ArrowUpDown, Filter } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 
@@ -28,6 +28,11 @@ interface Company {
         id: string;
         name: string;
     } | null;
+    subscriptions: {
+        stripePriceId: string | null;
+        currentPeriodEnd: Date | null;
+        cancelAtPeriodEnd: boolean;
+    }[];
 }
 
 interface Tier {
@@ -67,18 +72,33 @@ export default function CompaniesPage() {
     const [selectedTierId, setSelectedTierId] = useState<string>("");
     const [expirationDate, setExpirationDate] = useState<string>("");
 
+    // Sorting and filtering state
+    const [sortBy, setSortBy] = useState<string>("createdAt");
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("desc");
+    const [filterTier, setFilterTier] = useState<string>("");
+    const [filterStatus, setFilterStatus] = useState<string>("");
+
     useEffect(() => {
         loadData();
-    }, [currentPage, searchQuery]);
+    }, [currentPage, searchQuery, sortBy, sortOrder, filterTier, filterStatus]);
 
     const loadData = async () => {
         try {
             const [companiesData, statsData, tiersData] = await Promise.all([
-                getCompanies({ page: currentPage, limit: 20, search: searchQuery }),
+                getCompanies({
+                    page: currentPage,
+                    limit: 20,
+                    search: searchQuery,
+                    sortBy,
+                    sortOrder,
+                    filterTier: filterTier || undefined,
+                    filterStatus: filterStatus || undefined
+                }),
                 getCompanyStats(),
                 getTiersList()
             ]);
-            setCompanies(companiesData.companies);
+            // Cast the response to match our interface since the action returns the raw Prisma type
+            setCompanies(companiesData.companies as unknown as Company[]);
             setTotalPages(companiesData.pagination.totalPages);
             setTotal(companiesData.pagination.total);
             setStats(statsData);
@@ -145,6 +165,47 @@ export default function CompaniesPage() {
         }
     };
 
+    const handleSort = (column: string) => {
+        if (sortBy === column) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(column);
+            setSortOrder('asc');
+        }
+    };
+
+    const handleExportCSV = () => {
+        // Prepare CSV data
+        const headers = ['Company', 'Subdomain', 'Owner Email', 'Tier', 'Status', 'Expires', 'Created'];
+        const rows = companies.map(company => [
+            company.name,
+            company.subdomain,
+            company.user?.email || '-',
+            company.tier?.name || 'Free',
+            company.subscriptionStatus || '-',
+            formatDate(company.subscriptionExpiresAt),
+            formatDate(company.createdAt)
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        // Download CSV
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `companies_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("CSV exported successfully", "success");
+    };
+
     const formatDate = (date: Date | null | undefined) => {
         if (!date) return "-";
         return new Date(date).toLocaleDateString();
@@ -159,12 +220,24 @@ export default function CompaniesPage() {
         return days;
     };
 
-    const getStatusBadge = (status: string | null | undefined, expiresAt: Date | null | undefined, tierName: string | null | undefined) => {
+    const getStatusBadge = (company: Company) => {
+        const status = company.subscriptionStatus;
+        const expiresAt = company.subscriptionExpiresAt;
+        const tierName = company.tier?.name;
+        const activeSub = company.subscriptions?.[0];
+        const isCancelled = activeSub?.cancelAtPeriodEnd;
+
         const days = getDaysRemaining(expiresAt);
 
         if (status === "EXPIRED" || (days !== null && days < 0)) {
             return <span className="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400">Expired</span>;
         }
+
+        // Show "Cancelled" if subscription is set to cancel at period end
+        if (isCancelled && status === "ACTIVE") {
+            return <span className="px-2 py-1 text-xs rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400">Cancelled</span>;
+        }
+
         if (status === "ACTIVE" && days !== null && days <= 7) {
             return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">Expiring Soon</span>;
         }
@@ -286,6 +359,45 @@ export default function CompaniesPage() {
                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
+
+                {/* Filters and Export */}
+                <div className="flex gap-3 items-center mt-4">
+                    <div className="flex gap-2 items-center">
+                        <Filter size={18} className="text-gray-400" />
+                        <select
+                            value={filterTier}
+                            onChange={(e) => setFilterTier(e.target.value)}
+                            className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">All Tiers</option>
+                            {tiers.map(tier => (
+                                <option key={tier.id} value={tier.id}>{tier.name}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="expired">Expired</option>
+                            <option value="lifetime">Lifetime</option>
+                        </select>
+                    </div>
+
+                    <div className="ml-auto">
+                        <button
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                        >
+                            <Download size={16} />
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Table */}
@@ -296,9 +408,25 @@ export default function CompaniesPage() {
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Company</th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Subdomain</th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Owner</th>
-                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Tier</th>
+                            <th
+                                className="p-4 font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => handleSort('tierId')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Tier
+                                    <ArrowUpDown size={14} className={sortBy === 'tierId' ? 'text-blue-500' : 'text-gray-400'} />
+                                </div>
+                            </th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Status</th>
-                            <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Expires</th>
+                            <th
+                                className="p-4 font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => handleSort('subscriptionExpiresAt')}
+                            >
+                                <div className="flex items-center gap-1">
+                                    Expires
+                                    <ArrowUpDown size={14} className={sortBy === 'subscriptionExpiresAt' ? 'text-blue-500' : 'text-gray-400'} />
+                                </div>
+                            </th>
                             <th className="p-4 font-medium text-gray-700 dark:text-gray-300">Actions</th>
                         </tr>
                     </thead>
@@ -317,7 +445,7 @@ export default function CompaniesPage() {
                                     </button>
                                 </td>
                                 <td className="p-4">
-                                    {getStatusBadge(company.subscriptionStatus, company.subscriptionExpiresAt, company.tier?.name)}
+                                    {getStatusBadge(company)}
                                 </td>
                                 <td className="p-4 text-gray-700 dark:text-gray-300">
                                     <div className="flex items-center gap-2">

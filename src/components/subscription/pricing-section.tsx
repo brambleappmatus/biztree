@@ -199,7 +199,7 @@ export function PricingSection({
 
                         // Treat cancelled subscriptions as inactive for OTHER tiers
                         // This allows switching from cancelled Business to Pro trial
-                        const isCurrentTierCard = tier.name === currentTierName;
+                        const isCurrentTierCard = isCurrentTierAndCycle;
                         const isCancelled = activeSubscription?.cancelAtPeriodEnd || false;
                         const hasActiveSubscription = !!activeSubscription && (!isCancelled || isCurrentTierCard);
 

@@ -18,6 +18,10 @@ export async function getCompanies(params: {
     page?: number;
     limit?: number;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    filterTier?: string;
+    filterStatus?: string;
 }) {
     await checkSuperAdmin();
 
@@ -25,15 +29,47 @@ export async function getCompanies(params: {
     const limit = params.limit || 20;
     const skip = (page - 1) * limit;
     const search = params.search?.trim() || '';
+    const sortBy = params.sortBy || 'createdAt';
+    const sortOrder = params.sortOrder || 'desc';
 
-    // Build where clause for search
-    const where = search ? {
-        OR: [
+    // Build where clause
+    const where: any = {};
+
+    if (search) {
+        where.OR = [
             { name: { contains: search, mode: 'insensitive' as const } },
             { subdomain: { contains: search, mode: 'insensitive' as const } },
             { user: { email: { contains: search, mode: 'insensitive' as const } } }
-        ]
-    } : {};
+        ];
+    }
+
+    if (params.filterTier) {
+        where.tierId = params.filterTier;
+    }
+
+    if (params.filterStatus) {
+        switch (params.filterStatus) {
+            case 'active':
+                where.subscriptionStatus = 'ACTIVE';
+                where.subscriptions = { none: { cancelAtPeriodEnd: true } };
+                break;
+            case 'cancelled':
+                where.subscriptions = { some: { status: 'ACTIVE', cancelAtPeriodEnd: true } };
+                break;
+            case 'expired':
+                where.OR = [
+                    ...(where.OR || []),
+                    { subscriptionStatus: 'EXPIRED' },
+                    { subscriptionExpiresAt: { lt: new Date() } }
+                ];
+                break;
+            case 'lifetime':
+                where.subscriptionStatus = 'ACTIVE';
+                where.subscriptionExpiresAt = null;
+                where.tier = { name: { not: 'Free' } };
+                break;
+        }
+    }
 
     const [companies, total] = await Promise.all([
         prisma.profile.findMany({
@@ -58,7 +94,8 @@ export async function getCompanies(params: {
                     where: { status: 'ACTIVE' },
                     select: {
                         stripePriceId: true,
-                        currentPeriodEnd: true
+                        currentPeriodEnd: true,
+                        cancelAtPeriodEnd: true
                     },
                     take: 1
                 },
@@ -69,7 +106,7 @@ export async function getCompanies(params: {
                     }
                 }
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { [sortBy]: sortOrder },
             skip,
             take: limit
         }),

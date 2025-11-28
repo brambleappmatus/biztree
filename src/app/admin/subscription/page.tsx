@@ -6,6 +6,7 @@ import { Crown, Sparkles, Calendar, Shield, Star } from "lucide-react";
 import { PricingSection } from "@/components/subscription/pricing-section";
 import { CancelSubscriptionButton } from "@/components/subscription/cancel-subscription-button";
 import { SubscriptionSuccessHandler } from "@/components/subscription/subscription-success-handler";
+import { SubscriptionSyncer } from "@/components/subscription/subscription-syncer";
 import { getStripePrices } from "@/lib/stripe";
 
 export default async function SubscriptionPage() {
@@ -247,10 +248,16 @@ export default async function SubscriptionPage() {
             />
 
             {/* Cancel Subscription/Trial Button */}
-            <CancelSubscriptionButton subscriptionStatus={subscriptionStatus} />
+            <CancelSubscriptionButton
+                subscriptionStatus={subscriptionStatus}
+                currentTier={currentTier}
+                activeSubscription={activeSubscription}
+                priceIds={priceIds}
+            />
 
             {/* Success/Cancel Handler */}
             <SubscriptionSuccessHandler />
+            <SubscriptionSyncer />
         </div>
     );
 }
