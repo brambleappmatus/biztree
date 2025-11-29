@@ -8,6 +8,7 @@ import { Plus, Trash2, Eye, EyeOff, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface ShowcaseLayer {
     id?: string;
@@ -284,6 +285,40 @@ export default function ShowcasesPage() {
         setEditingId(showcase.id);
     };
 
+    const handleDragEnd = async (result: DropResult) => {
+        if (!result.destination) return;
+
+        const items = Array.from(showcases);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reorderedItem);
+
+        // Update order property for all items
+        const updatedItems = items.map((item, index) => ({
+            ...item,
+            order: index,
+        }));
+
+        // Optimistically update UI
+        setShowcases(updatedItems);
+
+        // Update in database
+        try {
+            await fetch("/api/superadmin/showcases/reorder", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    items: updatedItems.map(item => ({ id: item.id, order: item.order }))
+                }),
+            });
+            showToast("Order updated", "success");
+        } catch (error) {
+            console.error("Failed to reorder showcases:", error);
+            showToast("Failed to update order", "error");
+            // Revert on error
+            fetchShowcases();
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div>
@@ -452,53 +487,76 @@ export default function ShowcasesPage() {
                         No showcases yet. Add one above!
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {showcases.map((showcase) => (
-                            <div
-                                key={showcase.id}
-                                className={cn(
-                                    "flex items-center gap-4 p-4 rounded-lg border transition-colors",
-                                    showcase.isActive
-                                        ? "bg-white border-gray-200"
-                                        : "bg-gray-50 border-gray-200 opacity-60"
-                                )}
-                            >
-                                <GripVertical className="text-gray-400 cursor-move" size={20} />
-                                <div className="flex-1">
-                                    <div className="font-medium">{showcase.name}</div>
-                                    <div className="text-sm text-gray-500 truncate">
-                                        {showcase.profileUrl}
-                                    </div>
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                        <Droppable droppableId="showcases">
+                            {(provided) => (
+                                <div
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                    className="space-y-2"
+                                >
+                                    {showcases.map((showcase, index) => (
+                                        <Draggable
+                                            key={showcase.id}
+                                            draggableId={showcase.id}
+                                            index={index}
+                                        >
+                                            {(provided, snapshot) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    className={cn(
+                                                        "flex items-center gap-4 p-4 rounded-lg border transition-colors",
+                                                        showcase.isActive
+                                                            ? "bg-white border-gray-200"
+                                                            : "bg-gray-50 border-gray-200 opacity-60",
+                                                        snapshot.isDragging && "shadow-lg"
+                                                    )}
+                                                >
+                                                    <div {...provided.dragHandleProps}>
+                                                        <GripVertical className="text-gray-400 cursor-move" size={20} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="font-medium">{showcase.name}</div>
+                                                        <div className="text-sm text-gray-500 truncate">
+                                                            {showcase.profileUrl}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleToggleActive(showcase.id, showcase.isActive)}
+                                                            className={cn(
+                                                                "p-2 rounded-lg transition-colors",
+                                                                showcase.isActive
+                                                                    ? "bg-green-100 text-green-600 hover:bg-green-200"
+                                                                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                                                            )}
+                                                            title={showcase.isActive ? "Active" : "Inactive"}
+                                                        >
+                                                            {showcase.isActive ? <Eye size={18} /> : <EyeOff size={18} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleEdit(showcase)}
+                                                            className="px-3 py-2 text-sm bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteClick(showcase.id)}
+                                                            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleToggleActive(showcase.id, showcase.isActive)}
-                                        className={cn(
-                                            "p-2 rounded-lg transition-colors",
-                                            showcase.isActive
-                                                ? "bg-green-100 text-green-600 hover:bg-green-200"
-                                                : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                                        )}
-                                        title={showcase.isActive ? "Active" : "Inactive"}
-                                    >
-                                        {showcase.isActive ? <Eye size={18} /> : <EyeOff size={18} />}
-                                    </button>
-                                    <button
-                                        onClick={() => handleEdit(showcase)}
-                                        className="px-3 py-2 text-sm bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(showcase.id)}
-                                        className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
                 )}
             </MuiCard>
 
