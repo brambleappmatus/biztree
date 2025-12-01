@@ -8,6 +8,8 @@ interface BookingConfirmationEmailProps {
     location?: string;
     googleCalendarLink?: string;
     appleCalendarLink?: string;
+    googleMeetLink?: string;
+    locationType?: string;
 }
 
 export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> = ({
@@ -18,6 +20,8 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
     location,
     googleCalendarLink,
     appleCalendarLink,
+    googleMeetLink,
+    locationType,
 }) => (
     <div style={{
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -98,7 +102,32 @@ export const BookingConfirmationEmail: React.FC<BookingConfirmationEmailProps> =
                         </div>
                     </div>
 
-                    {location && (
+                    {locationType === 'google_meet' && googleMeetLink && (
+                        <div>
+                            <span style={{ color: '#64748b', fontSize: '14px' }}>Miesto</span>
+                            <div style={{ color: '#1e293b', fontSize: '16px', fontWeight: '500', marginTop: '4px' }}>
+                                💻 Online stretnutie (Google Meet)
+                            </div>
+                            <a
+                                href={googleMeetLink}
+                                style={{
+                                    display: 'inline-block',
+                                    marginTop: '8px',
+                                    backgroundColor: '#0b8043',
+                                    color: '#ffffff',
+                                    padding: '10px 20px',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    fontWeight: '600',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                🎥 Pripojiť sa na Google Meet
+                            </a>
+                        </div>
+                    )}
+
+                    {locationType !== 'google_meet' && location && (
                         <div>
                             <span style={{ color: '#64748b', fontSize: '14px' }}>Miesto</span>
                             <div style={{ color: '#1e293b', fontSize: '16px', fontWeight: '500', marginTop: '4px' }}>

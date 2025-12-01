@@ -220,19 +220,7 @@ export default async function ProfilePage({
                         <ServicesBlock
                             profile={{
                                 ...profileData,
-                                services: profileData.services
-                                    .slice(0, getPlanLimits(profileData.tier?.name).maxServices)
-                                    .map(s => ({
-                                        ...s,
-                                        price: s.price ? Number(s.price) : 0,
-                                        minimumValue: s.minimumValue ? Number(s.minimumValue) : 0,
-                                        pricePerDay: s.pricePerDay ? Number(s.pricePerDay) : 0,
-                                    })),
-                                // Serialize tier to convert Decimal price field
-                                tier: profileData.tier ? {
-                                    ...profileData.tier,
-                                    price: profileData.tier.price ? Number(profileData.tier.price) : null,
-                                } as any : null
+                                services: profileData.services.slice(0, getPlanLimits(profileData.tier?.name).maxServices),
                             }}
                             lang={lang}
                             bgImage={effectiveBgImage}

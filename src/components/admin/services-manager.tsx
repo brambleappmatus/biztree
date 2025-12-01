@@ -15,7 +15,12 @@ import { PremiumModal } from "@/components/ui/premium-modal";
 
 interface ServicesManagerProps {
     profileId: string;
-    services: (Service & { workers?: any[] })[];
+    services: (Omit<Service, "price" | "minimumValue" | "pricePerDay"> & {
+        price: number | any;
+        minimumValue: number | any;
+        pricePerDay: number | any;
+        workers?: any[];
+    })[];
     workers: Worker[];
     isGoogleConnected: boolean;
     allowConcurrentServices?: boolean;
@@ -50,6 +55,8 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
         maxCapacity: 4,
         allowWorkerSelection: false,
         requireWorker: false,
+        locationType: "business_address" as "business_address" | "custom_address" | "google_meet",
+        customAddress: "",
     });
 
     const [minConstraintType, setMinConstraintType] = useState<'days' | 'value'>('days');
@@ -68,6 +75,8 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
             maxCapacity: 4,
             allowWorkerSelection: false,
             requireWorker: false,
+            locationType: "business_address" as "business_address" | "custom_address" | "google_meet",
+            customAddress: "",
         });
         setEditingId(null);
         setIsCreating(false);
@@ -88,6 +97,8 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
             maxCapacity: service.maxCapacity ?? 4,
             allowWorkerSelection: service.allowWorkerSelection,
             requireWorker: service.requireWorker,
+            locationType: (service.locationType as "business_address" | "custom_address" | "google_meet") ?? "business_address",
+            customAddress: service.customAddress ?? "",
         });
         setEditingId(service.id);
         setIsCreating(false);
@@ -229,7 +240,7 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
                                     setShowPremiumModal(true);
                                     return;
                                 }
-                                window.location.href = "/api/google-calendar/auth";
+                                window.location.href = `/api/google-calendar/connect?profileId=${profileId}`;
                             }}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors relative"
                         >
@@ -483,6 +494,67 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
                             </div>
                         )}
 
+                        {formData.calendarType === "HOURLY_SERVICE" && (
+                            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
+                                <h4 className="text-sm font-medium mb-3">Miesto konania</h4>
+                                <div className="space-y-3">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="locationType"
+                                                value="business_address"
+                                                checked={formData.locationType === "business_address"}
+                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm text-gray-700">Adresa firmy</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="locationType"
+                                                value="custom_address"
+                                                checked={formData.locationType === "custom_address"}
+                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm text-gray-700">Vlastná adresa</span>
+                                        </label>
+
+                                        {formData.locationType === "custom_address" && (
+                                            <input
+                                                type="text"
+                                                placeholder="Zadajte adresu..."
+                                                value={formData.customAddress}
+                                                onChange={(e) => setFormData({ ...formData, customAddress: e.target.value })}
+                                                className="ml-6 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 text-sm"
+                                            />
+                                        )}
+
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="locationType"
+                                                value="google_meet"
+                                                checked={formData.locationType === "google_meet"}
+                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
+                                                className="w-4 h-4 text-blue-600"
+                                            />
+                                            <span className="text-sm text-gray-700">Google Meet (online)</span>
+                                        </label>
+
+                                        {formData.locationType === "google_meet" && (
+                                            <p className="ml-6 text-xs text-gray-500">
+                                                Google Meet link bude automaticky vytvorený a pridaný do kalendára a emailu.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {formData.calendarType === "DAILY_RENTAL" && (
                             <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
                                 <div className="mb-4">
@@ -641,7 +713,10 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-500">
-                                            {service.duration > 0 && `${service.duration} min • `}{Number(service.price)} €
+                                            {[
+                                                service.duration > 0 && `${service.duration} min`,
+                                                Number(service.price) > 0 && `${Number(service.price)} €`
+                                            ].filter(Boolean).join(' • ')}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">

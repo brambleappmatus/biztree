@@ -415,28 +415,68 @@ export async function createBooking(data: {
     // Add to Google Calendar
     console.log("📝 Attempting to add booking to Google Calendar...");
     console.log("🔑 Has tokens?", !!(profile.googleAccessToken && profile.googleRefreshToken));
+
+    let googleMeetLink: string | undefined;
+
     if (profile.googleAccessToken && profile.googleRefreshToken) {
         try {
             console.log("📅 Creating event:", {
                 summary: `Rezervácia: ${service.name} - ${data.name}`,
                 start: startTime.toISOString(),
-                end: endTime.toISOString()
+                end: endTime.toISOString(),
+                locationType: service.locationType
             });
             const calendar = getGoogleCalendarClient(profile.googleAccessToken, profile.googleRefreshToken);
+
+            // Build event request body
+            const eventBody: any = {
+                summary: `Rezervácia: ${service.name} - ${data.name}`,
+                description: `Služba: ${service.name}\\nKlient: ${data.name}\\nEmail: ${data.email}\\nTel: ${data.phone}`,
+                start: { dateTime: startTime.toISOString() },
+                end: { dateTime: endTime.toISOString() },
+                attendees: [
+                    { email: data.email, displayName: data.name, responseStatus: 'needsAction' }
+                ],
+                extendedProperties: {
+                    private: {
+                        biztreeBookingId: booking.id
+                    }
+                }
+            };
+
+            // Add location based on service settings
+            if (service.locationType === 'google_meet') {
+                // Request Google Meet conference
+                eventBody.conferenceData = {
+                    createRequest: {
+                        requestId: `biztree-${booking.id}`,
+                        conferenceSolutionKey: { type: 'hangoutsMeet' }
+                    }
+                };
+            } else if (service.locationType === 'custom_address' && service.customAddress) {
+                eventBody.location = service.customAddress;
+            } else if (service.locationType === 'business_address' && profile.address) {
+                eventBody.location = profile.address;
+            }
+
             const result = await calendar.events.insert({
                 calendarId: 'primary',
-                requestBody: {
-                    summary: `Rezervácia: ${service.name} - ${data.name}`,
-                    description: `Služba: ${service.name}\nKlient: ${data.name}\nEmail: ${data.email}\nTel: ${data.phone}`,
-                    start: { dateTime: startTime.toISOString() },
-                    end: { dateTime: endTime.toISOString() },
-                    extendedProperties: {
-                        private: {
-                            biztreeBookingId: booking.id
-                        }
-                    }
-                },
+                conferenceDataVersion: service.locationType === 'google_meet' ? 1 : 0,
+                sendUpdates: 'all', // Send email notifications to all attendees
+                requestBody: eventBody,
             });
+
+            // Extract Google Meet link if created
+            if (result.data.conferenceData?.entryPoints) {
+                const meetEntry = result.data.conferenceData.entryPoints.find(
+                    (entry: any) => entry.entryPointType === 'video'
+                );
+                if (meetEntry?.uri) {
+                    googleMeetLink = meetEntry.uri;
+                    console.log("✅ Google Meet link created:", googleMeetLink);
+                }
+            }
+
             console.log("✅ Event created successfully:", result.data.id);
         } catch (error) {
             console.error("❌ Failed to add event to Google Calendar:", error);
@@ -454,11 +494,26 @@ export async function createBooking(data: {
         const formattedDate = format(startTime, "d.M.yyyy");
         const formattedTime = format(startTime, "HH:mm");
 
+        // Determine location for calendar links and email
+        let locationForCalendar = '';
+        let locationForEmail = '';
+
+        if (service.locationType === 'google_meet') {
+            locationForCalendar = 'Online (Google Meet)';
+            locationForEmail = googleMeetLink || 'Online (Google Meet)';
+        } else if (service.locationType === 'custom_address' && service.customAddress) {
+            locationForCalendar = service.customAddress;
+            locationForEmail = service.customAddress;
+        } else if (profile.address) {
+            locationForCalendar = profile.address;
+            locationForEmail = profile.address;
+        }
+
         // Create Google Calendar link
-        const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Rezervácia: ${service.name}`)}&dates=${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}&location=${encodeURIComponent(profile.address || '')}`;
+        const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Rezervácia: ${service.name}`)}&dates=${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(`Služba: ${service.name}\\nPoskytovateľ: ${profile.name}`)}${locationForCalendar ? `&location=${encodeURIComponent(locationForCalendar)}` : ''}`;
 
         // Create Apple Calendar (.ics) link
-        const appleCalendarLink = `data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ADTEND:${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ASUMMARY:${encodeURIComponent(`Rezervácia: ${service.name}`)}%0ADESCRIPTION:${encodeURIComponent(`Služba: ${service.name}\nPoskytovateľ: ${profile.name}`)}%0ALOCATION:${encodeURIComponent(profile.address || '')}%0AEND:VEVENT%0AEND:VCALENDAR`;
+        const appleCalendarLink = `data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ADTSTART:${startTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ADTEND:${endTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z%0ASUMMARY:${encodeURIComponent(`Rezervácia: ${service.name}`)}%0ADESCRIPTION:${encodeURIComponent(`Služba: ${service.name}\\nPoskytovateľ: ${profile.name}`)}${locationForCalendar ? `%0ALOCATION:${encodeURIComponent(locationForCalendar)}` : ''}%0AEND:VEVENT%0AEND:VCALENDAR`;
 
         if (resend) {
             console.log(`📧 Sending confirmation email to ${data.email}...`);
@@ -471,9 +526,11 @@ export async function createBooking(data: {
                     serviceName: service.name,
                     date: formattedDate,
                     time: formattedTime,
-                    location: profile.address || undefined,
+                    location: locationForEmail,
                     googleCalendarLink,
-                    appleCalendarLink
+                    appleCalendarLink,
+                    googleMeetLink,
+                    locationType: service.locationType || 'business_address',
                 }) as React.ReactNode,
             });
             console.log("✅ Confirmation email sent:", result.data?.id || result.error);
@@ -570,6 +627,8 @@ export async function createService(profileId: string, data: {
     maxCapacity?: number;
     allowWorkerSelection?: boolean;
     requireWorker?: boolean;
+    locationType?: string;
+    customAddress?: string;
 }) {
     const profile = await prisma.profile.findUnique({
         where: { id: profileId },
@@ -605,6 +664,8 @@ export async function createService(profileId: string, data: {
             maxCapacity: data.maxCapacity,
             allowWorkerSelection: data.allowWorkerSelection ?? false,
             requireWorker: data.requireWorker ?? false,
+            locationType: data.locationType ?? "business_address",
+            customAddress: data.customAddress,
         },
     });
     return { success: true };
@@ -623,6 +684,8 @@ export async function updateService(serviceId: string, data: {
     maxCapacity?: number;
     allowWorkerSelection?: boolean;
     requireWorker?: boolean;
+    locationType?: string;
+    customAddress?: string;
 }) {
     await prisma.service.update({
         where: { id: serviceId },
@@ -639,6 +702,8 @@ export async function updateService(serviceId: string, data: {
             maxCapacity: data.maxCapacity,
             allowWorkerSelection: data.allowWorkerSelection,
             requireWorker: data.requireWorker,
+            locationType: data.locationType,
+            customAddress: data.customAddress,
         },
     });
     return { success: true };

@@ -41,20 +41,27 @@ export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockP
                             <p className={`text-sm ${isLight ? "text-gray-300" : "text-gray-600"}`}>
                                 {service.calendarType === "DAILY_RENTAL" && (
                                     <>
-                                        {service.minimumDays && `Min. ${service.minimumDays} ${service.minimumDays === 1 ? 'noc' : 'noci'}`}
-                                        {service.pricePerDay && ` • ${Number(service.pricePerDay)} ${service.currency} / noc`}
+                                        {[
+                                            service.minimumDays && `Min. ${service.minimumDays} ${service.minimumDays === 1 ? 'noc' : 'noci'}`,
+                                            service.pricePerDay && Number(service.pricePerDay) > 0 && `${Number(service.pricePerDay)} ${service.currency} / noc`
+                                        ].filter(Boolean).join(' • ')}
                                     </>
                                 )}
                                 {service.calendarType === "HOURLY_SERVICE" && (
                                     <>
-                                        {service.duration > 0 && `${service.duration} min`}
-                                        {service.price && ` • ${Number(service.price)} ${service.currency}`}
+                                        {/* Display duration and price only when > 0 */}
+                                        {[
+                                            service.duration > 0 && `${service.duration} min`,
+                                            service.price && Number(service.price) > 0 && `${Number(service.price)} ${service.currency}`
+                                        ].filter(Boolean).join(' • ')}
                                     </>
                                 )}
                                 {service.calendarType === "TABLE_RESERVATION" && (
                                     <>
-                                        {service.duration > 0 && `${service.duration} min`}
-                                        {service.maxCapacity && ` • Max. ${service.maxCapacity} osôb`}
+                                        {[
+                                            service.duration > 0 && `${service.duration} min`,
+                                            service.maxCapacity && `Max. ${service.maxCapacity} osôb`
+                                        ].filter(Boolean).join(' • ')}
                                     </>
                                 )}
                             </p>

@@ -59,7 +59,12 @@ export default async function ServicesPage() {
                 />
                 <ServicesManager
                     profileId={profile.id}
-                    services={profile.services}
+                    services={profile.services.map(service => ({
+                        ...service,
+                        price: service.price ? Number(service.price) : 0,
+                        minimumValue: service.minimumValue ? Number(service.minimumValue) : 0,
+                        pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : 0,
+                    }))}
                     workers={profile.workers}
                     isGoogleConnected={!!(profile.googleAccessToken && profile.googleRefreshToken)}
                     allowConcurrentServices={profile.allowConcurrentServices}

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { PremiumModal } from "@/components/ui/premium-modal";
-import Image from "next/image";
+
 
 import { checkWorkerLimit, getPlanLimits } from "@/lib/subscription-limits";
 import { Lock } from "lucide-react";
@@ -176,12 +176,23 @@ export default function WorkersManager({ profileId, workers, tierName }: Workers
                             <div className="flex-shrink-0">
                                 <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 group hover:border-gray-400 transition-colors">
                                     {formData.imageUrl ? (
-                                        <Image
-                                            src={formData.imageUrl}
-                                            alt="Preview"
-                                            fill
-                                            className="object-cover"
-                                        />
+                                        <>
+                                            <img
+                                                src={formData.imageUrl}
+                                                alt="Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setFormData(prev => ({ ...prev, imageUrl: "" }));
+                                                }}
+                                                className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-gray-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </>
                                     ) : (
                                         <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
                                             <User className="w-8 h-8 mb-2" />
@@ -283,11 +294,10 @@ export default function WorkersManager({ profileId, workers, tierName }: Workers
                         >
                             <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                                 {worker.imageUrl ? (
-                                    <Image
+                                    <img
                                         src={worker.imageUrl}
                                         alt={worker.name}
-                                        fill
-                                        className="object-cover"
+                                        className="w-full h-full object-cover"
                                     />
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center text-gray-400">
@@ -385,7 +395,7 @@ export default function WorkersManager({ profileId, workers, tierName }: Workers
                 isOpen={showPremiumModal}
                 onClose={() => setShowPremiumModal(false)}
                 featureName="Správa pracovníkov"
-                description="Pridaťte ďalších pracovníkov do vášho tímu a spravujte ich rezervácie."
+                description="Pridajte ďalších pracovníkov do vášho tímu a spravujte ich rezervácie."
             />
         </div>
     );

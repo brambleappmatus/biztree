@@ -182,6 +182,10 @@ model Service {
   allowWorkerSelection Boolean  @default(false)
   requireWorker        Boolean  @default(false)
   
+  // Location settings (for HOURLY_SERVICE)
+  locationType         String?  @default("business_address") // "business_address", "custom_address", "google_meet"
+  customAddress        String?  // Used when locationType is "custom_address"
+  
   profileId      String
   profile        Profile  @relation(fields: [profileId], references: [id])
   bookings       Booking[]

@@ -4,7 +4,7 @@ import { ProfileCore } from "@/types";
 
 // Cached data fetcher to deduplicate requests
 export const getProfile = cache(async (subdomain: string) => {
-    return await prisma.profile.findUnique({
+    const profile = await prisma.profile.findUnique({
         where: { subdomain },
         include: {
             services: true,
@@ -30,7 +30,29 @@ export const getProfile = cache(async (subdomain: string) => {
                         }
                     }
                 }
+            },
+            user: {
+                select: {
+                    email: true
+                }
             }
         },
-    }) as ProfileCore | null;
+    });
+
+    if (!profile) return null;
+
+    // Serialize Decimal fields to numbers for client components
+    return {
+        ...profile,
+        services: profile.services.map(service => ({
+            ...service,
+            price: service.price ? Number(service.price) : 0,
+            minimumValue: service.minimumValue ? Number(service.minimumValue) : 0,
+            pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : 0,
+        })),
+        tier: profile.tier ? {
+            ...profile.tier,
+            price: profile.tier.price ? Number(profile.tier.price) : null,
+        } : null
+    } as any as ProfileCore;
 });

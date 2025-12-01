@@ -494,9 +494,18 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                         <CheckCircle size={40} />
                                     </div>
                                     <h2 className="text-2xl font-bold mb-2">Rezervácia potvrdená!</h2>
-                                    <p className="text-gray-500 mb-8 max-w-xs mx-auto">
+                                    <p className="text-gray-500 mb-4 max-w-xs mx-auto">
                                         Ďakujeme, {formData.name}. Potvrdenie sme poslali na váš email.
                                     </p>
+
+                                    {service.locationType === 'google_meet' && (
+                                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl max-w-xs mx-auto">
+                                            <p className="text-sm text-green-800 font-medium mb-1">💻 Online stretnutie</p>
+                                            <p className="text-xs text-green-600">
+                                                Google Meet link nájdete v potvrdzovacom emaili a vo vašom kalendári.
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div className="w-full mb-8">
                                         <p className="text-sm font-medium text-gray-500 mb-3">Pridať do kalendára</p>
@@ -520,10 +529,16 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                                         profile.phone ? `Tel: ${profile.phone}` : "",
                                                         profile.email ? `Email: ${profile.email}` : "",
                                                         `Pre: ${formData.name}`
-                                                    ].filter(Boolean).join("\n");
+                                                    ].filter(Boolean).join("\\n");
 
                                                     googleUrl.searchParams.append("details", details);
-                                                    if (profile.address) {
+
+                                                    // Add location based on service type
+                                                    if (service.locationType === 'google_meet') {
+                                                        googleUrl.searchParams.append("location", "Online (Google Meet)");
+                                                    } else if (service.locationType === 'custom_address' && service.customAddress) {
+                                                        googleUrl.searchParams.append("location", service.customAddress);
+                                                    } else if (profile.address) {
                                                         googleUrl.searchParams.append("location", profile.address);
                                                     }
 
@@ -551,6 +566,15 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                                         `Pre: ${formData.name}`
                                                     ].filter(Boolean).join("\\n");
 
+                                                    let location = '';
+                                                    if (service.locationType === 'google_meet') {
+                                                        location = "Online (Google Meet)";
+                                                    } else if (service.locationType === 'custom_address' && service.customAddress) {
+                                                        location = service.customAddress;
+                                                    } else if (profile.address) {
+                                                        location = profile.address;
+                                                    }
+
                                                     const icsContent = [
                                                         "BEGIN:VCALENDAR",
                                                         "VERSION:2.0",
@@ -559,10 +583,10 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                                         `DTEND:${format(endDate, "yyyyMMdd'T'HHmmss")}`,
                                                         `SUMMARY:Rezervácia: ${service.name} - ${profile.name}`,
                                                         `DESCRIPTION:${description}`,
-                                                        profile.address ? `LOCATION:${profile.address}` : "",
+                                                        location ? `LOCATION:${location}` : "",
                                                         "END:VEVENT",
                                                         "END:VCALENDAR"
-                                                    ].filter(Boolean).join("\n");
+                                                    ].filter(Boolean).join("\\n");
 
                                                     const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
                                                     const link = document.createElement("a");

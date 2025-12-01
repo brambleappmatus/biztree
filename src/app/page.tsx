@@ -5,7 +5,9 @@ import LandingContent from "@/components/landing-content";
 import LandingFooter from "@/components/landing-footer";
 import { getStripePrices } from "@/lib/stripe";
 
-export const dynamic = 'force-dynamic';
+// Use ISR (Incremental Static Regeneration) instead of force-dynamic
+// Revalidate every 3600 seconds (1 hour)
+export const revalidate = 3600;
 
 export default async function LandingPage() {
   // Fetch active showcases from database with layers

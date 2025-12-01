@@ -2,13 +2,20 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { ArrowRight, Sparkles, Calendar, Globe2, Zap, Check, Shield, Palette, TrendingUp, Users, Rocket, BarChart3, Image as ImageIcon, Bell, Link2, Layout, Smartphone } from "lucide-react";
-import ShowcaseCarousel from "@/components/showcase-carousel";
 import ScrollAnimation from "@/components/scroll-animation";
 import AnimatedCounter from "@/components/animated-counter";
 import MagneticButton from "@/components/magnetic-button";
 import { useLanguage } from "@/contexts/language-context";
 import { PricingSection } from "@/components/subscription/pricing-section";
+
+// Lazy load heavy components
+const ShowcaseCarousel = dynamic(() => import("@/components/showcase-carousel"), {
+    loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-2xl" />,
+    ssr: false
+});
 
 interface LandingContentProps {
     showcases: any[];
@@ -104,10 +111,13 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                                 {/* Main Image Container */}
                                 <div className="relative flex justify-center items-center w-full">
                                     {/* Main Image */}
-                                    <div className="relative z-10 w-full max-w-[580px]">
-                                        <img
+                                    <div className="relative z-10 w-full max-w-[580px] h-auto">
+                                        <Image
                                             src="/hero-mockup.png"
                                             alt="BizTree App Interface"
+                                            width={580}
+                                            height={700}
+                                            priority
                                             className="w-full h-auto drop-shadow-2xl transform hover:scale-[1.02] transition-transform duration-500"
                                         />
                                     </div>
