@@ -1,4 +1,4 @@
-import { proxy } from "./proxy";
+import { proxy } from "./middleware-handler";
 
 export default proxy;
 
