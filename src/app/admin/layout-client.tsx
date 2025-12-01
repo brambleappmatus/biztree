@@ -32,18 +32,21 @@ export default function AdminLayoutClient({
         if (typeof window !== 'undefined') {
             const hostname = window.location.hostname;
 
-            // If on Vercel or production domain
-            if (hostname.includes('vercel.app')) {
-                return `https://${subdomain}.biztree.bio`;
-            } else if (hostname.includes('biztree.bio')) {
-                return `https://${subdomain}.biztree.bio`;
-            } else if (hostname.includes('biztree.sk')) {
+            // Check for localhost first (development)
+            if (hostname === 'localhost' || hostname.includes('localhost')) {
+                return `http://${subdomain}.localhost:3000`;
+            }
+
+            // Production domains
+            if (hostname.includes('biztree.sk')) {
                 return `https://${subdomain}.biztree.sk`;
+            } else if (hostname.includes('biztree.bio') || hostname.includes('vercel.app')) {
+                return `https://${subdomain}.biztree.bio`;
             }
         }
 
-        // Default to localhost for development
-        return `http://${subdomain}.localhost:3000`;
+        // Fallback to production domain
+        return `https://${subdomain}.biztree.bio`;
     };
 
     const profileUrl = getProfileUrl();
