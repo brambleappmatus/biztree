@@ -11,6 +11,13 @@ const nextConfig = {
     poweredByHeader: false,
     compress: true,
 
+    // Experimental features for Next.js 16
+    experimental: {
+        serverActions: {
+            bodySizeLimit: '2mb',
+        },
+    },
+
     // Image optimization
     images: {
         remotePatterns: [
