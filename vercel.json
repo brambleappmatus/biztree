@@ -2,10 +2,5 @@
     "buildCommand": "prisma generate && next build",
     "framework": "nextjs",
     "installCommand": "npm install",
-    "outputDirectory": ".next",
-    "functions": {
-        "middleware.ts": {
-            "runtime": "edge"
-        }
-    }
+    "outputDirectory": ".next"
 }
