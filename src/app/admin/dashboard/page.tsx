@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { LockedFeatureGuard } from "@/components/admin/LockedFeatureGuard";
 import { PageHeader } from "@/components/ui/page-header";
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard";
+import { Lock } from "lucide-react";
+import { isFeatureAllowed } from "@/lib/subscription-limits";
 
 export default async function AdminDashboard(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const searchParams = await props.searchParams;
@@ -17,7 +19,14 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ [k
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profiles: { include: { bookings: true } } }
+        include: {
+            profiles: {
+                include: {
+                    bookings: true,
+                    tier: true
+                }
+            }
+        }
     });
 
     if (!user || !user.profiles || user.profiles.length === 0) {
@@ -178,8 +187,16 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ [k
 
                 {/* Analytics Section */}
                 <div className="mb-8">
-                    <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Analytika</h2>
-                    <AnalyticsDashboard data={analyticsData} />
+                    <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        Analytika
+                        {!isFeatureAllowed(profile.tier?.name, 'advancedAnalytics') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-semibold">
+                                <Lock size={12} />
+                                Pro
+                            </span>
+                        )}
+                    </h2>
+                    <AnalyticsDashboard data={analyticsData} tierName={profile.tier?.name} />
                 </div>
 
                 <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Nedávne rezervácie</h2>

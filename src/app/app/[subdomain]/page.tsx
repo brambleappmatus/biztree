@@ -19,6 +19,7 @@ import { Metadata } from "next";
 
 import { getProfile } from "@/lib/data-profile";
 import { AnalyticsTracker } from "@/components/analytics/analytics-tracker";
+import { getPlanLimits } from "@/lib/subscription-limits";
 
 // Helper to check if profile has access to a feature
 function hasFeatureAccess(profile: any, featureKey: string): boolean {
@@ -219,10 +220,14 @@ export default async function ProfilePage({
                         <ServicesBlock
                             profile={{
                                 ...profileData,
-                                services: profileData.services.map(s => ({
-                                    ...s,
-                                    price: s.price ? Number(s.price) : 0
-                                })),
+                                services: profileData.services
+                                    .slice(0, getPlanLimits(profileData.tier?.name).maxServices)
+                                    .map(s => ({
+                                        ...s,
+                                        price: s.price ? Number(s.price) : 0,
+                                        minimumValue: s.minimumValue ? Number(s.minimumValue) : 0,
+                                        pricePerDay: s.pricePerDay ? Number(s.pricePerDay) : 0,
+                                    })),
                                 // Serialize tier to convert Decimal price field
                                 tier: profileData.tier ? {
                                     ...profileData.tier,

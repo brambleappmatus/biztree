@@ -10,8 +10,10 @@ import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
 
 interface ServicesBlockProps {
     profile: Omit<ProfileCore, "services"> & {
-        services: (Omit<ProfileCore["services"][0], "price"> & {
+        services: (Omit<ProfileCore["services"][0], "price" | "minimumValue" | "pricePerDay"> & {
             price: number | any; // Accept number or Decimal (typed as any to avoid import issues)
+            minimumValue: number | any;
+            pricePerDay: number | any;
         })[];
     };
     lang: Language;
@@ -37,7 +39,24 @@ export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockP
                         <div>
                             <h3 className={`font-semibold ${isLight ? "text-white" : "text-gray-900"}`}>{service.name}</h3>
                             <p className={`text-sm ${isLight ? "text-gray-300" : "text-gray-600"}`}>
-                                {service.duration > 0 && `${service.duration} min • `}{Number(service.price)} {service.currency}
+                                {service.calendarType === "DAILY_RENTAL" && (
+                                    <>
+                                        {service.minimumDays && `Min. ${service.minimumDays} ${service.minimumDays === 1 ? 'noc' : 'noci'}`}
+                                        {service.pricePerDay && ` • ${Number(service.pricePerDay)} ${service.currency} / noc`}
+                                    </>
+                                )}
+                                {service.calendarType === "HOURLY_SERVICE" && (
+                                    <>
+                                        {service.duration > 0 && `${service.duration} min`}
+                                        {service.price && ` • ${Number(service.price)} ${service.currency}`}
+                                    </>
+                                )}
+                                {service.calendarType === "TABLE_RESERVATION" && (
+                                    <>
+                                        {service.duration > 0 && `${service.duration} min`}
+                                        {service.maxCapacity && ` • Max. ${service.maxCapacity} osôb`}
+                                    </>
+                                )}
                             </p>
                         </div>
                         {

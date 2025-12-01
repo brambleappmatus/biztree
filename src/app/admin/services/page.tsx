@@ -16,12 +16,39 @@ export default async function ServicesPage() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profiles: { include: { services: true } } }
+        include: {
+            profiles: {
+                include: {
+                    tier: {
+                        include: {
+                            features: {
+                                include: {
+                                    feature: true
+                                }
+                            }
+                        }
+                    },
+                    services: {
+                        include: {
+                            workers: {
+                                include: {
+                                    worker: true
+                                }
+                            }
+                        }
+                    },
+                    workers: true
+                }
+            }
+        }
     });
 
     if (!user || !user.profiles || user.profiles.length === 0) {
         redirect("/onboarding");
     }
+
+    const profile = user.profiles[0];
+    const enabledFeatures = profile.tier?.features.map((f: any) => f.feature.key) || [];
 
     return (
         <LockedFeatureGuard featureKey="page_services">
@@ -31,9 +58,13 @@ export default async function ServicesPage() {
                     description="Spravujte svoje služby a ich nastavenia."
                 />
                 <ServicesManager
-                    profileId={user.profiles[0].id}
-                    services={user.profiles[0].services}
-                    isGoogleConnected={!!((user.profiles[0] as any).googleAccessToken && (user.profiles[0] as any).googleRefreshToken)}
+                    profileId={profile.id}
+                    services={profile.services}
+                    workers={profile.workers}
+                    isGoogleConnected={!!(profile.googleAccessToken && profile.googleRefreshToken)}
+                    allowConcurrentServices={profile.allowConcurrentServices}
+                    tierName={profile.tier?.name}
+                    enabledFeatures={enabledFeatures}
                 />
             </div>
         </LockedFeatureGuard>

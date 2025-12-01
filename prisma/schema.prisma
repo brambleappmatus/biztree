@@ -87,6 +87,8 @@ model Profile {
   googleRefreshToken String?
   googleTokenExpiry  BigInt?
 
+  // Booking Settings
+  allowConcurrentServices Boolean @default(false) // Allow bookings of different service types at the same time
   
   showBusinessCard Boolean @default(true) // Toggle to show/hide business card on profile
   
@@ -113,6 +115,10 @@ model Profile {
   subscriptions Subscription[]
   subscriptionHistory SubscriptionHistory[]
   pageViews     PageView[]
+  
+  workers       Worker[]
+  tables        Table[]
+  floorPlan     FloorPlan?
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -161,9 +167,26 @@ model Service {
   currency       String   @default("EUR")
   bookingEnabled Boolean  @default(true) // Toggle to enable/disable bookings
   
+  calendarType   CalendarType @default(HOURLY_SERVICE)
+  
+  // For DAILY_RENTAL
+  minimumDays    Int?
+  minimumValue   Decimal?
+  pricePerDay    Decimal?
+  
+  // For TABLE_RESERVATION
+  requiresTable  Boolean      @default(false)
+  maxCapacity    Int?
+  
+  // Worker preferences
+  allowWorkerSelection Boolean  @default(false)
+  requireWorker        Boolean  @default(false)
+  
   profileId      String
   profile        Profile  @relation(fields: [profileId], references: [id])
   bookings       Booking[]
+  categories     ServiceCategory[]
+  workers        ServiceWorker[]
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -209,7 +232,20 @@ model Booking {
   customerPhone String?
   startTime   DateTime
   endTime     DateTime
-  status      String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  
+  numberOfPeople Int?
+  notes         String?
+  
+  categoryId    String?
+  category      ServiceCategory? @relation(fields: [categoryId], references: [id])
+  
+  workerId      String?
+  worker        Worker?  @relation(fields: [workerId], references: [id])
+  
+  tableId       String?
+  table         Table?   @relation(fields: [tableId], references: [id])
+  
+  status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
   
   serviceId   String
   service     Service  @relation(fields: [serviceId], references: [id])
@@ -429,4 +465,100 @@ model SystemSettings {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+enum CalendarType {
+  HOURLY_SERVICE
+  DAILY_RENTAL
+  TABLE_RESERVATION
+}
+
+model Worker {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  services    ServiceWorker[]
+  bookings    Booking[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([order])
+}
+
+model ServiceCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal?
+  duration    Int?
+  order       Int      @default(0)
+  
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  bookings    Booking[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([serviceId])
+  @@index([order])
+}
+
+model ServiceWorker {
+  id        String   @id @default(cuid())
+  serviceId String
+  workerId  String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  
+  @@unique([serviceId, workerId])
+}
+
+model Table {
+  id          String   @id @default(cuid())
+  name        String
+  capacity    Int
+  
+  positionX   Float?
+  positionY   Float?
+  width       Float?
+  height      Float?
+  shape       String   @default("rectangle")
+  
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  bookings    Booking[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([profileId])
+}
+
+model FloorPlan {
+  id          String   @id @default(cuid())
+  name        String   @default("Main Floor")
+  imageUrl    String?
+  width       Int      @default(1000)
+  height      Int      @default(800)
+  
+  profileId   String   @unique
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

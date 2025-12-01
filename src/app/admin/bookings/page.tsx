@@ -35,6 +35,8 @@ export default async function BookingsPage() {
         service: {
             ...booking.service,
             price: booking.service.price ? Number(booking.service.price) : null,
+            minimumValue: booking.service.minimumValue ? Number(booking.service.minimumValue) : null,
+            pricePerDay: booking.service.pricePerDay ? Number(booking.service.pricePerDay) : null,
         },
     }));
 

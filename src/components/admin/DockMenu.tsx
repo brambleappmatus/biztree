@@ -10,7 +10,9 @@ import {
     LineChart,
     LogOut,
     Lock,
-    Crown
+    Crown,
+    Briefcase,
+    LayoutGrid
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/motion-primitives/dock";
@@ -143,6 +145,20 @@ export default function DockMenu() {
             featureKey: "page_services"
         },
         {
+            label: "Pracovníci",
+            icon: Briefcase,
+            href: "/admin/workers",
+            badge: 0,
+            featureKey: "calendar_worker_management"
+        },
+        {
+            label: "Stoly",
+            icon: LayoutGrid,
+            href: "/admin/tables",
+            badge: 0,
+            featureKey: "calendar_table_reservation"
+        },
+        {
             label: "Rezervácie",
             icon: Calendar,
             href: "/admin/bookings",
@@ -260,22 +276,24 @@ export default function DockMenu() {
                             <button
                                 key={item.href}
                                 onClick={() => {
-                                    if (!locked) {
-                                        router.push(item.href);
-                                        setIsMobileMenuOpen(false);
-                                    }
+                                    router.push(item.href);
+                                    setIsMobileMenuOpen(false);
                                 }}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors relative",
                                     isActive
                                         ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                                        : "hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300",
-                                    locked && "opacity-50 cursor-not-allowed"
+                                        : "hover:bg-gray-50 dark:hover:bg-neutral-800 text-gray-700 dark:text-gray-300"
                                 )}
                             >
                                 <item.icon size={18} />
                                 {item.label}
-                                {locked && <Lock size={14} className="ml-auto" />}
+                                {locked && (
+                                    <span className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-semibold">
+                                        <Lock size={10} />
+                                        Pro
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -311,28 +329,24 @@ export default function DockMenu() {
                             return (
                                 <div key={item.href} className="relative">
                                     <DockItem
-                                        onClick={() => {
-                                            if (locked) return;
-                                            router.push(item.href);
-                                        }}
+                                        onClick={() => router.push(item.href)}
                                         className={cn(
                                             "aspect-square rounded-full transition-colors duration-200",
-                                            locked
-                                                ? "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-600"
-                                                : isActive
-                                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                                            isActive
+                                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                                         )}
                                     >
                                         <DockLabel>{item.label}</DockLabel>
                                         <DockIcon>
-                                            {locked ? (
-                                                <Lock className="h-3/5 w-3/5" />
-                                            ) : (
-                                                <item.icon className="h-3/5 w-3/5" />
-                                            )}
+                                            <item.icon className="h-3/5 w-3/5" />
                                         </DockIcon>
                                     </DockItem>
+                                    {locked && (
+                                        <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg pointer-events-none z-10">
+                                            <Lock className="w-2.5 h-2.5 text-white" />
+                                        </div>
+                                    )}
                                     {item.badge > 0 && !locked && (
                                         <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 shadow-lg pointer-events-none z-10">
                                             {item.badge > 99 ? "99+" : item.badge}
@@ -373,19 +387,21 @@ export default function DockMenu() {
                         return (
                             <button
                                 key={item.href}
-                                onClick={() => {
-                                    if (!locked) router.push(item.href);
-                                }}
+                                onClick={() => router.push(item.href)}
                                 className={cn(
-                                    "flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all",
+                                    "flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all relative",
                                     isActive
                                         ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-                                        : "text-gray-500 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800",
-                                    locked && "opacity-50"
+                                        : "text-gray-500 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800"
                                 )}
                             >
                                 <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                {item.badge > 0 && (
+                                {locked && (
+                                    <div className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md">
+                                        <Lock className="w-2 h-2 text-white" />
+                                    </div>
+                                )}
+                                {item.badge > 0 && !locked && (
                                     <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
                                 )}
                             </button>
