@@ -46,9 +46,9 @@ export const getProfile = cache(async (subdomain: string) => {
         ...profile,
         services: profile.services.map(service => ({
             ...service,
-            price: service.price ? Number(service.price) : 0,
-            minimumValue: service.minimumValue ? Number(service.minimumValue) : 0,
-            pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : 0,
+            price: service.price ? Number(service.price) : null,
+            minimumValue: service.minimumValue ? Number(service.minimumValue) : null,
+            pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : null,
         })),
         tier: profile.tier ? {
             ...profile.tier,

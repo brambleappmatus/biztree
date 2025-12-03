@@ -19,7 +19,16 @@ import { useToast } from "@/components/ui/toast";
 import { LockedComponentWrapper } from "./LockedComponentWrapper";
 
 interface ProfileFormProps {
-    profile: Profile & { socialLinks: any[], hours: WorkingHours[], links: any[], bgNoise?: boolean };
+    profile: Profile & {
+        socialLinks: any[],
+        hours: WorkingHours[],
+        links: any[],
+        bgNoise?: boolean,
+        iconStyle?: string,
+        cardColor?: string,
+        cardOpacity?: number,
+        cardTextColor?: string
+    };
 }
 
 const THEMES = [
@@ -94,6 +103,10 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         bgNoise: profile.bgNoise || false,
         avatarUrl: profile.avatarUrl || "",
         showBusinessCard: profile.showBusinessCard !== undefined ? profile.showBusinessCard : true,
+        iconStyle: profile.iconStyle || "standard",
+        cardColor: profile.cardColor || "#ffffff",
+        cardOpacity: profile.cardOpacity !== undefined ? profile.cardOpacity : 1.0,
+        cardTextColor: profile.cardTextColor || "#000000",
     });
 
     // Avatar upload handler
@@ -254,6 +267,13 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
     const handleAutoSave = async () => {
         try {
+            console.log('Auto-saving profile with data:', {
+                iconStyle: formData.iconStyle,
+                cardColor: formData.cardColor,
+                cardOpacity: formData.cardOpacity,
+                cardTextColor: formData.cardTextColor
+            });
+
             // Update profile
             await updateProfile(profile.id, formData);
 
@@ -262,8 +282,10 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
             setLastSaved(new Date());
 
-            // Dispatch event for preview refresh
-            window.dispatchEvent(new Event('profile-updated'));
+            // Dispatch event for preview refresh after a short delay to ensure DB update completes
+            setTimeout(() => {
+                window.dispatchEvent(new Event('profile-updated'));
+            }, 300);
 
         } catch (error) {
             console.error(error);
@@ -547,24 +569,29 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2">
                                 <Palette className="w-4 h-4" /> Farebná téma
                             </label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
                                 {THEMES.map((theme) => (
                                     <button
                                         key={theme.id}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, theme: theme.id })}
                                         className={cn(
-                                            "p-3 rounded-xl border transition-all flex items-center gap-3",
+                                            "h-20 w-28 flex-shrink-0 rounded-lg border-2 transition-all relative overflow-hidden snap-start flex flex-col items-center justify-center gap-2",
                                             formData.theme === theme.id
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500"
-                                                : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                                ? "border-blue-500 ring-2 ring-blue-200"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                         )}
                                     >
                                         <div
-                                            className="w-6 h-6 rounded-full shadow-sm"
+                                            className="w-10 h-10 rounded-full shadow-md"
                                             style={{ backgroundColor: theme.color }}
                                         />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{theme.name}</span>
+                                        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{theme.name}</span>
+                                        {formData.theme === theme.id && (
+                                            <div className="absolute top-1 right-1">
+                                                <Check className="text-blue-600" size={16} />
+                                            </div>
+                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -796,6 +823,194 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
                                     </div>
                                 </LockedComponentWrapper>
                             )}
+                        </div>
+
+                        {/* Visual Customization */}
+                        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 block flex items-center gap-2">
+                                <Palette className="w-4 h-4" /> Prispôsobenie vzhľadu
+                            </label>
+
+                            <div className="space-y-8">
+                                {/* 1. Card Style (Background Color) */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 mb-3 block">1. Štýl kariet (Pozadie)</label>
+                                    <div className="flex overflow-x-auto gap-3 pb-4 snap-x scrollbar-hide -mx-2 px-2">
+                                        {[
+                                            { id: 'light', label: 'Light', color: '#ffffff' },
+                                            { id: 'dark', label: 'Dark', color: '#000000' },
+                                            { id: 'navy', label: 'Navy', color: '#0f172a' },
+                                            { id: 'blue', label: 'Blue', color: '#e3f2fd' },
+                                            { id: 'beige', label: 'Beige', color: '#fff8e7' },
+                                            { id: 'mint', label: 'Mint', color: '#e0f2f1' },
+                                            { id: 'peach', label: 'Peach', color: '#fff3e0' },
+                                            { id: 'lavender', label: 'Lavender', color: '#f3e5f5' },
+                                            { id: 'red', label: 'Red', color: '#ffebee' },
+                                            { id: 'purple', label: 'Purple', color: '#ede7f6' },
+                                            { id: 'green', label: 'Green', color: '#e8f5e9' },
+                                            { id: 'teal', label: 'Teal', color: '#b2dfdb' },
+                                        ].map((preset) => {
+                                            const isActive = formData.cardColor === preset.color;
+
+                                            return (
+                                                <button
+                                                    key={preset.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            cardColor: preset.color
+                                                            // We preserve current opacity and text color
+                                                        });
+                                                    }}
+                                                    className={cn(
+                                                        "relative h-24 w-32 flex-shrink-0 rounded-xl border-2 transition-all overflow-hidden flex flex-col items-center justify-center gap-2 snap-start group",
+                                                        isActive
+                                                            ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900"
+                                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                                    )}
+                                                >
+                                                    {/* Preview Background with glass effect */}
+                                                    <div
+                                                        className="absolute inset-0 transition-opacity"
+                                                        style={{
+                                                            backgroundColor: preset.color,
+                                                            opacity: formData.cardOpacity
+                                                        }}
+                                                    />
+
+                                                    {/* Solid color indicator at bottom for clarity */}
+                                                    <div
+                                                        className="absolute bottom-0 left-0 right-0 h-2 opacity-100"
+                                                        style={{
+                                                            backgroundColor: preset.color
+                                                        }}
+                                                    />
+
+                                                    {/* Preview Content - shows actual contrast */}
+                                                    <div className="relative z-10 w-full px-3 flex flex-col gap-1.5 items-center">
+                                                        <div className="w-16 h-1.5 rounded-full opacity-40"
+                                                            style={{ backgroundColor: formData.cardTextColor }}
+                                                        />
+                                                        <div className="w-10 h-1.5 rounded-full opacity-30"
+                                                            style={{ backgroundColor: formData.cardTextColor }}
+                                                        />
+                                                    </div>
+
+                                                    <span className={cn(
+                                                        "relative z-10 text-[10px] font-medium mt-1",
+                                                        // Dynamically set label color based on background brightness for readability of the UI itself
+                                                        // Simple heuristic: dark backgrounds get white text, light get black
+                                                        ['#000000', '#0f172a'].includes(preset.color) ? "text-white" : "text-gray-900"
+                                                    )}>
+                                                        {preset.label}
+                                                    </span>
+
+                                                    {isActive && (
+                                                        <div className="absolute top-1 right-1 z-20 bg-blue-500 rounded-full p-0.5">
+                                                            <Check size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Opacity Slider */}
+                                <div>
+                                    <div className="flex justify-between mb-2">
+                                        <label className="text-xs font-medium text-gray-500">Priehľadnosť kariet</label>
+                                        <span className="text-xs text-gray-500">{Math.round((formData.cardOpacity || 1) * 100)}%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0.1"
+                                        max="1"
+                                        step="0.05"
+                                        value={formData.cardOpacity || 1}
+                                        onChange={(e) => setFormData({ ...formData, cardOpacity: parseFloat(e.target.value) })}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-blue-600"
+                                    />
+                                    <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-1">
+                                        <span>Priehľadné (Glass)</span>
+                                        <span>Plné</span>
+                                    </div>
+                                </div>
+
+                                {/* 2. Text Color */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 mb-3 block">2. Farba textu (Nadpisov a obsahu)</label>
+                                    <div className="flex gap-4">
+                                        {[
+                                            { id: '#000000', label: 'Čierna', textClass: 'text-black' },
+                                            { id: '#ffffff', label: 'Biela', textClass: 'text-white' }
+                                        ].map((color) => {
+                                            const isSelected = formData.cardTextColor === color.id;
+                                            return (
+                                                <button
+                                                    key={color.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        console.log('Selected text color:', color.id);
+                                                        setFormData({ ...formData, cardTextColor: color.id });
+                                                    }}
+                                                    className={cn(
+                                                        "flex-1 py-4 px-4 rounded-xl border-2 transition-all flex items-center justify-center gap-2 relative overflow-hidden group",
+                                                        isSelected
+                                                            ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900"
+                                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                                    )}
+                                                >
+                                                    {/* Background Preview */}
+                                                    <div
+                                                        className="absolute inset-0 transition-opacity"
+                                                        style={{
+                                                            backgroundColor: formData.cardColor,
+                                                            opacity: formData.cardOpacity
+                                                        }}
+                                                    />
+
+                                                    {/* Content */}
+                                                    <div className={cn("relative z-10 font-bold flex items-center gap-2", color.textClass)}>
+                                                        {isSelected && <Check size={16} />}
+                                                        {color.label}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-gray-500 mt-2">
+                                        Táto farba sa použije na všetok text v kartách. Uistite sa, že je čitateľná na zvolenom pozadí karty.
+                                    </p>
+                                </div>
+
+                                {/* 3. Icon Style */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 mb-3 block">3. Štýl ikon</label>
+                                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                                        {[
+                                            { id: 'standard', label: 'Farebné (Standard)' },
+                                            { id: 'black', label: 'Čierne' },
+                                            { id: 'white', label: 'Biele' }
+                                        ].map((style) => (
+                                            <button
+                                                key={style.id}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, iconStyle: style.id })}
+                                                className={cn(
+                                                    "flex-1 py-2 text-xs font-medium rounded-lg transition-all",
+                                                    formData.iconStyle === style.id
+                                                        ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100"
+                                                        : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                                                )}
+                                            >
+                                                {style.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </MuiCard>

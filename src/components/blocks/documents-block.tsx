@@ -64,26 +64,29 @@ export default function DocumentsBlock({ documents, bgImage }: DocumentsBlockPro
                     >
                         {/* Icon background */}
                         <div className="absolute left-0 top-0 bottom-0 w-14 flex items-center justify-center bg-gray-50/50">
-                            <Icon className="w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                            <Icon className="w-6 h-6 opacity-40 group-hover:opacity-60 transition-colors" />
                         </div>
 
                         {/* Content */}
                         <div className="absolute inset-0 left-14 px-3 flex flex-col justify-center">
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-gray-900 font-semibold text-sm leading-tight truncate pr-6">
-                                        {doc.name}
-                                    </h3>
-                                    <div className="flex items-center gap-1.5 text-gray-500 text-[10px] mt-0.5">
-                                        <span className="uppercase font-medium">{doc.fileType}</span>
-                                        <span>•</span>
-                                        <span>{(doc.fileSize / 1024).toFixed(0)} KB</span>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex flex-col">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <h3 className="font-semibold text-sm leading-tight truncate pr-6 opacity-90">
+                                            {doc.name}
+                                        </h3>
+                                        <div className="flex items-center gap-1.5 text-[10px] mt-0.5 opacity-60">
+                                            <FileText className="w-3 h-3" />
+                                            <span className="uppercase">{doc.fileType}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-gray-400 group-hover:text-gray-600 group-hover:bg-gray-100 transition-all">
-                                    <Download className="w-3.5 h-3.5" />
-                                </div>
                             </div>
+                        </div>
+
+                        {/* Download Icon */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full opacity-40 group-hover:opacity-60 group-hover:bg-current/10 transition-all">
+                            <Download className="w-3.5 h-3.5" />
                         </div>
                     </button>
                 );

@@ -4,6 +4,10 @@ import { getProfile } from "@/lib/data-profile";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const BACKGROUND_GRADIENTS: Record<string, string> = {
     "none": "transparent",
     "black": "linear-gradient(to bottom, #000000, #1a1a1a)",
@@ -42,6 +46,22 @@ const BACKGROUND_GRADIENTS: Record<string, string> = {
 import { ProfileRefresher } from "@/components/profile/profile-refresher";
 import { CookieConsent } from "@/components/ui/cookie-consent";
 import { ProfileHeaderBadges } from "@/components/profile/profile-header-badges";
+
+// Helper to convert hex to rgba
+function hexToRgba(hex: string, alpha: number) {
+    if (!hex) return `rgba(255, 255, 255, ${alpha})`;
+    if (!/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return `rgba(255, 255, 255, ${alpha})`;
+
+    let c = hex.substring(1).split('');
+    if (c.length === 3) {
+        c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+    }
+    const hexStr = c.join('');
+    const r = parseInt(hexStr.slice(0, 2), 16);
+    const g = parseInt(hexStr.slice(2, 4), 16);
+    const b = parseInt(hexStr.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 // This layout wraps the public profile pages
 export default async function ProfileLayout({
@@ -87,10 +107,39 @@ export default async function ProfileLayout({
         };
     }
 
+    // Cast profile to any to access new fields until types are updated
+    const p = profile as any;
+
+    // Function to calculate luminance and determine if background is light or dark
+    const getContrastTextColor = (bgImage: string | null): string => {
+        // If there's an image background, default to white (most images are dark-ish)
+        if (bgImage?.startsWith('http')) {
+            return '#ffffff';
+        }
+
+        // For gradients, analyze the gradient name
+        if (bgImage && BACKGROUND_GRADIENTS[bgImage]) {
+            const darkGradients = ['black', 'dark', 'navy', 'charcoal', 'burgundy', 'ocean', 'forest'];
+            const isDark = darkGradients.some(name => bgImage.toLowerCase().includes(name));
+            return isDark ? '#ffffff' : '#000000';
+        }
+
+        // Default to white for safety
+        return '#ffffff';
+    };
+
+    const headerTextColor = getContrastTextColor(profile.bgImage);
+
     return (
         <div
             className="min-h-[100dvh] w-full flex justify-center relative"
             data-theme={profile.theme}
+            style={{
+                '--card-bg': hexToRgba(p.cardColor || '#ffffff', p.cardOpacity ?? 1),
+                '--card-text': p.cardTextColor || '#ffffff',
+                '--header-text': headerTextColor,
+                '--icon-style': p.iconStyle || 'standard',
+            } as React.CSSProperties}
         >
             {/* Fixed Background Layer - Covers entire viewport including safe areas */}
             <div

@@ -1,7 +1,7 @@
 import React from "react";
 import { ProfileCore } from "@/types";
 import { getTranslation, Language } from "@/lib/i18n";
-import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
+import { getBlockBgClass } from "@/lib/background-utils";
 
 interface LocationBlockProps {
     profile: ProfileCore;
@@ -13,16 +13,15 @@ interface LocationBlockProps {
 export default function LocationBlock({ profile, lang, bgImage, themeColor }: LocationBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
-    const isLight = isLightBackground(bgImage);
 
     if (!profile.address && !profile.mapEmbed) return null;
 
     return (
-        <div className={`${blockBgClass} p-4 rounded-2xl shadow-sm`}>
-            <h2 className={`font-semibold mb-3 ${isLight ? "text-white" : "text-gray-900"}`}>{t.common.location}</h2>
+        <div className={`${blockBgClass} p-4 rounded-2xl shadow-sm`} style={{ color: 'var(--card-text)' }}>
+            <h2 className="font-semibold mb-3" style={{ color: 'var(--card-text)', opacity: 0.9 }}>{t.common.location}</h2>
 
             {profile.address && (
-                <p className={`text-sm mb-3 ${isLight ? "text-gray-300" : "text-gray-600"}`}>{profile.address}</p>
+                <p className="text-sm mb-3" style={{ color: 'var(--card-text)', opacity: 0.7 }}>{profile.address}</p>
             )}
 
             {profile.mapEmbed ? (
@@ -35,10 +34,7 @@ export default function LocationBlock({ profile, lang, bgImage, themeColor }: Lo
                     href={`https://maps.google.com/?q=${encodeURIComponent(profile.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors ${isLight
-                        ? "bg-white/20 hover:bg-white/30 text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100"
-                        }`}
+                    className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors bg-current/10 hover:bg-current/15"
                     style={themeColor ? { backgroundColor: `${themeColor}20`, color: themeColor } : undefined}
                 >
                     <span>Navigovať</span>

@@ -179,7 +179,7 @@ export default function DocumentsManager({ profile }: DocumentsManagerProps) {
         >
             <div className="mt-4 space-y-4">
                 {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-6 text-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors relative">
+                <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors relative">
                     <input
                         type="file"
                         multiple
@@ -188,9 +188,9 @@ export default function DocumentsManager({ profile }: DocumentsManagerProps) {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         disabled={loading || documents.length >= MAX_DOCUMENTS}
                     />
-                    <div className="flex flex-col items-center gap-2 text-gray-500">
-                        <Upload className="w-8 h-8 mb-2" />
-                        <p className="font-medium">Kliknite alebo potiahnite súbory sem</p>
+                    <div className="flex flex-col items-center gap-1 text-gray-500">
+                        <Upload className="w-6 h-6 mb-1" />
+                        <p className="text-sm font-medium">Kliknite alebo potiahnite súbory sem</p>
                         <p className="text-xs">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (max 10MB)</p>
                         <p className="text-xs font-semibold">
                             {documents.length} / {MAX_DOCUMENTS} dokumentov

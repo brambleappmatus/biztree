@@ -116,6 +116,11 @@ export async function createProfileFromOnboarding(userId: string, data: {
             address: data.address,
             language: data.language || "sk",
             tierId: freeTier.id,
+            // Default card styling: white background with 80% opacity and black text
+            cardColor: "#ffffff",
+            cardOpacity: 0.8,
+            cardTextColor: "#000000",
+            iconStyle: "standard",
             // Create hours if provided
             hours: data.hours && data.hours.length > 0 ? {
                 create: data.hours

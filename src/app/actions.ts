@@ -8,6 +8,7 @@ import { Resend } from "resend";
 import { BookingConfirmationEmail } from "@/components/emails/BookingConfirmationEmail";
 import { NewBookingNotificationEmail } from "@/components/emails/NewBookingNotificationEmail";
 import { checkServiceLimit, isCalendarTypeAllowed, isFeatureAllowed } from "@/lib/subscription-limits";
+import { revalidatePath } from "next/cache";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -590,8 +591,13 @@ export async function updateProfile(profileId: string, data: {
     bgNoise?: boolean;
     avatarUrl?: string;
     showBusinessCard?: boolean;
+    iconStyle?: string;
+    cardColor?: string;
+    cardOpacity?: number;
+    cardTextColor?: string;
 }) {
-    await prisma.profile.update({
+    console.log('SERVER ACTION updateProfile received:', { profileId, data });
+    const updatedProfile = await prisma.profile.update({
         where: { id: profileId },
         data: {
             name: data.name,
@@ -607,8 +613,21 @@ export async function updateProfile(profileId: string, data: {
             bgNoise: data.bgNoise,
             avatarUrl: data.avatarUrl,
             showBusinessCard: data.showBusinessCard,
+            iconStyle: data.iconStyle,
+            cardColor: data.cardColor,
+            cardOpacity: data.cardOpacity,
+            cardTextColor: data.cardTextColor,
         },
     });
+
+    // Revalidate all profile pages to show updated settings
+    revalidatePath('/app', 'layout');
+
+    // Revalidate specific subdomain paths to ensure fresh data
+    if (updatedProfile.subdomain) {
+        revalidatePath(`/app/${updatedProfile.subdomain}`, 'layout');
+        revalidatePath(`/app/${updatedProfile.subdomain}`, 'page');
+    }
 
     return { success: true };
 }
@@ -649,7 +668,7 @@ export async function createService(profileId: string, data: {
         throw new Error("This service type is not available in your plan");
     }
 
-    await prisma.service.create({
+    const service = await prisma.service.create({
         data: {
             profileId,
             name: data.name,
@@ -668,7 +687,7 @@ export async function createService(profileId: string, data: {
             customAddress: data.customAddress,
         },
     });
-    return { success: true };
+    return service;
 }
 
 export async function updateService(serviceId: string, data: {

@@ -21,7 +21,9 @@ const ONBOARDING_TRANSLATIONS = {
         subtitle: "Vyplňte základné informácie a vytvorte si profesionálny online profil",
         basicInfo: "Základné informácie",
         companyName: "Názov firmy / Meno *",
+        companyNameHelper: "Toto je názov, ktorý uvidia vaši zákazníci. Môžete ho kedykoľvek zmeniť.",
         subdomain: "Subdoména (URL adresa) *",
+        subdomainHelper: "Toto bude vaša jedinečná webová adresa (napr. vase-meno.biztree.bio). Po vytvorení ju už NEMOŽNO zmeniť, preto si ju dobre premyslite!",
         checking: "Kontrolujem dostupnosť...",
         available: "je dostupná",
         subdomainTaken: "Táto subdoména už existuje",
@@ -58,7 +60,9 @@ const ONBOARDING_TRANSLATIONS = {
         subtitle: "Fill in basic information and create your professional online profile",
         basicInfo: "Basic Information",
         companyName: "Company / Name *",
+        companyNameHelper: "This is the name your customers will see. You can change it anytime.",
         subdomain: "Subdomain (URL address) *",
+        subdomainHelper: "This will be your unique web address (e.g. your-name.biztree.bio). Once created, it CANNOT be changed, so choose carefully!",
         checking: "Checking availability...",
         available: "is available",
         subdomainTaken: "This subdomain is already taken",
@@ -306,12 +310,17 @@ export default function OnboardingForm() {
                                 </button>
                             </div>
 
-                            <MuiInput
-                                label={t.companyName}
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
-                            />
+                            <div>
+                                <MuiInput
+                                    label={t.companyName}
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                    {t.companyNameHelper}
+                                </p>
+                            </div>
 
                             <div>
                                 <MuiInput
@@ -320,6 +329,10 @@ export default function OnboardingForm() {
                                     onChange={(e) => handleSubdomainChange(e.target.value)}
                                     required
                                 />
+                                <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1">
+                                    <span className="text-base">⚠️</span>
+                                    <span>{t.subdomainHelper}</span>
+                                </p>
                                 {formData.subdomain && (
                                     <div className="mt-2 text-sm">
                                         {subdomainChecking ? (

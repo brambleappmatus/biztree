@@ -1,0 +1,11 @@
+{
+  "/admin/page": "app/admin/page.js",
+  "/api/analytics/time/route": "app/api/analytics/time/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/bookings/count/route": "app/api/bookings/count/route.js",
+  "/api/documents/route": "app/api/documents/route.js",
+  "/api/gallery/albums/route": "app/api/gallery/albums/route.js",
+  "/api/user/features/route": "app/api/user/features/route.js",
+  "/api/user/subdomain/route": "app/api/user/subdomain/route.js",
+  "/app/[subdomain]/page": "app/app/[subdomain]/page.js"
+}

@@ -175,9 +175,11 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                 <div>
                     <h2 className="font-semibold text-lg">{service.name}</h2>
                     <p className="text-xs text-gray-500">
-                        {service.duration > 0 && `${service.duration} min • `}
-                        {Number(service.price)} €
-                        {service.maxCapacity && ` • Max. ${service.maxCapacity} osôb`}
+                        {[
+                            service.duration > 0 && `${service.duration} min`,
+                            service.price && Number(service.price) > 0 && `${Number(service.price)} ${service.currency}`,
+                            service.maxCapacity && `Max. ${service.maxCapacity} osôb`
+                        ].filter(Boolean).join(' • ')}
                     </p>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">

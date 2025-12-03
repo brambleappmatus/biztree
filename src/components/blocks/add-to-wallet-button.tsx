@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ProfileCore } from "@/types";
 import { Wallet } from "lucide-react";
 import { getTranslation, Language } from "@/lib/i18n";
-import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
+import { getBlockBgClass } from "@/lib/background-utils";
 
 interface AddToWalletButtonProps {
     profile: ProfileCore;
@@ -32,7 +32,6 @@ function getPlatform(): "ios" | "android" | "other" {
 export default function AddToWalletButton({ profile, lang, bgImage }: AddToWalletButtonProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
-    const isLight = isLightBackground(bgImage);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -84,10 +83,10 @@ export default function AddToWalletButton({ profile, lang, bgImage }: AddToWalle
                     {loading ? (
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                        <Wallet className={`w-5 h-5 ${isLight ? "text-white" : "text-gray-900"}`} />
+                        <Wallet className="w-5 h-5" />
                     )}
                 </div>
-                <span className={`text-sm font-medium ${isLight ? "text-white" : "text-gray-900"}`}>
+                <span className="text-sm font-medium">
                     {loading ? t.common.generatingPass : t.common.addToWallet}
                 </span>
             </button>

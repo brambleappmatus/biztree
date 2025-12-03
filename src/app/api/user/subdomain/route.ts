@@ -12,12 +12,30 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        include: { profiles: { select: { subdomain: true } } }
+        include: {
+            profiles: {
+                select: {
+                    id: true,
+                    subdomain: true,
+                    name: true,
+                    avatarUrl: true,
+                    theme: true,
+                    seoTitle: true,
+                    seoDesc: true,
+                    bgImage: true,
+                    bgBlur: true,
+                    bgNoise: true
+                }
+            }
+        }
     });
 
     if (!user?.profiles || user.profiles.length === 0) {
-        return NextResponse.json({ subdomain: null });
+        return NextResponse.json({ subdomain: null, profile: null });
     }
 
-    return NextResponse.json({ subdomain: user.profiles[0]?.subdomain });
+    return NextResponse.json({
+        subdomain: user.profiles[0]?.subdomain,
+        profile: user.profiles[0]
+    });
 }

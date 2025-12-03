@@ -63,12 +63,37 @@ html {
   background: #000000;
 }
 
-/* Utilities */
-.ios-card {
-  background-color: var(--card-bg);
-  border-radius: 16px;
-  /* iOS 16 style */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+/* Utilities - Use layer to override Tailwind */
+@layer utilities {
+  .ios-card {
+    background-color: var(--card-bg) !important;
+    color: var(--card-text) !important;
+    border-radius: 16px;
+    /* iOS 16 style */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Force all children to use the card text color - maximum specificity to override Tailwind */
+  .ios-card.ios-card.ios-card.ios-card *:not(svg):not(path):not(img):not(button) {
+    color: var(--card-text) !important;
+  }
+
+  /* Ensure headings and paragraphs also inherit the card text color */
+  .ios-card.ios-card.ios-card.ios-card h1,
+  .ios-card.ios-card.ios-card.ios-card h2,
+  .ios-card.ios-card.ios-card.ios-card h3,
+  .ios-card.ios-card.ios-card.ios-card h4,
+  .ios-card.ios-card.ios-card.ios-card h5,
+  .ios-card.ios-card.ios-card.ios-card h6,
+  .ios-card.ios-card.ios-card.ios-card p,
+  .ios-card.ios-card.ios-card.ios-card span,
+  .ios-card.ios-card.ios-card.ios-card a,
+  .ios-card.ios-card.ios-card.ios-card div:not(:has(svg)):not(:has(img)) {
+    color: var(--card-text) !important;
+  }
 }
 
 .ios-btn {

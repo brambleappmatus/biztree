@@ -1,6 +1,6 @@
 import React from "react";
 import { ExternalLink } from "lucide-react";
-import { getBlockBgClass, isLightBackground } from "@/lib/background-utils";
+import { getBlockBgClass } from "@/lib/background-utils";
 
 interface Link {
     id: string;
@@ -16,7 +16,6 @@ interface LinksBlockProps {
 
 export default function LinksBlock({ links, bgImage }: LinksBlockProps) {
     const blockBgClass = getBlockBgClass(bgImage);
-    const isLight = isLightBackground(bgImage);
 
     if (!links || links.length === 0) return null;
 
@@ -32,12 +31,14 @@ export default function LinksBlock({ links, bgImage }: LinksBlockProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`${blockBgClass} p-4 rounded-2xl shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform`}
+                    style={{ color: 'var(--card-text)' }}
                 >
-                    <span className={`font-medium ${isLight ? "text-white" : "text-gray-900"}`}>
+                    <span className="font-medium" style={{ color: 'var(--card-text)', opacity: 0.9 }}>
                         {link.title}
                     </span>
                     <ExternalLink
-                        className={`w-5 h-5 ${isLight ? "text-white/70" : "text-gray-400"} group-hover:translate-x-1 transition-transform`}
+                        className="w-5 h-5 opacity-70 group-hover:translate-x-1 transition-transform"
+                        style={{ color: 'var(--card-text)' }}
                     />
                 </a>
             ))}

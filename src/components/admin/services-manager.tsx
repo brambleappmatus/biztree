@@ -12,6 +12,7 @@ import { updateProfileSettings } from "@/app/actions/profile-settings";
 import { isFeatureAllowed, checkServiceLimit, isCalendarTypeAllowed, getRequiredTierForFeature, getRequiredTierForCalendarType, getPlanLimits } from "@/lib/subscription-limits";
 import { Lock } from "lucide-react";
 import { PremiumModal } from "@/components/ui/premium-modal";
+import { ServiceForm } from "./service-form";
 
 interface ServicesManagerProps {
     profileId: string;
@@ -118,8 +119,23 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
                 await updateService(editingId, formData);
                 showToast("Služba aktualizovaná", "success");
             } else {
-                await createService(profileId, formData);
+                // Create the service first
+                const newService = await createService(profileId, formData);
                 showToast("Služba vytvorená", "success");
+
+                // If workers were selected, assign them to the new service
+                const selectedWorkerIds = (formData as any).selectedWorkerIds;
+                if (selectedWorkerIds && selectedWorkerIds.length > 0 && newService?.id) {
+                    try {
+                        for (const workerId of selectedWorkerIds) {
+                            await assignWorkerToService(workerId, newService.id);
+                        }
+                        showToast(`${selectedWorkerIds.length} pracovníkov priradených`, "success");
+                    } catch (error) {
+                        console.error("Error assigning workers:", error);
+                        showToast("Služba vytvorená, ale niektorí pracovníci neboli priradení", "error");
+                    }
+                }
             }
             router.refresh();
             resetForm();
@@ -255,430 +271,26 @@ export default function ServicesManager({ profileId, services, workers, isGoogle
                 </div>
 
                 {(isCreating || editingId) && (
-                    <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-xl border border-gray-200 animate-fade-up">
-                        <h3 className="font-medium mb-4">{editingId ? "Upraviť službu" : "Nová služba"}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="md:col-span-3">
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Názov služby</label>
-                                <input
-                                    required
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    placeholder={
-                                        formData.calendarType === "DAILY_RENTAL"
-                                            ? "Napr. Chata pod lesom, Apartmán v centre..."
-                                            : formData.calendarType === "TABLE_RESERVATION"
-                                                ? "Napr. Hlavná sála, Terasa, VIP stôl..."
-                                                : "Napr. Strihanie vlasov, Masáž, Konzultácia..."
-                                    }
-                                />
-                            </div>
-                            {formData.calendarType !== "DAILY_RENTAL" && (
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Trvanie (min)</label>
-                                    <input
-                                        required
-                                        type="number"
-                                        min="0"
-                                        step="5"
-                                        value={formData.duration}
-                                        onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                                        className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-                            )}
-                            {formData.calendarType === "HOURLY_SERVICE" && (
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Cena (€)</label>
-                                    <input
-                                        required
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={formData.price}
-                                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                                        className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-                            )}
-                            <div className="flex items-center gap-2 pt-6">
-                                <input
-                                    type="checkbox"
-                                    id="bookingEnabled"
-                                    checked={formData.bookingEnabled}
-                                    onChange={(e) => setFormData({ ...formData, bookingEnabled: e.target.checked })}
-                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                />
-                                <label htmlFor="bookingEnabled" className="text-sm font-medium text-gray-700">
-                                    Povoliť rezervácie
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Typ rezervácie</label>
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <input
-                                        type="radio"
-                                        id="type_hourly"
-                                        name="calendarType"
-                                        checked={formData.calendarType === "HOURLY_SERVICE"}
-                                        onChange={() => setFormData({ ...formData, calendarType: "HOURLY_SERVICE" })}
-                                        className="text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="type_hourly" className="text-sm font-medium text-gray-700">Hodinové služby</label>
-                                </div>
-
-                                <div className={!isCalendarTypeAllowed(tierName, "DAILY_RENTAL") ? "opacity-50" : ""}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="radio"
-                                            id="type_daily"
-                                            name="calendarType"
-                                            checked={formData.calendarType === "DAILY_RENTAL"}
-                                            onChange={() => {
-                                                if (isCalendarTypeAllowed(tierName, "DAILY_RENTAL")) {
-                                                    setFormData({ ...formData, calendarType: "DAILY_RENTAL" });
-                                                } else {
-                                                    setPremiumFeature({ name: "Denný prenájom", description: "Umožnite zákazníkom rezervovať si služby na celé dni." });
-                                                    setShowPremiumModal(true);
-                                                }
-                                            }}
-                                            className="text-blue-600 focus:ring-blue-500"
-                                        />
-                                        <label htmlFor="type_daily" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            Denný prenájom
-                                            {!isCalendarTypeAllowed(tierName, "DAILY_RENTAL") && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-semibold">
-                                                    <Lock size={10} />
-                                                    {getRequiredTierForCalendarType("DAILY_RENTAL")}
-                                                </span>
-                                            )}
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div className={!isCalendarTypeAllowed(tierName, "TABLE_RESERVATION") ? "opacity-50" : ""}>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            id="type_table"
-                                            name="calendarType"
-                                            checked={formData.calendarType === "TABLE_RESERVATION"}
-                                            onChange={() => {
-                                                if (isCalendarTypeAllowed(tierName, "TABLE_RESERVATION")) {
-                                                    setFormData({ ...formData, calendarType: "TABLE_RESERVATION" });
-                                                } else {
-                                                    setPremiumFeature({ name: "Rezervácia stolov", description: "Umožnite zákazníkom rezervovať si konkrétne stoly." });
-                                                    setShowPremiumModal(true);
-                                                }
-                                            }}
-                                            className="text-blue-600 focus:ring-blue-500"
-                                        />
-                                        <label htmlFor="type_table" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            Rezervácia stolov
-                                            {!isCalendarTypeAllowed(tierName, "TABLE_RESERVATION") && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-semibold">
-                                                    <Lock size={10} />
-                                                    {getRequiredTierForCalendarType("TABLE_RESERVATION")}
-                                                </span>
-                                            )}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {formData.calendarType === "HOURLY_SERVICE" && (
-                            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                                <h4 className="text-sm font-medium mb-3">Nastavenia pracovníkov</h4>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="allowWorkerSelection"
-                                            checked={formData.allowWorkerSelection}
-                                            onChange={(e) => {
-                                                if (!isFeatureAllowed(tierName, 'workerSelection', enabledFeatures) && e.target.checked) {
-                                                    setPremiumFeature({ name: "Výber pracovníka", description: "Umožnite zákazníkom vybrať si konkrétneho pracovníka pri rezervácii." });
-                                                    setShowPremiumModal(true);
-                                                    return;
-                                                }
-                                                setFormData({ ...formData, allowWorkerSelection: e.target.checked });
-                                            }}
-                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                        />
-                                        <label htmlFor="allowWorkerSelection" className="text-sm text-gray-700 flex items-center gap-2">
-                                            Povoliť výber konkrétneho pracovníka
-                                            {!isFeatureAllowed(tierName, 'workerSelection', enabledFeatures) && (
-                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-xs font-semibold">
-                                                    <Lock size={10} />
-                                                    {getRequiredTierForFeature('workerSelection')}
-                                                </span>
-                                            )}
-                                        </label>
-                                    </div>
-                                    {formData.allowWorkerSelection && (
-                                        <div className="flex items-center gap-2 ml-6">
-                                            <input
-                                                type="checkbox"
-                                                id="requireWorker"
-                                                checked={formData.requireWorker}
-                                                onChange={(e) => setFormData({ ...formData, requireWorker: e.target.checked })}
-                                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                            />
-                                            <label htmlFor="requireWorker" className="text-sm text-gray-700">
-                                                Vyžadovať výber pracovníka
-                                            </label>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {formData.calendarType === "HOURLY_SERVICE" && editingId && formData.allowWorkerSelection && workers.length > 0 && (
-                            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Users size={18} className="text-blue-600" />
-                                    <h4 className="text-sm font-medium text-blue-900">Priradiť pracovníkov</h4>
-                                </div>
-                                <p className="text-xs text-blue-700 mb-3">Vyberte pracovníkov, ktorí môžu poskytovať túto službu</p>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                    {workers.map((worker) => {
-                                        const service = services.find(s => s.id === editingId);
-                                        const isAssigned = service?.workers?.some((sw: any) => sw.workerId === worker.id) || false;
-
-                                        return (
-                                            <div key={worker.id} className="flex items-center gap-2 p-2 bg-white rounded border border-blue-100">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`worker-${worker.id}`}
-                                                    checked={isAssigned}
-                                                    onChange={async (e) => {
-                                                        try {
-                                                            if (e.target.checked) {
-                                                                await assignWorkerToService(worker.id, editingId);
-                                                                showToast(`${worker.name} priradený k službe`, "success");
-                                                            } else {
-                                                                await removeWorkerFromService(worker.id, editingId);
-                                                                showToast(`${worker.name} odstránený zo služby`, "success");
-                                                            }
-                                                            router.refresh();
-                                                        } catch (error) {
-                                                            showToast("Chyba pri aktualizácii", "error");
-                                                        }
-                                                    }}
-                                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <label htmlFor={`worker-${worker.id}`} className="text-sm text-gray-700 flex-1 cursor-pointer">
-                                                    {worker.name}
-                                                    {worker.description && (
-                                                        <span className="text-xs text-gray-500 block">{worker.description}</span>
-                                                    )}
-                                                </label>
-                                                {!worker.isActive && (
-                                                    <span className="text-xs text-red-500">(Neaktívny)</span>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                {workers.length === 0 && (
-                                    <p className="text-sm text-gray-500 text-center py-4">
-                                        Zatiaľ nemáte žiadnych pracovníkov. <a href="/admin/workers" className="text-blue-600 hover:underline">Pridať pracovníka</a>
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        {formData.calendarType === "HOURLY_SERVICE" && (
-                            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                                <h4 className="text-sm font-medium mb-3">Miesto konania</h4>
-                                <div className="space-y-3">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="locationType"
-                                                value="business_address"
-                                                checked={formData.locationType === "business_address"}
-                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
-                                                className="w-4 h-4 text-blue-600"
-                                            />
-                                            <span className="text-sm text-gray-700">Adresa firmy</span>
-                                        </label>
-
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="locationType"
-                                                value="custom_address"
-                                                checked={formData.locationType === "custom_address"}
-                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
-                                                className="w-4 h-4 text-blue-600"
-                                            />
-                                            <span className="text-sm text-gray-700">Vlastná adresa</span>
-                                        </label>
-
-                                        {formData.locationType === "custom_address" && (
-                                            <input
-                                                type="text"
-                                                placeholder="Zadajte adresu..."
-                                                value={formData.customAddress}
-                                                onChange={(e) => setFormData({ ...formData, customAddress: e.target.value })}
-                                                className="ml-6 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 text-sm"
-                                            />
-                                        )}
-
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="locationType"
-                                                value="google_meet"
-                                                checked={formData.locationType === "google_meet"}
-                                                onChange={(e) => setFormData({ ...formData, locationType: e.target.value as any })}
-                                                className="w-4 h-4 text-blue-600"
-                                            />
-                                            <span className="text-sm text-gray-700">Google Meet (online)</span>
-                                        </label>
-
-                                        {formData.locationType === "google_meet" && (
-                                            <p className="ml-6 text-xs text-gray-500">
-                                                Google Meet link bude automaticky vytvorený a pridaný do kalendára a emailu.
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {formData.calendarType === "DAILY_RENTAL" && (
-                            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                                <div className="mb-4">
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Cena za deň (€)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={formData.pricePerDay}
-                                        onChange={(e) => setFormData({ ...formData, pricePerDay: Number(e.target.value) })}
-                                        className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div className="flex gap-4 mb-3 border-b border-gray-100">
-                                    <button
-                                        type="button"
-                                        className={`pb-2 text-sm font-medium transition-colors relative ${minConstraintType === 'days' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => {
-                                            setMinConstraintType('days');
-                                            setFormData({ ...formData, minimumValue: 0 });
-                                        }}
-                                    >
-                                        Min. počet nocí
-                                        {minConstraintType === 'days' && (
-                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>
-                                        )}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`pb-2 text-sm font-medium transition-colors relative ${minConstraintType === 'value' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                                        onClick={() => {
-                                            setMinConstraintType('value');
-                                            setFormData({ ...formData, minimumDays: 1 });
-                                        }}
-                                    >
-                                        Min. hodnota objednávky
-                                        {minConstraintType === 'value' && (
-                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></span>
-                                        )}
-                                    </button>
-                                </div>
-
-                                {minConstraintType === 'days' ? (
-                                    <div className="animate-fade-in">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Min. počet nocí</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={formData.minimumDays}
-                                            onChange={(e) => setFormData({ ...formData, minimumDays: Number(e.target.value) })}
-                                            className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">Minimálny počet nocí, ktoré si zákazník musí rezervovať.</p>
-                                    </div>
-                                ) : (
-                                    <div className="animate-fade-in">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Min. hodnota (€)</label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            value={formData.minimumValue}
-                                            onChange={(e) => setFormData({ ...formData, minimumValue: Number(e.target.value) })}
-                                            className="w-full p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">Minimálna celková suma objednávky.</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {formData.calendarType === "TABLE_RESERVATION" && (
-                            <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <input
-                                        type="checkbox"
-                                        id="requiresTable"
-                                        checked={formData.requiresTable}
-                                        onChange={(e) => setFormData({ ...formData, requiresTable: e.target.checked })}
-                                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <label htmlFor="requiresTable" className="text-sm font-medium text-gray-700">
-                                        Vyžadovať priradenie stola
-                                    </label>
-                                </div>
-                                {!formData.requiresTable && (
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Max. kapacita (osôb)</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={formData.maxCapacity}
-                                            onChange={(e) => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
-                                            className="w-full max-w-[100px] p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                )}
-                                {formData.requiresTable && (
-                                    <p className="text-xs text-gray-500">
-                                        Kapacita bude určená vybraným stolom. <a href="/admin/tables" className="text-blue-600 hover:underline">Spravovať stoly</a>
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="flex justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={resetForm}
-                                className="px-3 py-2 text-gray-600 hover:bg-gray-200 rounded-lg text-sm"
-                            >
-                                Zrušiť
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                            >
-                                {loading ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />}
-                                Uložiť
-                            </button>
-                        </div>
-                    </form>
+                    <ServiceForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        onSubmit={handleSubmit}
+                        onCancel={resetForm}
+                        loading={loading}
+                        editingId={editingId}
+                        workers={workers}
+                        services={services}
+                        tierName={tierName}
+                        enabledFeatures={enabledFeatures}
+                        setPremiumFeature={setPremiumFeature}
+                        setShowPremiumModal={setShowPremiumModal}
+                        minConstraintType={minConstraintType}
+                        setMinConstraintType={setMinConstraintType}
+                        assignWorkerToService={assignWorkerToService}
+                        removeWorkerFromService={removeWorkerFromService}
+                        showToast={showToast}
+                        router={router}
+                    />
                 )}
 
                 <div className="space-y-3">

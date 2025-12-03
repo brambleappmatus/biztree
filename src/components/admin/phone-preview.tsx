@@ -8,12 +8,13 @@ interface PhonePreviewProps {
 
 export function PhonePreview({ url }: PhonePreviewProps) {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [iframeUrl, setIframeUrl] = useState(`${url}${url.includes('?') ? '&' : '?'}preview=true&t=${Date.now()}`);
     const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
     const handleRefresh = () => {
-        if (iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage('refresh-profile', '*');
-        }
+        // Force iframe reload with new timestamp
+        setIframeUrl(`${url}${url.includes('?') ? '&' : '?'}preview=true&t=${Date.now()}`);
+        setIsInitialLoad(true);
     };
 
     React.useEffect(() => {
@@ -48,7 +49,7 @@ export function PhonePreview({ url }: PhonePreviewProps) {
                     {/* Iframe */}
                     <iframe
                         ref={iframeRef}
-                        src={`${url}${url.includes('?') ? '&' : '?'}preview=true`}
+                        src={iframeUrl}
                         className={cn(
                             "w-full h-full border-0 transition-opacity duration-300",
                             isInitialLoad ? "opacity-0" : "opacity-100"

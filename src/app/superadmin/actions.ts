@@ -272,7 +272,11 @@ export async function createCompany(data: {
                         subdomain: data.subdomain,
                         name: data.name,
                         language: "sk",
-                        theme: "blue"
+                        theme: "blue",
+                        cardColor: "#ffffff",
+                        cardOpacity: 0.8,
+                        cardTextColor: "#000000",
+                        iconStyle: "standard"
                     }
                 }
             },
@@ -287,7 +291,11 @@ export async function createCompany(data: {
                 subdomain: data.subdomain,
                 name: data.name,
                 language: "sk",
-                theme: "blue"
+                theme: "blue",
+                cardColor: "#ffffff",
+                cardOpacity: 0.8,
+                cardTextColor: "#000000",
+                iconStyle: "standard"
             }
         });
 

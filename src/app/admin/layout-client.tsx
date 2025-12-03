@@ -31,10 +31,15 @@ export default function AdminLayoutClient({
         // Check if we're in production
         if (typeof window !== 'undefined') {
             const hostname = window.location.hostname;
+            const port = window.location.port;
+
+            console.log('Preview URL Debug:', { hostname, port, subdomain });
 
             // Check for localhost first (development)
-            if (hostname === 'localhost' || hostname.includes('localhost')) {
-                return `http://${subdomain}.localhost:3000`;
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.localhost')) {
+                const url = `http://${subdomain}.localhost:${port || '3000'}`;
+                console.log('Using localhost URL:', url);
+                return url;
             }
 
             // Production domains
@@ -103,7 +108,7 @@ export default function AdminLayoutClient({
                                             rel="noreferrer"
                                             className="text-xs font-semibold text-gray-900 truncate max-w-[200px] hover:text-blue-600 transition-colors"
                                         >
-                                            {subdomain ? `${subdomain}.biztree.bio` : 'Loading...'}
+                                            {profileUrl.replace('http://', '').replace('https://', '')}
                                         </a>
                                     </div>
                                     <a

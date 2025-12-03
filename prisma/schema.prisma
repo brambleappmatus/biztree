@@ -82,6 +82,12 @@ model Profile {
   bgBlur        Boolean  @default(false)
   bgNoise       Boolean  @default(false)
   
+  // Visual Customization
+  iconStyle     String   @default("standard") // standard, black, white
+  cardColor     String   @default("#ffffff")
+  cardOpacity   Float    @default(1.0)
+  cardTextColor String   @default("#000000")
+  
   // Google Calendar Integration
   googleAccessToken  String?
   googleRefreshToken String?

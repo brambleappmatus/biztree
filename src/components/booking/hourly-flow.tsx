@@ -191,7 +191,12 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
                 <div>
                     <h2 className="font-semibold text-lg">{service.name}</h2>
-                    <p className="text-xs text-gray-500">{service.duration > 0 && `${service.duration} min • `}{Number(service.price)} €</p>
+                    <p className="text-xs text-gray-500">
+                        {[
+                            service.duration > 0 && `${service.duration} min`,
+                            service.price && Number(service.price) > 0 && `${Number(service.price)} ${service.currency}`
+                        ].filter(Boolean).join(' • ')}
+                    </p>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                     <X size={20} />

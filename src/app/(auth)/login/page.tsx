@@ -20,6 +20,22 @@ export default function LoginPage() {
         password: ""
     });
 
+    const handleGoogleSignIn = async () => {
+        // Clear any existing session cookies to prevent conflicts
+        document.cookie.split(";").forEach((c) => {
+            const cookieName = c.trim().split("=")[0];
+            if (cookieName.includes("next-auth") || cookieName.includes("session")) {
+                document.cookie = cookieName + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+            }
+        });
+
+        // Small delay to ensure cookies are cleared
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Now initiate Google sign in
+        await signIn("google", { callbackUrl: "/admin" });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -97,7 +113,7 @@ export default function LoginPage() {
                         <div className="space-y-3 mb-6">
                             <button
                                 type="button"
-                                onClick={() => signIn("google", { callbackUrl: "/admin" })}
+                                onClick={handleGoogleSignIn}
                                 className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-medium"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">
