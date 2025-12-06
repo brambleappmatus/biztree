@@ -3,13 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { MuiInput } from "@/components/ui/mui-input";
-import { MuiTextArea } from "@/components/ui/mui-textarea";
-import { MuiButton } from "@/components/ui/mui-button";
 import { checkSubdomainAvailability, createProfileFromOnboarding } from "../actions";
-import { Check, Sparkles, Globe } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Language } from "@/lib/i18n";
+import { OnboardingStepWrapper } from "@/components/onboarding/onboarding-step-wrapper";
+import { StepBasicInfo } from "@/components/onboarding/steps/step-basic-info";
+import { StepContactInfo } from "@/components/onboarding/steps/step-contact-info";
+import { StepAppearance } from "@/components/onboarding/steps/step-appearance";
+import { StepAddress } from "@/components/onboarding/steps/step-address";
+import { StepSocialMedia } from "@/components/onboarding/steps/step-social-media";
+import { StepOpeningHours } from "@/components/onboarding/steps/step-opening-hours";
+import { OnboardingPaywall } from "@/components/onboarding/onboarding-paywall";
 import ContactButtonsBlock from "@/components/blocks/contact-buttons-block";
 import HoursBlock from "@/components/blocks/hours-block";
 import SocialLinksBlock from "@/components/blocks/social-links-block";
@@ -116,13 +119,20 @@ const BACKGROUNDS = [
     { id: "forest", name: "Forest", gradient: "linear-gradient(135deg, #0ba360 0%, #3cba92 100%)" },
 ];
 
-export default function OnboardingForm() {
+interface OnboardingFormProps {
+    businessPriceId: string;
+    proPriceId: string;
+}
+
+export default function OnboardingForm({ businessPriceId, proPriceId }: OnboardingFormProps) {
     const router = useRouter();
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [currentStep, setCurrentStep] = useState(0);
     const [subdomainChecking, setSubdomainChecking] = useState(false);
     const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<'free' | 'business' | 'pro' | null>('business');
 
     const [formData, setFormData] = useState({
         subdomain: "",
@@ -136,13 +146,13 @@ export default function OnboardingForm() {
         bgImage: "black",
         address: "",
         hours: [
-            { day: 1, isOpen: true, openTime: "09:00", closeTime: "17:00" }, // Monday
+            { day: 1, isOpen: true, openTime: "09:00", closeTime: "17:00" },
             { day: 2, isOpen: true, openTime: "09:00", closeTime: "17:00" },
             { day: 3, isOpen: true, openTime: "09:00", closeTime: "17:00" },
             { day: 4, isOpen: true, openTime: "09:00", closeTime: "17:00" },
             { day: 5, isOpen: true, openTime: "09:00", closeTime: "17:00" },
-            { day: 6, isOpen: false, openTime: "09:00", closeTime: "17:00" }, // Saturday
-            { day: 0, isOpen: false, openTime: "09:00", closeTime: "17:00" }, // Sunday
+            { day: 6, isOpen: false, openTime: "09:00", closeTime: "17:00" },
+            { day: 0, isOpen: false, openTime: "09:00", closeTime: "17:00" },
         ],
         socialLinks: {
             instagram: "",
@@ -182,7 +192,6 @@ export default function OnboardingForm() {
         }
     };
 
-    // Debounced subdomain check
     useEffect(() => {
         if (!formData.subdomain || formData.subdomain.length < 3 || formData.subdomain === "www") {
             return;
@@ -195,9 +204,7 @@ export default function OnboardingForm() {
         return () => clearTimeout(timer);
     }, [formData.subdomain]);
 
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleComplete = async () => {
         const t = ONBOARDING_TRANSLATIONS[formData.language];
 
         if (!session?.user?.id) {
@@ -210,16 +217,23 @@ export default function OnboardingForm() {
             return;
         }
 
+        // If on paywall step and no plan selected, show error
+        if (currentStep === 6 && !selectedPlan) {
+            setError("Vyberte plán");
+            return;
+        }
         setLoading(true);
         setError("");
 
         try {
-            // Convert social links object to array
+            // Prepare social links array
             const socialLinksArray = Object.entries(formData.socialLinks)
                 .filter(([_, url]) => url && url.trim() !== '')
                 .map(([platform, url]) => ({ platform, url }));
 
             console.log('Submitting onboarding data...');
+
+            // Create profile first (for all plans)
             const result = await createProfileFromOnboarding(session.user.id, {
                 ...formData,
                 socialLinks: socialLinksArray
@@ -231,11 +245,41 @@ export default function OnboardingForm() {
                 console.error('Onboarding error:', result.error);
                 setError(result.error);
                 setLoading(false);
-            } else {
-                console.log('Onboarding successful, redirecting to admin...');
-                // Redirect to admin - don't set loading to false, let the redirect happen
-                window.location.href = '/admin';
+                return;
             }
+
+            // Profile created successfully
+            console.log('Profile created successfully');
+
+            // If paid plan selected, redirect to Stripe checkout
+            if (selectedPlan === 'business' || selectedPlan === 'pro') {
+                const { createCheckoutSession } = await import("@/app/admin/subscription/actions");
+                const priceId = selectedPlan === 'business' ? businessPriceId : proPriceId;
+
+                if (!priceId) {
+                    setError("Price ID not configured");
+                    setLoading(false);
+                    return;
+                }
+
+                console.log('Creating Stripe checkout session for', selectedPlan, 'plan...');
+                const url = await createCheckoutSession(priceId, undefined, 'subscription');
+
+                if (url) {
+                    console.log('Redirecting to Stripe checkout...');
+                    // Redirect to Stripe checkout
+                    window.location.href = url;
+                    // Don't set loading to false, let the redirect happen
+                } else {
+                    setError("Failed to create checkout session");
+                    setLoading(false);
+                }
+                return;
+            }
+
+            // For free plan, just redirect to admin
+            console.log('Free plan selected, redirecting to admin...');
+            window.location.href = '/admin';
         } catch (err) {
             console.error('Onboarding exception:', err);
             setError(t.errorCreating);
@@ -243,535 +287,286 @@ export default function OnboardingForm() {
         }
     };
 
+    // Skip handler - moves to next step
+    const handleSkip = () => {
+        if (currentStep < 6) { // Don't skip paywall
+            setCurrentStep(currentStep + 1);
+        }
+    };
+
     const selectedTheme = THEMES.find(t => t.id === formData.theme);
     const selectedBg = BACKGROUNDS.find(b => b.id === formData.bgImage);
     const t = ONBOARDING_TRANSLATIONS[formData.language];
 
-    return (
-        <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
-            {/* Left Side - Form */}
-            <div className="w-full lg:w-3/5 p-6 lg:p-12 overflow-y-auto">
-                <div className="max-w-2xl mx-auto">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                                <img src="/logo.svg" alt="BizTree Logo" className="w-full h-full object-cover" />
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BizTree</h1>
-                        </div>
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                            {t.title}
-                        </h2>
-                        <p className="text-gray-600 dark:text-gray-400">
-                            {t.subtitle}
-                        </p>
-                    </div>
+    // Define steps
+    const steps = [
+        {
+            id: "basic-info",
+            title: t.basicInfo,
+            isRequired: true, // REQUIRED
+            component: (
+                <StepBasicInfo
+                    formData={{
+                        language: formData.language,
+                        name: formData.name,
+                        subdomain: formData.subdomain
+                    }}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                    onSubdomainChange={handleSubdomainChange}
+                    subdomainChecking={subdomainChecking}
+                    subdomainAvailable={subdomainAvailable}
+                    translations={t}
+                />
+            ),
+            isValid: !!(formData.name && formData.subdomain && subdomainAvailable)
+        },
+        {
+            id: "contact-info",
+            title: t.contactInfo,
+            isRequired: false, // OPTIONAL
+            component: (
+                <StepContactInfo
+                    formData={{
+                        about: formData.about,
+                        phone: formData.phone,
+                        email: formData.email
+                    }}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                    translations={t}
+                />
+            ),
+            isValid: true
+        },
+        {
+            id: "appearance",
+            title: t.appearance,
+            isRequired: false, // OPTIONAL
+            component: (
+                <StepAppearance
+                    formData={{
+                        theme: formData.theme,
+                        bgImage: formData.bgImage
+                    }}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                    translations={t}
+                />
+            ),
+            isValid: true
+        },
+        {
+            id: "address",
+            title: t.address,
+            isRequired: false, // OPTIONAL
+            component: (
+                <StepAddress
+                    formData={{ address: formData.address }}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                    translations={t}
+                />
+            ),
+            isValid: true
+        },
+        {
+            id: "social-media",
+            title: t.socialMedia,
+            isRequired: false, // OPTIONAL
+            component: (
+                <StepSocialMedia
+                    formData={formData.socialLinks}
+                    onChange={(data) => setFormData({ ...formData, socialLinks: { ...formData.socialLinks, ...data } })}
+                />
+            ),
+            isValid: true
+        },
+        {
+            id: "opening-hours",
+            title: t.openingHours,
+            isRequired: false, // OPTIONAL
+            component: (
+                <StepOpeningHours
+                    formData={formData.hours}
+                    onChange={(hours) => setFormData({ ...formData, hours })}
+                    translations={t}
+                />
+            ),
+            isValid: true
+        },
+        {
+            id: "paywall",
+            title: "Vyberte plán",
+            isRequired: true, // REQUIRED
+            component: (
+                <OnboardingPaywall
+                    onSelectPlan={setSelectedPlan}
+                    selectedPlan={selectedPlan}
+                    businessPriceId={businessPriceId}
+                    proPriceId={proPriceId}
+                />
+            ),
+            isValid: selectedPlan !== null
+        }
+    ];
 
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400">
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Basic Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.basicInfo}
-                            </h3>
-
-                            {/* Language Selector */}
-                            <div className="flex gap-2 mb-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, language: "sk" })}
-                                    className={cn(
-                                        "flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all",
-                                        formData.language === "sk"
-                                            ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-                                    )}
-                                >
-                                    <span className="text-xl">🇸🇰</span>
-                                    <span className="font-medium">Slovensky</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, language: "en" })}
-                                    className={cn(
-                                        "flex-1 py-2 px-4 rounded-lg border flex items-center justify-center gap-2 transition-all",
-                                        formData.language === "en"
-                                            ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-                                    )}
-                                >
-                                    <span className="text-xl">🇺🇸</span>
-                                    <span className="font-medium">English</span>
-                                </button>
-                            </div>
-
-                            <div>
-                                <MuiInput
-                                    label={t.companyName}
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
-                                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                    {t.companyNameHelper}
-                                </p>
-                            </div>
-
-                            <div>
-                                <MuiInput
-                                    label={t.subdomain}
-                                    value={formData.subdomain}
-                                    onChange={(e) => handleSubdomainChange(e.target.value)}
-                                    required
-                                />
-                                <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1">
-                                    <span className="text-base">⚠️</span>
-                                    <span>{t.subdomainHelper}</span>
-                                </p>
-                                {formData.subdomain && (
-                                    <div className="mt-2 text-sm">
-                                        {subdomainChecking ? (
-                                            <span className="text-gray-500">{t.checking}</span>
-                                        ) : subdomainAvailable === true ? (
-                                            <span className="text-green-600 dark:text-green-400">
-                                                ✓ {formData.subdomain}.biztree.bio {t.available}
-                                            </span>
-                                        ) : subdomainAvailable === false ? (
-                                            <span className="text-red-600 dark:text-red-400">
-                                                {formData.subdomain === "www" ? `✗ ${t.subdomainWww}` : `✗ ${t.subdomainTaken}`}
-                                            </span>
-                                        ) : null}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Contact Info */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.contactInfo}
-                            </h3>
-
-                            <MuiTextArea
-                                label={t.about}
-                                value={formData.about}
-                                onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                                rows={3}
-                            />
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <MuiInput
-                                    label={t.phone}
-                                    type="tel"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                />
-
-                                <MuiInput
-                                    label={t.email}
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Appearance */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.appearance}
-                            </h3>
-
-                            {/* Theme Selection */}
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t.colorTheme}</h4>
-                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                                    {THEMES.map((theme) => (
-                                        <button
-                                            key={theme.id}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, theme: theme.id })}
-                                            className={cn(
-                                                "p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2",
-                                                formData.theme === theme.id
-                                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                                    : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                            )}
-                                        >
-                                            <div
-                                                className="w-8 h-8 rounded-full shadow-sm"
-                                                style={{ backgroundColor: theme.color }}
-                                            />
-                                            <span className="text-xs font-medium text-gray-900 dark:text-gray-100">
-                                                {theme.name}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Background Selection */}
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t.background}</h4>
-                                <div className="flex overflow-x-auto gap-3 pb-2 snap-x scrollbar-hide -mx-2 px-2">
-                                    {BACKGROUNDS.map((bg) => (
-                                        <button
-                                            key={bg.id}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, bgImage: bg.id })}
-                                            className={cn(
-                                                "h-24 w-32 flex-shrink-0 rounded-lg border-2 transition-all relative overflow-hidden snap-start",
-                                                formData.bgImage === bg.id
-                                                    ? "border-blue-500 ring-2 ring-blue-200"
-                                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                                            )}
-                                        >
-                                            <div
-                                                className="w-full h-full"
-                                                style={{
-                                                    background: bg.gradient,
-                                                    backgroundSize: "cover",
-                                                    backgroundPosition: "center"
-                                                }}
-                                            />
-                                            {formData.bgImage === bg.id && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-blue-600/20">
-                                                    <Check className="text-white" size={24} />
-                                                </div>
-                                            )}
-                                            <span className="absolute bottom-1 left-1 text-[10px] font-medium text-white drop-shadow-md bg-black/20 px-1.5 py-0.5 rounded">
-                                                {bg.name}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Address */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.address}
-                            </h3>
-                            <MuiInput
-                                label={t.addressOptional}
-                                value={formData.address}
-                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                placeholder={t.addressPlaceholder}
-                            />
-                        </div>
-
-                        {/* Social Media */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.socialMedia}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {t.socialMediaDesc}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <MuiInput
-                                    label="Instagram"
-                                    value={formData.socialLinks.instagram}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, instagram: e.target.value }
-                                    })}
-                                    placeholder="https://instagram.com/..."
-                                />
-                                <MuiInput
-                                    label="Facebook"
-                                    value={formData.socialLinks.facebook}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, facebook: e.target.value }
-                                    })}
-                                    placeholder="https://facebook.com/..."
-                                />
-                                <MuiInput
-                                    label="TikTok"
-                                    value={formData.socialLinks.tiktok}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, tiktok: e.target.value }
-                                    })}
-                                    placeholder="https://tiktok.com/@..."
-                                />
-                                <MuiInput
-                                    label="LinkedIn"
-                                    value={formData.socialLinks.linkedin}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, linkedin: e.target.value }
-                                    })}
-                                    placeholder="https://linkedin.com/..."
-                                />
-                                <MuiInput
-                                    label="Twitter / X"
-                                    value={formData.socialLinks.twitter}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, twitter: e.target.value }
-                                    })}
-                                    placeholder="https://twitter.com/..."
-                                />
-                                <MuiInput
-                                    label="YouTube"
-                                    value={formData.socialLinks.youtube}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        socialLinks: { ...formData.socialLinks, youtube: e.target.value }
-                                    })}
-                                    placeholder="https://youtube.com/..."
-                                />
-                            </div>
-                        </div>
-
-                        {/* Opening Hours */}
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {t.openingHours}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {t.openingHoursDesc}
-                            </p>
-                            <div className="space-y-3">
-                                {t.days.map((dayName, index) => {
-                                    const dayIndex = index === 6 ? 0 : index + 1; // Sunday is 0
-                                    const dayData = formData.hours.find(h => h.day === dayIndex);
-                                    if (!dayData) return null;
-
-                                    return (
-                                        <div key={dayIndex} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                            <div className="w-24 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                {dayName}
-                                            </div>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={dayData.isOpen}
-                                                    onChange={(e) => {
-                                                        const newHours = formData.hours.map(h =>
-                                                            h.day === dayIndex ? { ...h, isOpen: e.target.checked } : h
-                                                        );
-                                                        setFormData({ ...formData, hours: newHours });
-                                                    }}
-                                                    className="w-4 h-4 text-blue-600 rounded"
-                                                />
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">{t.open}</span>
-                                            </label>
-                                            {dayData.isOpen && (
-                                                <>
-                                                    <input
-                                                        type="time"
-                                                        value={dayData.openTime}
-                                                        onChange={(e) => {
-                                                            const newHours = formData.hours.map(h =>
-                                                                h.day === dayIndex ? { ...h, openTime: e.target.value } : h
-                                                            );
-                                                            setFormData({ ...formData, hours: newHours });
-                                                        }}
-                                                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-                                                    />
-                                                    <span className="text-gray-500">-</span>
-                                                    <input
-                                                        type="time"
-                                                        value={dayData.closeTime}
-                                                        onChange={(e) => {
-                                                            const newHours = formData.hours.map(h =>
-                                                                h.day === dayIndex ? { ...h, closeTime: e.target.value } : h
-                                                            );
-                                                            setFormData({ ...formData, hours: newHours });
-                                                        }}
-                                                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Submit Button */}
-
-                        {/* Submit Button */}
-                        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <MuiButton
-                                type="submit"
-                                loading={loading}
-                                disabled={loading || !formData.subdomain || !formData.name || !subdomainAvailable}
-                                startIcon={<Sparkles size={18} />}
-                                className="w-full"
-                            >
-                                {t.submit}
-                            </MuiButton>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
-                                {t.submitDesc}
-                            </p>
-                        </div>
-                    </form>
+    // Preview component
+    const preview = (
+        <div className="p-8 h-full flex flex-col">
+            <div className="mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span>{t.livePreview}</span>
                 </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {formData.subdomain ? `${formData.subdomain}.biztree.bio` : t.yourSubdomain}
+                </p>
             </div>
 
-            {/* Right Side - Live Preview */}
-            <div className="hidden lg:block lg:w-2/5 bg-gray-100 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 sticky top-0 h-screen overflow-hidden">
-                <div className="p-8 h-full flex flex-col">
-                    <div className="mb-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span>{t.livePreview}</span>
-                        </div>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">
-                            {formData.subdomain ? `${formData.subdomain}.biztree.bio` : t.yourSubdomain}
-                        </p>
-                    </div>
+            <div className="flex-1 flex items-center justify-center">
+                <div className="w-[300px] h-[600px] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border-8 border-gray-800 dark:border-gray-700 overflow-hidden relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 dark:bg-gray-700 rounded-b-2xl z-10"></div>
 
-                    {/* Preview Phone Mockup */}
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className="w-[300px] h-[600px] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl border-8 border-gray-800 dark:border-gray-700 overflow-hidden relative">
-                            {/* Phone notch */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 dark:bg-gray-700 rounded-b-2xl z-10"></div>
-
-                            {/* Preview Content */}
-                            <div
-                                className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
-                                style={{
-                                    background: selectedBg?.gradient || BACKGROUNDS[0].gradient,
-                                    '--primary': selectedTheme?.color || '#007AFF',
-                                } as React.CSSProperties}
-                            >
-                                <div className="min-h-full flex flex-col items-center p-6 pt-12 space-y-4">
-                                    {/* Avatar Placeholder */}
-                                    <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-sm border-4 border-white/20 mb-2 flex items-center justify-center">
-                                        <span className="text-3xl text-white/60">
-                                            {formData.name ? formData.name[0].toUpperCase() : "?"}
-                                        </span>
-                                    </div>
-
-                                    {/* Name */}
-                                    <h1 className="text-2xl font-bold text-white text-center">
-                                        {formData.name || t.yourName}
-                                    </h1>
-
-                                    {/* About */}
-                                    {formData.about && (
-                                        <p className="text-sm text-white/80 text-center max-w-[250px]">
-                                            {formData.about}
-                                        </p>
-                                    )}
-
-                                    {/* Contact Buttons */}
-                                    {(formData.phone || formData.email) && (
-                                        <div className="w-full px-2">
-                                            <ContactButtonsBlock
-                                                profile={{
-                                                    phone: formData.phone || null,
-                                                    email: formData.email || null,
-                                                    whatsapp: null,
-                                                    address: null,
-                                                    services: [],
-                                                    socialLinks: [],
-                                                    links: [],
-                                                    hours: []
-                                                } as any}
-                                                lang={formData.language}
-                                                bgImage={formData.bgImage}
-                                                themeColor={selectedTheme?.color}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Social Links */}
-                                    {Object.values(formData.socialLinks).some(url => url && url.trim() !== '') && (
-                                        <div className="w-full px-2">
-                                            <SocialLinksBlock
-                                                profile={{
-                                                    socialLinks: Object.entries(formData.socialLinks)
-                                                        .filter(([_, url]) => url && url.trim() !== '')
-                                                        .map(([platform, url]) => ({
-                                                            id: platform,
-                                                            platform,
-                                                            url,
-                                                            profileId: ''
-                                                        })),
-                                                    services: [],
-                                                    links: [],
-                                                    hours: []
-                                                } as any}
-                                                lang={formData.language}
-                                                bgImage={formData.bgImage}
-                                                themeColor={selectedTheme?.color}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Opening Hours */}
-                                    {formData.hours.some(h => h.isOpen) && (
-                                        <div className="w-full px-2">
-                                            <HoursBlock
-                                                profile={{
-                                                    hours: formData.hours
-                                                        .filter(h => h.isOpen)
-                                                        .map(h => ({
-                                                            id: `hour-${h.day}`,
-                                                            dayOfWeek: h.day,
-                                                            openTime: h.openTime,
-                                                            closeTime: h.closeTime,
-                                                            isClosed: false,
-                                                            profileId: ''
-                                                        })),
-                                                    services: [],
-                                                    socialLinks: [],
-                                                    links: []
-                                                } as any}
-                                                lang="sk"
-                                                bgImage={formData.bgImage}
-                                                themeColor={selectedTheme?.color}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Location */}
-                                    {formData.address && (
-                                        <div className="w-full px-2">
-                                            <LocationBlock
-                                                profile={{
-                                                    address: formData.address,
-                                                    mapEmbed: null,
-                                                    locationLat: null,
-                                                    locationLng: null,
-                                                    services: [],
-                                                    socialLinks: [],
-                                                    links: [],
-                                                    hours: []
-                                                } as any}
-                                                lang="sk"
-
-                                                bgImage={formData.bgImage}
-                                                themeColor={selectedTheme?.color}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Empty state */}
-                                    {!formData.name && !formData.about && (
-                                        <div className="text-center text-white/40 text-sm mt-8">
-                                            <p>{t.startFilling}</p>
-                                            <p>{t.seePreview}</p>
-                                        </div>
-                                    )}
-                                </div>
+                    <div
+                        className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
+                        style={{
+                            background: selectedBg?.gradient || BACKGROUNDS[0].gradient,
+                            '--primary': selectedTheme?.color || '#007AFF',
+                        } as React.CSSProperties}
+                    >
+                        <div className="min-h-full flex flex-col items-center p-6 pt-12 space-y-4">
+                            <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-sm border-4 border-white/20 mb-2 flex items-center justify-center">
+                                <span className="text-3xl text-white/60">
+                                    {formData.name ? formData.name[0].toUpperCase() : "?"}
+                                </span>
                             </div>
+
+                            <h1 className="text-2xl font-bold text-white text-center">
+                                {formData.name || t.yourName}
+                            </h1>
+
+                            {formData.about && (
+                                <p className="text-sm text-white/80 text-center max-w-[250px]">
+                                    {formData.about}
+                                </p>
+                            )}
+
+                            {(formData.phone || formData.email) && (
+                                <div className="w-full px-2">
+                                    <ContactButtonsBlock
+                                        profile={{
+                                            phone: formData.phone || null,
+                                            email: formData.email || null,
+                                            whatsapp: null,
+                                            address: null,
+                                            services: [],
+                                            socialLinks: [],
+                                            links: [],
+                                            hours: []
+                                        } as any}
+                                        lang={formData.language}
+                                        bgImage={formData.bgImage}
+                                        themeColor={selectedTheme?.color}
+                                    />
+                                </div>
+                            )}
+
+                            {Object.values(formData.socialLinks).some(url => url && url.trim() !== '') && (
+                                <div className="w-full px-2">
+                                    <SocialLinksBlock
+                                        profile={{
+                                            socialLinks: Object.entries(formData.socialLinks)
+                                                .filter(([_, url]) => url && url.trim() !== '')
+                                                .map(([platform, url]) => ({
+                                                    id: platform,
+                                                    platform,
+                                                    url,
+                                                    profileId: ''
+                                                })),
+                                            services: [],
+                                            links: [],
+                                            hours: []
+                                        } as any}
+                                        lang={formData.language}
+                                        bgImage={formData.bgImage}
+                                        themeColor={selectedTheme?.color}
+                                    />
+                                </div>
+                            )}
+
+                            {formData.hours.some(h => h.isOpen) && (
+                                <div className="w-full px-2">
+                                    <HoursBlock
+                                        profile={{
+                                            hours: formData.hours
+                                                .filter(h => h.isOpen)
+                                                .map(h => ({
+                                                    id: `hour-${h.day}`,
+                                                    dayOfWeek: h.day,
+                                                    openTime: h.openTime,
+                                                    closeTime: h.closeTime,
+                                                    isClosed: false,
+                                                    profileId: ''
+                                                })),
+                                            services: [],
+                                            socialLinks: [],
+                                            links: []
+                                        } as any}
+                                        lang="sk"
+                                        bgImage={formData.bgImage}
+                                        themeColor={selectedTheme?.color}
+                                    />
+                                </div>
+                            )}
+
+                            {formData.address && (
+                                <div className="w-full px-2">
+                                    <LocationBlock
+                                        profile={{
+                                            address: formData.address,
+                                            mapEmbed: null,
+                                            locationLat: null,
+                                            locationLng: null,
+                                            services: [],
+                                            socialLinks: [],
+                                            links: [],
+                                            hours: []
+                                        } as any}
+                                        lang="sk"
+                                        bgImage={formData.bgImage}
+                                        themeColor={selectedTheme?.color}
+                                    />
+                                </div>
+                            )}
+
+                            {!formData.name && !formData.about && (
+                                <div className="text-center text-white/40 text-sm mt-8">
+                                    <p>{t.startFilling}</p>
+                                    <p>{t.seePreview}</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    );
+
+    return (
+        <>
+            {error && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
+                    <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400">
+                        {error}
+                    </div>
+                </div>
+            )}
+            <OnboardingStepWrapper
+                steps={steps}
+                currentStep={currentStep}
+                onStepChange={setCurrentStep}
+                onComplete={handleComplete}
+                onSkip={handleSkip}
+                preview={preview}
+                loading={loading}
+            />
+        </>
     );
 }

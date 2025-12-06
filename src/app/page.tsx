@@ -38,10 +38,55 @@ export default async function LandingPage() {
     orderBy: { name: 'asc' }
   });
 
-  // Convert Decimal to number for client components
+  // Fetch latest blog posts
+  const blogPosts = await prisma.blogPost.findMany({
+    where: { isPublished: true },
+    orderBy: { publishedAt: 'desc' },
+    take: 3
+  });
+
+  // Serialize data for client components
+  const serializedShowcases = showcases.map(showcase => ({
+    ...showcase,
+    createdAt: showcase.createdAt.toISOString(),
+    updatedAt: showcase.updatedAt.toISOString(),
+    layers: showcase.layers.map(layer => ({
+      ...layer,
+      createdAt: layer.createdAt.toISOString(),
+      updatedAt: layer.updatedAt.toISOString(),
+    }))
+  }));
+
   const serializedTiers = tiers.map(tier => ({
     ...tier,
-    price: tier.price ? Number(tier.price) : 0
+    price: tier.price ? Number(tier.price) : 0,
+    createdAt: tier.createdAt.toISOString(),
+    updatedAt: tier.updatedAt.toISOString(),
+    features: tier.features.map(tf => ({
+      ...tf,
+      // TierFeature doesn't have createdAt/updatedAt in schema but let's be safe if it did
+      // It has relation fields which are fine.
+      // But we need to verify if TierFeature has Date fields. Schema says no.
+      // But it includes 'feature' which has Date fields.
+      feature: {
+        ...tf.feature,
+        createdAt: tf.feature.createdAt.toISOString(),
+        updatedAt: tf.feature.updatedAt.toISOString(),
+      }
+    }))
+  }));
+
+  const serializedFeatures = allFeatures.map(feature => ({
+    ...feature,
+    createdAt: feature.createdAt.toISOString(),
+    updatedAt: feature.updatedAt.toISOString(),
+  }));
+
+  const serializedBlogPosts = blogPosts.map(post => ({
+    ...post,
+    createdAt: post.createdAt.toISOString(),
+    updatedAt: post.updatedAt.toISOString(),
+    publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
   }));
 
   // Define pricing structure for PricingSection
@@ -117,12 +162,13 @@ export default async function LandingPage() {
 
       {/* Client-side content with language context */}
       <LandingContent
-        showcases={showcases}
+        showcases={serializedShowcases}
         serializedTiers={serializedTiers}
-        allFeatures={allFeatures}
+        allFeatures={serializedFeatures}
         priceIds={priceIds}
         prices={prices}
         enableLifetime={enableLifetime}
+        blogPosts={serializedBlogPosts}
       />
 
       {/* Footer */}

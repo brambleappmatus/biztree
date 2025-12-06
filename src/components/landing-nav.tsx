@@ -45,6 +45,7 @@ export default function LandingNav() {
                         { href: "/", label: language === 'sk' ? 'Domov' : 'Home' },
                         { href: "#features", label: t.landing.features },
                         { href: "#showcase", label: language === 'sk' ? 'Ukážky' : 'Showcase' },
+                        { href: "/blog", label: "Blog" },
                         { href: "#pricing", label: t.landing.pricing },
                     ].map((link) => (
                         <Link

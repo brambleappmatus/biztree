@@ -572,3 +572,34 @@ model FloorPlan {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model BlogPost {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  excerpt         String?  // Short description for previews
+  content         String   @db.Text // Rich text content (HTML)
+  featuredImage   String?  // URL to featured image
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Publishing
+  isPublished     Boolean  @default(false)
+  publishedAt     DateTime?
+  
+  // Author info
+  authorName      String?
+  authorImage     String?
+  
+  // Analytics
+  viewCount       Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+}

@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { ProfileCore } from "@/types";
 import { cn } from "@/lib/utils";
@@ -40,13 +42,10 @@ export default function HoursBlock({ profile, lang, bgImage, themeColor }: Hours
                     return (
                         <div key={hour.id} className={cn(
                             "flex justify-between py-1 border-b last:border-0 border-white/10",
-                            isToday && !themeColor && "font-bold text-[var(--primary)]",
-                            isToday && themeColor && "font-bold",
+                            isToday && "font-bold today-highlight",
                             hour.isClosed && "opacity-50",
                             !isToday && "opacity-80"
-                        )}
-                            style={isToday && themeColor ? { color: themeColor } : undefined}
-                        >
+                        )}>
                             <span>{DAYS[hour.dayOfWeek]}</span>
                             <span>
                                 {hour.isClosed ? (

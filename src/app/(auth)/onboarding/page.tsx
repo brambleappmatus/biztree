@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import OnboardingForm from "./onboarding-form";
+import { getStripePriceIds } from "../actions";
 
 export default async function OnboardingPage() {
     const session = await getServerSession(authOptions);
@@ -21,5 +22,8 @@ export default async function OnboardingPage() {
         redirect("/admin");
     }
 
-    return <OnboardingForm />;
+    // Get Stripe price IDs
+    const priceIds = await getStripePriceIds();
+
+    return <OnboardingForm businessPriceId={priceIds.businessMonthly} proPriceId={priceIds.proMonthly} />;
 }

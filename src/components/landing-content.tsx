@@ -32,10 +32,16 @@ interface LandingContentProps {
         lifetime: Record<string, number>;
     };
     enableLifetime: boolean;
+    blogPosts?: any[];
 }
 
-export default function LandingContent({ showcases, serializedTiers, allFeatures, priceIds, prices, enableLifetime }: LandingContentProps) {
+export default function LandingContent({ showcases, serializedTiers, allFeatures, priceIds, prices, enableLifetime, blogPosts }: LandingContentProps) {
     const { t, language } = useLanguage();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     return (
         <>
@@ -269,81 +275,147 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
             </section>
 
             {/* Features Section */}
-            <section id="features" className="py-24 px-4 bg-gradient-to-b from-white via-gray-50/50 to-white">
-                <div className="max-w-6xl mx-auto">
-                    <ScrollAnimation animation="slide-up">
-                        <div className="text-center mb-16">
+            <section id="features" className="py-24 px-4 bg-gradient-to-b from-white via-gray-50/50 to-white relative overflow-hidden">
+                <div className="max-w-7xl mx-auto">
+                    {mounted ? (
+                        <>
+                            {/* Title and Description */}
+                            <ScrollAnimation animation="slide-up">
+                                <div className="mb-12">
+                                    <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
+                                        {t.landing.allYouNeed}
+                                    </h2>
+                                    <p className="text-gray-600 text-xl">
+                                        {t.landing.completeSolution}
+                                    </p>
+                                </div>
+                            </ScrollAnimation>
+
+                            {/* Flex layout: Features (Left) + Bizzy (Right) */}
+                            <div className="flex flex-col lg:flex-row gap-12 items-end relative">
+                                {/* Left side - Feature Grid */}
+                                <div className="w-full lg:w-7/12 relative">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <ScrollAnimation animation="slide-up" delay={0}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-blue-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <Calendar className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.onlineBooking}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.onlineBookingDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        <ScrollAnimation animation="slide-up" delay={100}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-purple-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <Globe2 className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.customDomain}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.customDomainDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        {/* Placeholder for third column - first row */}
+                                        <ScrollAnimation animation="slide-up" delay={100}>
+                                            <div className="hidden md:block opacity-0 pointer-events-none">
+                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
+                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
+                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
+                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
+                                                </div>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        <ScrollAnimation animation="slide-up" delay={200}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-green-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <Zap className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.quickSetup}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.quickSetupDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        <ScrollAnimation animation="slide-up" delay={0}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-orange-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <Palette className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.customDesign}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.customDesignDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        {/* Placeholder for third column - second row */}
+                                        <ScrollAnimation animation="slide-up" delay={0}>
+                                            <div className="hidden md:block opacity-0 pointer-events-none">
+                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
+                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
+                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
+                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
+                                                </div>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        <ScrollAnimation animation="slide-up" delay={100}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-pink-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-600 to-pink-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <TrendingUp className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.seoOptimization}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.seoOptimizationDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        <ScrollAnimation animation="slide-up" delay={200}>
+                                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-indigo-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                                    <BarChart3 className="text-white" size={28} />
+                                                </div>
+                                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.analytics}</h3>
+                                                <p className="text-gray-600 leading-relaxed">{t.landing.analyticsDesc}</p>
+                                            </div>
+                                        </ScrollAnimation>
+
+                                        {/* Placeholder for third column - third row */}
+                                        <ScrollAnimation animation="slide-up" delay={200}>
+                                            <div className="hidden md:block opacity-0 pointer-events-none">
+                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
+                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
+                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
+                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
+                                                </div>
+                                            </div>
+                                        </ScrollAnimation>
+                                    </div>
+                                </div>
+
+                                {/* Bizzy - absolutely positioned within section */}
+                                <div className="hidden lg:block absolute bottom-0 right-0 pointer-events-none z-10" style={{ width: '50vw', maxWidth: '900px', transform: 'translateX(40%)' }}>
+                                    <ScrollAnimation animation="slide-left" delay={200}>
+                                        <Image
+                                            src="/bizzy-cheese.png"
+                                            alt="Bizzy with cheese"
+                                            width={1200}
+                                            height={1200}
+                                            className="drop-shadow-2xl w-full h-auto"
+                                        />
+                                    </ScrollAnimation>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        // Server-side placeholder - simple non-animated version
+                        <div className="mb-12">
                             <h2 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 bg-clip-text text-transparent">
                                 {t.landing.allYouNeed}
                             </h2>
-                            <p className="text-gray-600 text-xl max-w-2xl mx-auto">
+                            <p className="text-gray-600 text-xl">
                                 {t.landing.completeSolution}
                             </p>
                         </div>
-                    </ScrollAnimation>
-
-                    {/* Feature Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <ScrollAnimation animation="slide-up" delay={0}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-blue-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <Calendar className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.onlineBooking}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.onlineBookingDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-
-                        <ScrollAnimation animation="slide-up" delay={100}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-purple-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <Globe2 className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.customDomain}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.customDomainDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-
-                        <ScrollAnimation animation="slide-up" delay={200}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-green-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <Zap className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.quickSetup}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.quickSetupDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-
-                        <ScrollAnimation animation="slide-up" delay={0}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-orange-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-600 to-orange-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <Palette className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.customDesign}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.customDesignDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-
-                        <ScrollAnimation animation="slide-up" delay={100}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-pink-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-600 to-pink-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <TrendingUp className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.seoOptimization}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.seoOptimizationDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-
-                        <ScrollAnimation animation="slide-up" delay={200}>
-                            <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-indigo-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <BarChart3 className="text-white" size={28} />
-                                </div>
-                                <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.analytics}</h3>
-                                <p className="text-gray-600 leading-relaxed">{t.landing.analyticsDesc}</p>
-                            </div>
-                        </ScrollAnimation>
-                    </div>
+                    )}
                 </div>
             </section>
 
@@ -436,36 +508,133 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                 </div>
             </section>
 
+            {/* Blog Section */}
+            {blogPosts && blogPosts.length > 0 && (
+                <section className="py-20 px-4 bg-white">
+                    <div className="max-w-6xl mx-auto">
+                        <ScrollAnimation animation="slide-up">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900">
+                                    {language === 'sk' ? 'Najnovšie z blogu' : 'Latest from Blog'}
+                                </h2>
+                                <p className="text-gray-600 text-lg">
+                                    {language === 'sk' ? 'Tipy a triky pre vaše podnikanie' : 'Tips and tricks for your business'}
+                                </p>
+                            </div>
+                        </ScrollAnimation>
+
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {blogPosts.map((post: any, index: number) => (
+                                <ScrollAnimation key={post.id} animation="slide-up" delay={index * 100}>
+                                    <Link
+                                        href={`/blog/${post.slug}`}
+                                        className="group flex flex-col bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
+                                    >
+                                        <div className="relative h-48 w-full bg-gray-100 overflow-hidden">
+                                            {post.featuredImage ? (
+                                                <Image
+                                                    src={post.featuredImage}
+                                                    alt={post.title}
+                                                    fill
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+                                                    <span className="text-4xl">📝</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 p-6 flex flex-col">
+                                            <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                                                {post.publishedAt && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar size={14} />
+                                                        <span>
+                                                            {new Date(post.publishedAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                                {post.title}
+                                            </h3>
+                                            {post.excerpt && (
+                                                <p className="text-gray-600 mb-4 line-clamp-3 text-sm flex-1">
+                                                    {post.excerpt}
+                                                </p>
+                                            )}
+                                            <div className="mt-auto pt-4 flex items-center text-blue-600 font-medium text-sm group-hover:gap-2 transition-all">
+                                                {language === 'sk' ? 'Čítať viac' : 'Read Article'} <ArrowRight size={16} className="ml-1" />
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </ScrollAnimation>
+                            ))}
+                        </div>
+
+                        <div className="text-center mt-12">
+                            <Link
+                                href="/blog"
+                                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                            >
+                                {language === 'sk' ? 'Zobraziť všetky články' : 'View All Articles'}
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Final CTA Section */}
-            <section className="py-24 px-4 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full opacity-10">
+            <section className="py-24 px-4 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 relative overflow-visible">
+                <div className="absolute top-0 left-0 w-full h-full opacity-10 overflow-hidden">
                     <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-blob" />
                     <div className="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
                 </div>
 
-                <div className="max-w-3xl mx-auto text-center relative z-10">
-                    <ScrollAnimation animation="scale">
-                        <Sparkles className="mx-auto mb-6 text-blue-200 animate-float" size={56} />
-                    </ScrollAnimation>
+                <div className="max-w-7xl mx-auto relative z-10">
+                    <div className="grid lg:grid-cols-2 gap-12 items-end">
+                        {/* Left Column - CTA Content */}
+                        <div className="text-center lg:text-left mb-8 lg:mb-0">
+                            <ScrollAnimation animation="slide-up" delay={0}>
+                                <Sparkles className="mx-auto lg:mx-0 mb-6 text-blue-200 animate-float" size={56} />
+                            </ScrollAnimation>
 
-                    <ScrollAnimation animation="slide-up" delay={100}>
-                        <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-                            {t.landing.readyToStart}
-                        </h2>
-                    </ScrollAnimation>
+                            <ScrollAnimation animation="slide-up" delay={100}>
+                                <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+                                    {t.landing.readyToStart}
+                                </h2>
+                            </ScrollAnimation>
 
-                    <ScrollAnimation animation="slide-up" delay={200}>
-                        <p className="text-blue-100 text-xl mb-10 max-w-2xl mx-auto">
-                            {t.landing.readyToStartDesc}
-                        </p>
-                    </ScrollAnimation>
+                            <ScrollAnimation animation="slide-up" delay={200}>
+                                <p className="text-blue-100 text-xl mb-10">
+                                    {t.landing.readyToStartDesc}
+                                </p>
+                            </ScrollAnimation>
 
-                    <ScrollAnimation animation="slide-up" delay={300}>
-                        <Link href="/register">
-                            <MagneticButton className="inline-flex items-center justify-center bg-white text-blue-600 px-10 py-5 rounded-xl text-lg font-bold hover:bg-gray-50 transition-all hover:shadow-2xl gap-3">
-                                {t.landing.createPageFree} <ArrowRight size={24} />
-                            </MagneticButton>
-                        </Link>
+                            <ScrollAnimation animation="slide-up" delay={300}>
+                                <Link href="/register">
+                                    <MagneticButton className="inline-flex items-center justify-center bg-white text-blue-600 px-10 py-5 rounded-xl text-lg font-bold hover:bg-gray-50 transition-all hover:shadow-2xl gap-3">
+                                        {t.landing.createPageFree} <ArrowRight size={24} />
+                                    </MagneticButton>
+                                </Link>
+                            </ScrollAnimation>
+                        </div>
+
+                        {/* Right Column - Empty space for layout */}
+                        <div className="hidden lg:block"></div>
+                    </div>
+                </div>
+
+                {/* Bizzy with Rocket - Absolutely positioned within section */}
+                <div className="hidden lg:block absolute bottom-0 right-0 pointer-events-none z-30" style={{ width: '55vw', maxWidth: '1000px' }}>
+                    <ScrollAnimation animation="scale" delay={100}>
+                        <Image
+                            src="/bizzy-rocket.png"
+                            alt="Bizzy with cheese rocket"
+                            width={1400}
+                            height={1400}
+                            className="drop-shadow-2xl w-full h-auto"
+                        />
                     </ScrollAnimation>
                 </div>
             </section>

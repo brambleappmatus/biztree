@@ -94,6 +94,21 @@ html {
   .ios-card.ios-card.ios-card.ios-card div:not(:has(svg)):not(:has(img)) {
     color: var(--card-text) !important;
   }
+
+  /* Allow primary color override for specific utility classes */
+  .ios-card .\!text-\[var\(--primary\)\],
+  .ios-card .\!text-\[var\(--primary\)\] * {
+    color: var(--primary) !important;
+  }
+
+  /* Today highlight in hours block - uses primary color */
+  /* Must have higher specificity than .ios-card rules above */
+  .ios-card .today-highlight.today-highlight.today-highlight.today-highlight,
+  .ios-card .today-highlight.today-highlight.today-highlight.today-highlight *,
+  .ios-card .today-highlight.today-highlight.today-highlight.today-highlight span,
+  .ios-card .today-highlight.today-highlight.today-highlight.today-highlight div {
+    color: var(--primary) !important;
+  }
 }
 
 .ios-btn {

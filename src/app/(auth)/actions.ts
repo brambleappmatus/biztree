@@ -248,3 +248,9 @@ export async function resetPassword(token: string, newPassword: string) {
     }
 }
 
+export async function getStripePriceIds() {
+    return {
+        businessMonthly: process.env.STRIPE_BUSINESS_PRICE_ID || '',
+        proMonthly: process.env.STRIPE_PRO_PRICE_ID || '',
+    };
+}

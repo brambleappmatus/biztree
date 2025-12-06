@@ -7,10 +7,11 @@ interface MuiButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     color?: "primary" | "secondary" | "danger";
     loading?: boolean;
     startIcon?: React.ReactNode;
+    endIcon?: React.ReactNode;
 }
 
 export const MuiButton = React.forwardRef<HTMLButtonElement, MuiButtonProps>(
-    ({ className, variant = "contained", color = "primary", loading, startIcon, children, disabled, ...props }, ref) => {
+    ({ className, variant = "contained", color = "primary", loading, startIcon, endIcon, children, disabled, ...props }, ref) => {
 
         const baseStyles = "relative overflow-hidden rounded-full px-6 py-2.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2";
 
@@ -42,6 +43,7 @@ export const MuiButton = React.forwardRef<HTMLButtonElement, MuiButtonProps>(
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {!loading && startIcon}
                 {children}
+                {!loading && endIcon}
             </button>
         );
     }

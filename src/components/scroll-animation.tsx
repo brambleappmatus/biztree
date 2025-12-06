@@ -24,8 +24,15 @@ export default function ScrollAnimation({
 }: ScrollAnimationProps) {
     const ref = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isMounted) return;
+
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
@@ -45,7 +52,7 @@ export default function ScrollAnimation({
         }
 
         return () => observer.disconnect();
-    }, [threshold, once]);
+    }, [threshold, once, isMounted]);
 
     const getAnimationClass = () => {
         const visible = isVisible ? "opacity-100 translate-x-0 translate-y-0 scale-100 rotate-0" : "";
@@ -77,6 +84,7 @@ export default function ScrollAnimation({
     return (
         <div
             ref={ref}
+            suppressHydrationWarning
             className={cn("transition-all", getAnimationClass(), className)}
             style={{
                 transitionDelay: `${delay}ms`,
