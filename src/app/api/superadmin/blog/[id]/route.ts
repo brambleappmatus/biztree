@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 // GET single blog post
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -15,8 +15,10 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         const post = await prisma.blogPost.findUnique({
-            where: { id: params.id },
+            where: { id },
         });
 
         if (!post) {
@@ -33,7 +35,7 @@ export async function GET(
 // PATCH update blog post
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -43,13 +45,14 @@ export async function PATCH(
         }
 
         const data = await request.json();
+        const { id } = await params;
 
         // Check if slug is being changed and if it conflicts
         if (data.slug) {
             const existingPost = await prisma.blogPost.findFirst({
                 where: {
                     slug: data.slug,
-                    NOT: { id: params.id },
+                    NOT: { id },
                 },
             });
 
@@ -73,7 +76,7 @@ export async function PATCH(
 
         // Set publishedAt when publishing for the first time
         const currentPost = await prisma.blogPost.findUnique({
-            where: { id: params.id },
+            where: { id },
         });
 
         if (data.isPublished && !currentPost?.publishedAt) {
@@ -83,7 +86,7 @@ export async function PATCH(
         }
 
         const post = await prisma.blogPost.update({
-            where: { id: params.id },
+            where: { id },
             data: updateData,
         });
 
@@ -97,7 +100,7 @@ export async function PATCH(
 // DELETE blog post
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -106,8 +109,10 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const { id } = await params;
+
         await prisma.blogPost.delete({
-            where: { id: params.id },
+            where: { id },
         });
 
         return NextResponse.json({ success: true });

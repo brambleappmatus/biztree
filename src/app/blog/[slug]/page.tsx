@@ -7,14 +7,15 @@ import LandingNav from "@/components/landing-nav";
 import { Metadata } from "next";
 
 interface Props {
-    params: {
+    params: Promise<{
         slug: string;
-    };
+    }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { slug } = await params;
     const post = await prisma.blogPost.findUnique({
-        where: { slug: params.slug },
+        where: { slug },
     });
 
     if (!post) {
@@ -38,9 +39,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
+    const { slug } = await params;
     const post = await prisma.blogPost.findUnique({
         where: {
-            slug: params.slug,
+            slug,
             isPublished: true,
         },
     });

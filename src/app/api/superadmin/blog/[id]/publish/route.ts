@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 // PATCH toggle publish status
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -16,9 +16,10 @@ export async function PATCH(
         }
 
         const { isPublished } = await request.json();
+        const { id } = await params;
 
         const currentPost = await prisma.blogPost.findUnique({
-            where: { id: params.id },
+            where: { id },
         });
 
         if (!currentPost) {
@@ -26,7 +27,7 @@ export async function PATCH(
         }
 
         const post = await prisma.blogPost.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 isPublished,
                 publishedAt: isPublished && !currentPost.publishedAt ? new Date() : currentPost.publishedAt,
