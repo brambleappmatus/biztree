@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Building2, Users, Moon, Sun, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Moon, Sun, LogOut, Shield, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -84,6 +84,10 @@ export default function SuperAdminLayout({
                     <Link href="/superadmin/showcases" className="flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors">
                         <LayoutDashboard size={20} />
                         Showcases
+                    </Link>
+                    <Link href="/superadmin/blog" className="flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors">
+                        <BookOpen size={20} />
+                        Blog
                     </Link>
                     <Link href="/superadmin/licensing" className="flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors">
                         <Shield size={20} />
