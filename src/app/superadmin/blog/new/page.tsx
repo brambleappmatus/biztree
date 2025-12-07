@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Eye, Upload, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import BlogEditor from "@/components/admin/blog-editor";
+import CategorySelector from "@/components/admin/blog/category-selector";
 
 interface BlogFormData {
     title: string;
@@ -17,6 +19,7 @@ interface BlogFormData {
     authorName: string;
     authorImage: string;
     isPublished: boolean;
+    categoryIds: string[];
 }
 
 export default function NewBlogPostPage() {
@@ -26,7 +29,6 @@ export default function NewBlogPostPage() {
     const [uploadingAuthorImage, setUploadingAuthorImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const authorImageInputRef = useRef<HTMLInputElement>(null);
-    const editorRef = useRef<HTMLTextAreaElement>(null);
 
     const [formData, setFormData] = useState<BlogFormData>({
         title: "",
@@ -39,6 +41,7 @@ export default function NewBlogPostPage() {
         authorName: "",
         authorImage: "",
         isPublished: false,
+        categoryIds: [],
     });
 
     // Auto-generate slug from title
@@ -97,52 +100,6 @@ export default function NewBlogPostPage() {
         }
     };
 
-    const insertFormatting = (format: string) => {
-        const textarea = editorRef.current;
-        if (!textarea) return;
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = formData.content.substring(start, end);
-        let newText = "";
-
-        switch (format) {
-            case "bold":
-                newText = `<strong>${selectedText || "bold text"}</strong>`;
-                break;
-            case "italic":
-                newText = `<em>${selectedText || "italic text"}</em>`;
-                break;
-            case "h2":
-                newText = `<h2>${selectedText || "Heading 2"}</h2>`;
-                break;
-            case "h3":
-                newText = `<h3>${selectedText || "Heading 3"}</h3>`;
-                break;
-            case "p":
-                newText = `<p>${selectedText || "Paragraph text"}</p>`;
-                break;
-            case "ul":
-                newText = `<ul>\n  <li>${selectedText || "List item"}</li>\n</ul>`;
-                break;
-            case "link":
-                newText = `<a href="https://example.com">${selectedText || "link text"}</a>`;
-                break;
-            case "image":
-                newText = `<img src="image-url.jpg" alt="${selectedText || "description"}" />`;
-                break;
-        }
-
-        const newContent =
-            formData.content.substring(0, start) + newText + formData.content.substring(end);
-        handleChange("content", newContent);
-
-        // Set cursor position after inserted text
-        setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(start + newText.length, start + newText.length);
-        }, 0);
-    };
 
     const handleSubmit = async (e: React.FormEvent, publish: boolean = false) => {
         e.preventDefault();
@@ -162,7 +119,7 @@ export default function NewBlogPostPage() {
                 router.push("/superadmin/blog");
             } else {
                 const error = await response.json();
-                alert(error.error || "Failed to create blog post");
+                alert(error.error + (error.details ? `\n\nDetails: ${error.details}` : "") || "Failed to create blog post");
             }
         } catch (error) {
             console.error("Failed to create blog post:", error);
@@ -286,79 +243,10 @@ export default function NewBlogPostPage() {
                 {/* Content Editor */}
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Content</h2>
-
-                    {/* Formatting Toolbar */}
-                    <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("h2")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-semibold"
-                        >
-                            H2
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("h3")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-semibold"
-                        >
-                            H3
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("p")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
-                        >
-                            P
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("bold")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm font-bold"
-                        >
-                            B
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("italic")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm italic"
-                        >
-                            I
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("ul")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
-                        >
-                            • List
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("link")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
-                        >
-                            🔗 Link
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => insertFormatting("image")}
-                            className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
-                        >
-                            🖼️ Image
-                        </button>
-                    </div>
-
-                    <textarea
-                        ref={editorRef}
-                        value={formData.content}
-                        onChange={(e) => handleChange("content", e.target.value)}
-                        rows={20}
-                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
-                        placeholder="Write your blog post content using HTML tags..."
-                        required
+                    <BlogEditor
+                        content={formData.content}
+                        onChange={(content) => handleChange("content", content)}
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Use HTML tags for formatting. The toolbar above helps insert common tags.
-                    </p>
                 </div>
 
                 {/* Author Info */}

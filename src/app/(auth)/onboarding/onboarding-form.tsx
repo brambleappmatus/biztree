@@ -204,8 +204,9 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
         return () => clearTimeout(timer);
     }, [formData.subdomain]);
 
-    const handleComplete = async () => {
+    const handleComplete = async (planOverride?: 'free' | 'business' | 'pro') => {
         const t = ONBOARDING_TRANSLATIONS[formData.language];
+        const finalPlan = planOverride || selectedPlan;
 
         if (!session?.user?.id) {
             setError(t.notLoggedIn);
@@ -218,7 +219,7 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
         }
 
         // If on paywall step and no plan selected, show error
-        if (currentStep === 6 && !selectedPlan) {
+        if (currentStep === 6 && !finalPlan) {
             setError("Vyberte plán");
             return;
         }
@@ -252,9 +253,9 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
             console.log('Profile created successfully');
 
             // If paid plan selected, redirect to Stripe checkout
-            if (selectedPlan === 'business' || selectedPlan === 'pro') {
+            if (finalPlan === 'business' || finalPlan === 'pro') {
                 const { createCheckoutSession } = await import("@/app/admin/subscription/actions");
-                const priceId = selectedPlan === 'business' ? businessPriceId : proPriceId;
+                const priceId = finalPlan === 'business' ? businessPriceId : proPriceId;
 
                 if (!priceId) {
                     setError("Price ID not configured");
@@ -262,7 +263,7 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
                     return;
                 }
 
-                console.log('Creating Stripe checkout session for', selectedPlan, 'plan...');
+                console.log('Creating Stripe checkout session for', finalPlan, 'plan...');
                 const url = await createCheckoutSession(priceId, undefined, 'subscription');
 
                 if (url) {
@@ -397,7 +398,12 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
             isRequired: true, // REQUIRED
             component: (
                 <OnboardingPaywall
-                    onSelectPlan={setSelectedPlan}
+                    onSelectPlan={(plan) => {
+                        setSelectedPlan(plan);
+                        if (plan === 'free') {
+                            handleComplete('free');
+                        }
+                    }}
                     selectedPlan={selectedPlan}
                     businessPriceId={businessPriceId}
                     proPriceId={proPriceId}
@@ -562,7 +568,7 @@ export default function OnboardingForm({ businessPriceId, proPriceId }: Onboardi
                 steps={steps}
                 currentStep={currentStep}
                 onStepChange={setCurrentStep}
-                onComplete={handleComplete}
+                onComplete={() => handleComplete()}
                 onSkip={handleSkip}
                 preview={preview}
                 loading={loading}

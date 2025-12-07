@@ -47,6 +47,8 @@ export async function PATCH(
         const data = await request.json();
         const { id } = await params;
 
+        console.log("PATCH Blog Post Data:", JSON.stringify(data, null, 2));
+
         // Check if slug is being changed and if it conflicts
         if (data.slug) {
             const existingPost = await prisma.blogPost.findFirst({
@@ -61,18 +63,23 @@ export async function PATCH(
             }
         }
 
-        const updateData: any = {
-            title: data.title,
-            slug: data.slug,
-            excerpt: data.excerpt || null,
-            content: data.content,
-            featuredImage: data.featuredImage || null,
-            metaTitle: data.metaTitle || null,
-            metaDescription: data.metaDescription || null,
-            authorName: data.authorName || null,
-            authorImage: data.authorImage || null,
-            isPublished: data.isPublished,
-        };
+        const updateData: any = {};
+        if (data.title !== undefined) updateData.title = data.title;
+        if (data.slug !== undefined) updateData.slug = data.slug;
+        if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
+        if (data.content !== undefined) updateData.content = data.content;
+        if (data.featuredImage !== undefined) updateData.featuredImage = data.featuredImage;
+        if (data.metaTitle !== undefined) updateData.metaTitle = data.metaTitle;
+        if (data.metaDescription !== undefined) updateData.metaDescription = data.metaDescription;
+        if (data.authorName !== undefined) updateData.authorName = data.authorName;
+        if (data.authorImage !== undefined) updateData.authorImage = data.authorImage;
+        if (data.isPublished !== undefined) updateData.isPublished = data.isPublished;
+
+        if (data.categoryIds !== undefined) {
+            updateData.categories = {
+                set: data.categoryIds.map((id: string) => ({ id })),
+            };
+        }
 
         // Set publishedAt when publishing for the first time
         const currentPost = await prisma.blogPost.findUnique({
@@ -81,9 +88,11 @@ export async function PATCH(
 
         if (data.isPublished && !currentPost?.publishedAt) {
             updateData.publishedAt = new Date();
-        } else if (!data.isPublished) {
+        } else if (data.isPublished === false) {
             updateData.publishedAt = null;
         }
+
+        console.log("Update Data:", JSON.stringify(updateData, null, 2));
 
         const post = await prisma.blogPost.update({
             where: { id },
@@ -93,7 +102,7 @@ export async function PATCH(
         return NextResponse.json(post);
     } catch (error) {
         console.error("Failed to update blog post:", error);
-        return NextResponse.json({ error: "Failed to update blog post" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to update blog post", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
 

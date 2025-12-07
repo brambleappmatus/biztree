@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         }
 
         const data = await request.json();
+        console.log("POST Blog Post Data:", JSON.stringify(data, null, 2));
 
         // Check if slug already exists
         const existingPost = await prisma.blogPost.findUnique({
@@ -46,25 +47,36 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "A post with this slug already exists" }, { status: 400 });
         }
 
+        const createData: any = {
+            title: data.title,
+            slug: data.slug,
+            content: data.content,
+            isPublished: data.isPublished || false,
+            publishedAt: data.isPublished ? new Date() : null,
+        };
+
+        if (data.excerpt) createData.excerpt = data.excerpt;
+        if (data.featuredImage) createData.featuredImage = data.featuredImage;
+        if (data.metaTitle) createData.metaTitle = data.metaTitle;
+        if (data.metaDescription) createData.metaDescription = data.metaDescription;
+        if (data.authorName) createData.authorName = data.authorName;
+        if (data.authorImage) createData.authorImage = data.authorImage;
+
+        if (data.categoryIds && data.categoryIds.length > 0) {
+            createData.categories = {
+                connect: data.categoryIds.map((id: string) => ({ id })),
+            };
+        }
+
+        console.log("Create Data:", JSON.stringify(createData, null, 2));
+
         const post = await prisma.blogPost.create({
-            data: {
-                title: data.title,
-                slug: data.slug,
-                excerpt: data.excerpt || null,
-                content: data.content,
-                featuredImage: data.featuredImage || null,
-                metaTitle: data.metaTitle || null,
-                metaDescription: data.metaDescription || null,
-                authorName: data.authorName || null,
-                authorImage: data.authorImage || null,
-                isPublished: data.isPublished || false,
-                publishedAt: data.isPublished ? new Date() : null,
-            },
+            data: createData,
         });
 
         return NextResponse.json(post);
     } catch (error) {
         console.error("Failed to create blog post:", error);
-        return NextResponse.json({ error: "Failed to create blog post" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to create blog post", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }

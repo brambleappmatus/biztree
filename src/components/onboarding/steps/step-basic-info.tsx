@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Check, AlertCircle, Loader2, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { Check, AlertCircle, Loader2, Sparkles, Globe, ArrowRight, Pencil } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface StepBasicInfoProps {
     formData: {
@@ -25,35 +25,63 @@ export function StepBasicInfo({
     subdomainAvailable,
     translations: t
 }: StepBasicInfoProps) {
-    const [isEditingSubdomain, setIsEditingSubdomain] = useState(false);
-    const [customSubdomain, setCustomSubdomain] = useState(formData.subdomain);
+    const [localSubdomain, setLocalSubdomain] = useState(formData.subdomain);
+    const [isTyping, setIsTyping] = useState(false);
+    const [showInput, setShowInput] = useState(!!formData.subdomain);
+    const firstRender = useRef(true);
 
-    // Auto-generate subdomain from business name
+    // Update local state if prop changes (e.g. going back/forward)
     useEffect(() => {
-        if (!isEditingSubdomain && formData.name && !formData.subdomain) {
-            const generated = formData.name
-                .toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .substring(0, 30);
-
-            if (generated) {
-                onSubdomainChange(generated);
-                setCustomSubdomain(generated);
-            }
+        if (formData.subdomain && !showInput) {
+            setShowInput(true);
+            setLocalSubdomain(formData.subdomain);
         }
-    }, [formData.name, isEditingSubdomain]);
+    }, [formData.subdomain]);
 
-    const handleSubdomainEdit = (value: string) => {
-        setCustomSubdomain(value);
-        onSubdomainChange(value);
+    // Debounce subdomain changes
+    useEffect(() => {
+        // Skip calling onChange on first render to avoid double triggers
+        if (firstRender.current) {
+            firstRender.current = false;
+            return;
+        }
+
+        if (!showInput) return;
+
+        setIsTyping(true);
+        const timer = setTimeout(() => {
+            onSubdomainChange(localSubdomain);
+            setIsTyping(false);
+        }, 1000); // 1 second debounce
+
+        return () => clearTimeout(timer);
+    }, [localSubdomain, showInput]);
+
+    const handleCreateLink = () => {
+        if (!formData.name) return;
+
+        const generated = formData.name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .substring(0, 30);
+
+        setLocalSubdomain(generated);
+        setShowInput(true);
+        // Trigger immediate check safely through the effect by setting local state
+    };
+
+    const handleSubdomainChange = (value: string) => {
+        // Allow only valid characters
+        const sanitized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        setLocalSubdomain(sanitized);
     };
 
     const getSubdomainStatus = () => {
-        if (!customSubdomain || customSubdomain.length < 3) return null;
-        if (customSubdomain === 'www') return 'invalid';
-        if (subdomainChecking) return 'checking';
+        if (!localSubdomain || localSubdomain.length < 3) return null;
+        if (localSubdomain === 'www') return 'invalid';
+        if (isTyping || subdomainChecking) return 'checking';
         if (subdomainAvailable === true) return 'available';
         if (subdomainAvailable === false) return 'taken';
         return null;
@@ -70,12 +98,12 @@ export function StepBasicInfo({
         businessName: formData.language === 'sk' ? 'Názov vašej firmy' : 'Your Business Name',
         placeholder: formData.language === 'sk' ? 'Moja Kaviareň' : 'My Coffee Shop',
         yourLink: formData.language === 'sk' ? 'Váš odkaz' : 'Your link',
-        edit: formData.language === 'sk' ? 'Upraviť' : 'Edit',
-        done: formData.language === 'sk' ? 'Hotovo' : 'Done',
+        createLink: formData.language === 'sk' ? 'Vytvoriť môj odkaz' : 'Create my link',
         taken: formData.language === 'sk' ? 'Tento odkaz je už obsadený' : 'This link is already taken',
         tryThese: formData.language === 'sk' ? 'Skúste' : 'Try',
         chooseDifferent: formData.language === 'sk' ? 'Prosím zvoľte iný odkaz' : 'Please choose a different link',
         available: formData.language === 'sk' ? 'Perfektné! Tento odkaz je dostupný' : 'Perfect! This link is available',
+        checking: formData.language === 'sk' ? 'Overujem...' : 'Checking...',
     };
 
     return (
@@ -86,7 +114,7 @@ export function StepBasicInfo({
             transition={{ duration: 0.4 }}
             className="space-y-8 max-w-2xl mx-auto"
         >
-            {/* Title - No SplitText animation to avoid input issues */}
+            {/* Title */}
             <div className="text-center space-y-3">
                 <motion.h2
                     initial={{ opacity: 0, y: 20 }}
@@ -106,7 +134,7 @@ export function StepBasicInfo({
                 </motion.p>
             </div>
 
-            {/* Language Selection - Subtle */}
+            {/* Language Selection */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -118,8 +146,8 @@ export function StepBasicInfo({
                         key={lang}
                         onClick={() => onChange({ language: lang })}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${formData.language === lang
-                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                             }`}
                     >
                         {lang === 'sk' ? '🇸🇰 Slovenčina' : '🇬🇧 English'}
@@ -127,7 +155,7 @@ export function StepBasicInfo({
                 ))}
             </motion.div>
 
-            {/* Business Name Input - Large, Centered */}
+            {/* Business Name Input */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -147,109 +175,138 @@ export function StepBasicInfo({
                 />
             </motion.div>
 
-            {/* Auto-generated Subdomain */}
-            {formData.name && (
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1, duration: 0.3 }}
-                    className="space-y-3"
-                >
-                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Sparkles className="w-4 h-4" />
-                        <span>{texts.yourLink}</span>
-                    </div>
+            {/* Create Link Button */}
+            <AnimatePresence>
+                {formData.name && !showInput && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex justify-center"
+                    >
+                        <button
+                            onClick={handleCreateLink}
+                            className="group flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
+                        >
+                            <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                            {texts.createLink}
+                            <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                    {!isEditingSubdomain ? (
-                        <div className="flex items-center justify-center gap-3 group">
-                            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                                <span className="font-mono text-lg text-gray-900 dark:text-gray-100">
-                                    {customSubdomain || 'your-business'}.biztree.bio
-                                </span>
-                                {status === 'available' && (
-                                    <Check className="w-5 h-5 text-green-500" />
-                                )}
-                                {status === 'checking' && (
-                                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                                )}
-                                {status === 'taken' && (
-                                    <AlertCircle className="w-5 h-5 text-red-500" />
-                                )}
-                            </div>
-                            <button
-                                onClick={() => setIsEditingSubdomain(true)}
-                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                {texts.edit}
-                            </button>
+            {/* Subdomain Input */}
+            <AnimatePresence>
+                {showInput && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-3"
+                    >
+                        <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <Sparkles className="w-4 h-4" />
+                            <span>{texts.yourLink}</span>
                         </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
+
+                        <div className="relative group max-w-lg mx-auto">
+                            <div className={`
+                                flex items-center bg-gray-50 dark:bg-gray-800/50 rounded-xl border transition-all duration-300
+                                ${status === 'available' ? 'border-green-500/30 bg-green-50/5' : ''}
+                                ${status === 'taken' ? 'border-red-500/30 bg-red-50/5' : ''}
+                                ${status === 'checking' ? 'border-blue-500/30' : ''}
+                                ${!status ? 'border-gray-200 dark:border-gray-700 hover:border-blue-300/50 dark:hover:border-blue-700/50' : ''}
+                                focus-within:border-blue-500/50 focus-within:ring-4 focus-within:ring-blue-500/10
+                            `}>
+                                <div className="pl-4 text-gray-400 flex items-center gap-2">
+                                    <Globe size={18} />
+                                    <div className="h-4 w-[1px] bg-gray-300 dark:bg-gray-700 mx-1" />
+                                    <Pencil size={14} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
+                                </div>
                                 <input
                                     type="text"
-                                    value={customSubdomain}
-                                    onChange={(e) => handleSubdomainEdit(e.target.value)}
-                                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all outline-none"
+                                    value={localSubdomain}
+                                    onChange={(e) => handleSubdomainChange(e.target.value)}
+                                    className="flex-1 px-3 py-4 bg-transparent text-gray-900 dark:text-gray-100 font-mono text-lg outline-none text-right placeholder-gray-400"
                                     placeholder="your-business"
                                 />
-                                <span className="text-gray-500 dark:text-gray-400 font-mono">.biztree.bio</span>
-                                {status === 'available' && (
-                                    <Check className="w-5 h-5 text-green-500" />
-                                )}
-                                {status === 'checking' && (
-                                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                                )}
+                                <div className="pr-4 py-4 text-lg font-mono text-gray-500 dark:text-gray-400 select-none bg-transparent">
+                                    .biztree.bio
+                                </div>
+                                <div className="pr-4 min-w-[40px] flex justify-end">
+                                    {status === 'available' && (
+                                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                            <Check className="w-5 h-5 text-green-500" />
+                                        </motion.div>
+                                    )}
+                                    {status === 'checking' && (
+                                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                                        </motion.div>
+                                    )}
+                                    {status === 'taken' && (
+                                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                            <AlertCircle className="w-5 h-5 text-red-500" />
+                                        </motion.div>
+                                    )}
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setIsEditingSubdomain(false)}
-                                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                            >
-                                {texts.done}
-                            </button>
+
+                            {/* Status Messages */}
+                            <div className="h-6 mt-2">
+                                <AnimatePresence mode="wait">
+                                    {status === 'taken' && (
+                                        <motion.p
+                                            key="taken"
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            className="text-center text-sm text-red-500 font-medium"
+                                        >
+                                            {texts.taken}
+                                        </motion.p>
+                                    )}
+                                    {status === 'checking' && (
+                                        <motion.p
+                                            key="checking"
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            className="text-center text-sm text-blue-500 font-medium"
+                                        >
+                                            {texts.checking}
+                                        </motion.p>
+                                    )}
+                                    {status === 'available' && (
+                                        <motion.p
+                                            key="available"
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            className="text-center text-sm text-green-500 font-medium"
+                                        >
+                                            {texts.available}
+                                        </motion.p>
+                                    )}
+                                    {status === 'invalid' && (
+                                        <motion.p
+                                            key="invalid"
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            className="text-center text-sm text-amber-500 font-medium"
+                                        >
+                                            {texts.chooseDifferent}
+                                        </motion.p>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
-                    )}
-
-                    {/* Helpful Status Messages */}
-                    {status === 'taken' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl"
-                        >
-                            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-red-700 dark:text-red-400">
-                                <p className="font-medium">{texts.taken}</p>
-                                <p className="text-xs mt-1">{texts.tryThese}: {customSubdomain}-shop, {customSubdomain}-official, my-{customSubdomain}</p>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {status === 'invalid' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl"
-                        >
-                            <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-amber-700 dark:text-amber-400">
-                                {texts.chooseDifferent}
-                            </p>
-                        </motion.div>
-                    )}
-
-                    {status === 'available' && !isEditingSubdomain && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400"
-                        >
-                            <Check className="w-4 h-4" />
-                            <span>{texts.available}</span>
-                        </motion.div>
-                    )}
-                </motion.div>
-            )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

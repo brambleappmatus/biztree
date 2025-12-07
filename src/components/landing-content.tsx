@@ -10,6 +10,7 @@ import AnimatedCounter from "@/components/animated-counter";
 import MagneticButton from "@/components/magnetic-button";
 import { useLanguage } from "@/contexts/language-context";
 import { PricingSection } from "@/components/subscription/pricing-section";
+import ChristmasDealSection from "@/components/christmas-deal-section";
 
 // Lazy load heavy components
 const ShowcaseCarousel = dynamic(() => import("@/components/showcase-carousel"), {
@@ -231,6 +232,9 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                 </div>
             </section>
 
+            {/* Christmas Deal Section */}
+            <ChristmasDealSection prices={prices as any} priceIds={priceIds as any} />
+
             {/* Stats Section */}
             <section className="py-16 px-4 relative">
                 <div className="max-w-6xl mx-auto">
@@ -295,7 +299,7 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                             <div className="flex flex-col lg:flex-row gap-12 items-end relative">
                                 {/* Left side - Feature Grid */}
                                 <div className="w-full lg:w-7/12 relative">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <ScrollAnimation animation="slide-up" delay={0}>
                                             <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-blue-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
@@ -313,17 +317,6 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                                                 </div>
                                                 <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.customDomain}</h3>
                                                 <p className="text-gray-600 leading-relaxed">{t.landing.customDomainDesc}</p>
-                                            </div>
-                                        </ScrollAnimation>
-
-                                        {/* Placeholder for third column - first row */}
-                                        <ScrollAnimation animation="slide-up" delay={100}>
-                                            <div className="hidden md:block opacity-0 pointer-events-none">
-                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
-                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
-                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
-                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
-                                                </div>
                                             </div>
                                         </ScrollAnimation>
 
@@ -347,17 +340,6 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                                             </div>
                                         </ScrollAnimation>
 
-                                        {/* Placeholder for third column - second row */}
-                                        <ScrollAnimation animation="slide-up" delay={0}>
-                                            <div className="hidden md:block opacity-0 pointer-events-none">
-                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
-                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
-                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
-                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
-                                                </div>
-                                            </div>
-                                        </ScrollAnimation>
-
                                         <ScrollAnimation animation="slide-up" delay={100}>
                                             <div className="group bg-white rounded-2xl p-8 border border-gray-100 hover:border-pink-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                                                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-600 to-pink-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
@@ -375,17 +357,6 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                                                 </div>
                                                 <h3 className="font-bold text-xl mb-3 text-gray-900">{t.landing.analytics}</h3>
                                                 <p className="text-gray-600 leading-relaxed">{t.landing.analyticsDesc}</p>
-                                            </div>
-                                        </ScrollAnimation>
-
-                                        {/* Placeholder for third column - third row */}
-                                        <ScrollAnimation animation="slide-up" delay={200}>
-                                            <div className="hidden md:block opacity-0 pointer-events-none">
-                                                <div className="bg-white rounded-2xl p-8 border border-gray-100">
-                                                    <div className="w-14 h-14 rounded-xl bg-gray-200 mb-4"></div>
-                                                    <h3 className="font-bold text-xl mb-3">Placeholder</h3>
-                                                    <p className="text-gray-600 leading-relaxed">Placeholder text</p>
-                                                </div>
                                             </div>
                                         </ScrollAnimation>
                                     </div>
@@ -550,7 +521,7 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
                                                     <div className="flex items-center gap-1">
                                                         <Calendar size={14} />
                                                         <span>
-                                                            {new Date(post.publishedAt).toLocaleDateString()}
+                                                            {mounted ? new Date(post.publishedAt).toLocaleDateString() : ""}
                                                         </span>
                                                     </div>
                                                 )}

@@ -17,6 +17,10 @@
     "@react-email/render": "^2.0.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.83.0",
+    "@tiptap/extension-image": "^3.13.0",
+    "@tiptap/extension-link": "^3.13.0",
+    "@tiptap/react": "^3.13.0",
+    "@tiptap/starter-kit": "^3.13.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -45,6 +49,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19.2.7",

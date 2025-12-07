@@ -1,8 +1,23 @@
 import React from "react";
 import { ProfileCore } from "@/types";
-import { Phone, Mail, MessageCircle, Navigation } from "lucide-react";
+import { Phone, Send, MessageCircle, Navigation } from "lucide-react";
 import { getTranslation, Language } from "@/lib/i18n";
 import { getBlockBgClass } from "@/lib/background-utils";
+
+// Custom envelope icon to avoid rendering issues
+const EnvelopeIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className={className}
+        style={style}
+    >
+        <path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z" />
+    </svg>
+);
 
 interface ContactButtonsBlockProps {
     profile: ProfileCore;
@@ -31,7 +46,7 @@ export default function ContactButtonsBlock({ profile, lang, bgImage, themeColor
     if (profile.email) {
         buttons.push({
             label: t.common.email,
-            icon: Mail,
+            icon: EnvelopeIcon,
             href: `mailto:${profile.email}`,
             color: "text-blue-600 dark:text-blue-400",
             bgColor: "bg-blue-50 dark:bg-blue-900/20"

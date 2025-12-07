@@ -48,7 +48,20 @@ export default function RegisterPage() {
             if (result.error) {
                 setError(result.error);
             } else {
-                router.push("/login?registered=true");
+                // Auto-login after successful registration
+                const signInResult = await signIn("credentials", {
+                    email: formData.email,
+                    password: formData.password,
+                    redirect: false,
+                });
+
+                if (signInResult?.ok) {
+                    router.push("/admin");
+                    router.refresh();
+                } else {
+                    // Fallback to login page if auto-login fails
+                    router.push("/login?registered=true");
+                }
             }
         } catch (err) {
             setError(t.messages.saveError);

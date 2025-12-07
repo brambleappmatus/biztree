@@ -146,25 +146,41 @@ export function OnboardingPaywall({ onSelectPlan, selectedPlan, businessPriceId,
                 </button>
             </div>
 
-            {/* Free Option - Subtle Text Link */}
-            <div className="text-center space-y-2">
+            {/* Free Option - Styled Card */}
+            <div className="max-w-4xl mx-auto">
                 <button
                     onClick={() => onSelectPlan('free')}
                     className={cn(
-                        "text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline transition-colors",
-                        selectedPlan === 'free' && "text-gray-700 dark:text-gray-200 font-medium"
+                        "w-full group flex items-center justify-between p-3 rounded-lg border transition-all duration-200",
+                        selectedPlan === 'free'
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800"
                     )}
                 >
-                    Pokračovať zdarma
+                    <div className="flex items-center gap-3">
+                        <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                            selectedPlan === 'free'
+                                ? "border-green-500 bg-green-500"
+                                : "border-gray-300 dark:border-gray-600 group-hover:border-gray-400"
+                        )}>
+                            {selectedPlan === 'free' && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        <div className="text-left">
+                            <span className={cn(
+                                "block font-semibold text-base transition-colors",
+                                selectedPlan === 'free'
+                                    ? "text-green-700 dark:text-green-400"
+                                    : "text-gray-900 dark:text-gray-100"
+                            )}>
+                                Pokračovať zdarma
+                            </span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                Základný plán s obmedzenými funkciami
+                            </span>
+                        </div>
+                    </div>
                 </button>
-
-                {selectedPlan && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {selectedPlan === 'free' && "Pokračujete so základným plánom zadarmo"}
-                        {selectedPlan === 'business' && "Budete presmerovaný na Stripe pre platbu"}
-                        {selectedPlan === 'pro' && "Budete presmerovaný na Stripe pre platbu"}
-                    </p>
-                )}
             </div>
 
             {/* Trust Indicators */}

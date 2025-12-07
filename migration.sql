@@ -1,17 +1,31 @@
--- Migration: Add booking statuses
--- This migration updates the Booking table to support PENDING, CONFIRMED, COMPLETED, and CANCELLED statuses
+-- Create BlogCategory table
+CREATE TABLE "BlogCategory" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
--- Update the default status for new bookings to PENDING
-ALTER TABLE "Booking" ALTER COLUMN "status" SET DEFAULT 'PENDING';
+    CONSTRAINT "BlogCategory_pkey" PRIMARY KEY ("id")
+);
 
--- Update existing bookings that are past their end time to COMPLETED
-UPDATE "Booking" 
-SET "status" = 'COMPLETED' 
-WHERE "endTime" < NOW() 
-  AND "status" = 'CONFIRMED';
+-- Create unique index on slug
+CREATE UNIQUE INDEX "BlogCategory_slug_key" ON "BlogCategory"("slug");
 
--- Note: The schema now supports the following statuses:
--- PENDING: New booking waiting for confirmation
--- CONFIRMED: Booking has been confirmed
--- COMPLETED: Booking has been completed (automatically set for past bookings)
--- CANCELLED: Booking has been cancelled
+-- Create join table for Many-to-Many relation between BlogPost and BlogCategory
+CREATE TABLE "_BlogCategoryToBlogPost" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- Create unique index on join table
+CREATE UNIQUE INDEX "_BlogCategoryToBlogPost_AB_unique" ON "_BlogCategoryToBlogPost"("A", "B");
+
+-- Create index on B for reverse lookup
+CREATE INDEX "_BlogCategoryToBlogPost_B_index" ON "_BlogCategoryToBlogPost"("B");
+
+-- Add foreign keys
+ALTER TABLE "_BlogCategoryToBlogPost" ADD CONSTRAINT "_BlogCategoryToBlogPost_A_fkey" FOREIGN KEY ("A") REFERENCES "BlogCategory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "_BlogCategoryToBlogPost" ADD CONSTRAINT "_BlogCategoryToBlogPost_B_fkey" FOREIGN KEY ("B") REFERENCES "BlogPost"("id") ON DELETE CASCADE ON UPDATE CASCADE;

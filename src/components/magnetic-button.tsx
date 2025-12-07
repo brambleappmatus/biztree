@@ -9,6 +9,7 @@ interface MagneticButtonProps {
     strength?: number;
     onClick?: () => void;
     href?: string;
+    disabled?: boolean;
 }
 
 export default function MagneticButton({
@@ -17,12 +18,13 @@ export default function MagneticButton({
     strength = 0.3,
     onClick,
     href,
+    disabled = false,
 }: MagneticButtonProps) {
     const ref = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!ref.current) return;
+        if (!ref.current || disabled) return;
 
         const rect = ref.current.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -48,10 +50,10 @@ export default function MagneticButton({
         onMouseMove: handleMouseMove,
         onMouseLeave: handleMouseLeave,
         style,
-        className: cn("cursor-pointer", className),
+        className: cn("cursor-pointer", className, disabled && "opacity-70 cursor-not-allowed transform-none"),
     };
 
-    if (href) {
+    if (href && !disabled) {
         return (
             <a {...commonProps} href={href}>
                 {children}
@@ -60,7 +62,7 @@ export default function MagneticButton({
     }
 
     return (
-        <button {...commonProps} onClick={onClick}>
+        <button {...commonProps} onClick={onClick} disabled={disabled}>
             {children}
         </button>
     );
