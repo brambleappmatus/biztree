@@ -11,6 +11,7 @@ import MagneticButton from "@/components/magnetic-button";
 import { useLanguage } from "@/contexts/language-context";
 import { PricingSection } from "@/components/subscription/pricing-section";
 import ChristmasDealSection from "@/components/christmas-deal-section";
+import ChristmasFloatingButton from "@/components/christmas-floating-button";
 
 // Lazy load heavy components
 const ShowcaseCarousel = dynamic(() => import("@/components/showcase-carousel"), {
@@ -46,6 +47,9 @@ export default function LandingContent({ showcases, serializedTiers, allFeatures
 
     return (
         <>
+            {/* Floating Christmas Deal Button */}
+            <ChristmasFloatingButton />
+
             {/* Hero Section */}
             <section className="pt-32 sm:pt-40 pb-20 px-4 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto">

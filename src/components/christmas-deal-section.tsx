@@ -59,7 +59,7 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
     };
 
     return (
-        <section className="relative py-24 px-4 overflow-hidden bg-white">
+        <section id="christmas-deal" className="relative py-24 px-4 overflow-hidden bg-white">
             {/* Soft Red Gradient Background Spot */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[600px] bg-gradient-to-b from-red-50/50 to-transparent rounded-b-[50%] pointer-events-none -z-10" />
 
