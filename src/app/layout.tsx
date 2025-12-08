@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { LanguageProvider } from "@/contexts/language-context";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -48,6 +49,7 @@ export default function RootLayout({
             <AuthProvider>{children}</AuthProvider>
           </ToastProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
