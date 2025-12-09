@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, startOfWeek, endOfWeek, differenceInDays, addDays, isBefore, isAfter, isWithinInterval } from "date-fns";
-import { sk, enUS } from "date-fns/locale";
+import { sk, enUS, cs } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { getTranslation, Language } from "@/lib/i18n";
 const locales: Record<Language, any> = {
     sk: sk,
     en: enUS,
+    cs: cs,
 };
 
 interface DailyFlowProps {
