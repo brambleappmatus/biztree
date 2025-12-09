@@ -7,7 +7,7 @@ import { Language, TRANSLATIONS, getTranslation } from "@/lib/i18n";
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
-    t: typeof TRANSLATIONS.sk | typeof TRANSLATIONS.en;
+    t: typeof TRANSLATIONS.sk | typeof TRANSLATIONS.en | typeof TRANSLATIONS.cs;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -22,7 +22,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         setMounted(true);
         const stored = localStorage.getItem(STORAGE_KEY) as Language;
-        if (stored && ["sk", "en"].includes(stored)) {
+        if (stored && ["sk", "en", "cs"].includes(stored)) {
             setLanguageState(stored);
         }
     }, []);
