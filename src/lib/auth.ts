@@ -122,6 +122,20 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).onboardingCompleted = token.onboardingCompleted as boolean;
             }
             return session;
+        },
+        async redirect({ url, baseUrl }) {
+            // Check if this is a new OAuth user by looking for our special flag in the URL
+            if (url.includes("newOAuthUser=true")) {
+                // Extract the provider from URL
+                const urlObj = new URL(url, baseUrl);
+                const provider = urlObj.searchParams.get("provider") || "google";
+                return `${baseUrl}/register/success?provider=${provider}`;
+            }
+
+            // Default redirect behavior
+            if (url.startsWith("/")) return `${baseUrl}${url}`;
+            if (new URL(url).origin === baseUrl) return url;
+            return baseUrl;
         }
     },
     events: {

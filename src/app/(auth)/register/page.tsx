@@ -48,20 +48,12 @@ export default function RegisterPage() {
             if (result.error) {
                 setError(result.error);
             } else {
-                // Auto-login after successful registration
-                const signInResult = await signIn("credentials", {
-                    email: formData.email,
-                    password: formData.password,
-                    redirect: false,
-                });
+                // Store credentials temporarily for auto-login on success page
+                sessionStorage.setItem("register_email", formData.email);
+                sessionStorage.setItem("register_password", formData.password);
 
-                if (signInResult?.ok) {
-                    router.push("/admin");
-                    router.refresh();
-                } else {
-                    // Fallback to login page if auto-login fails
-                    router.push("/login?registered=true");
-                }
+                // Redirect to success page
+                router.push("/register/success");
             }
         } catch (err) {
             setError(t.messages.saveError);
@@ -107,7 +99,7 @@ export default function RegisterPage() {
                         <div className="space-y-3 mb-6">
                             <button
                                 type="button"
-                                onClick={() => signIn("google", { callbackUrl: "/admin" })}
+                                onClick={() => signIn("google", { callbackUrl: "/admin?newOAuthUser=true&provider=google" })}
                                 className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-medium"
                             >
                                 <svg className="w-5 h-5" viewBox="0 0 24 24">

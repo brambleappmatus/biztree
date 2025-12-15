@@ -5,6 +5,7 @@ import { Crown, Sparkles, Star, Check } from "lucide-react";
 import { SubscriptionActions } from "@/components/subscription/subscription-actions";
 import { PricingFeaturesList } from "@/components/subscription/pricing-features-list";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface PricingSectionProps {
     tiers: any[];
@@ -39,6 +40,7 @@ export function PricingSection({
     redirectUrl,
     trialEndsAt
 }: PricingSectionProps) {
+    const { t } = useLanguage();
     // Detect the user's current billing cycle from their subscription
     const detectBillingCycle = (): 'monthly' | 'yearly' | 'lifetime' => {
         if (!activeSubscription?.stripePriceId) return 'monthly';
@@ -80,7 +82,7 @@ export function PricingSection({
                                 : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                         )}
                     >
-                        Mesačne
+                        {t.pricing.monthly}
                     </button>
                     <button
                         onClick={() => setBillingCycle('yearly')}
@@ -91,7 +93,7 @@ export function PricingSection({
                                 : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                         )}
                     >
-                        Ročne
+                        {t.pricing.yearly}
                         <span className="text-[10px] font-bold px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full">
                             -25%
                         </span>
@@ -106,7 +108,7 @@ export function PricingSection({
                                     : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
                             )}
                         >
-                            Navždy
+                            {t.pricing.lifetime}
                             <span className="text-[10px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded-full">
                                 LTD
                             </span>
@@ -166,11 +168,11 @@ export function PricingSection({
                         if (billingCycle === 'monthly') {
                             displayPrice = prices.monthly[tier.name] || 0;
                             priceId = priceIds.monthly[tier.name] || '';
-                            period = '/mesiac';
+                            period = t.pricing.perMonth;
                         } else if (billingCycle === 'yearly') {
                             displayPrice = prices.yearly[tier.name] || 0;
                             priceId = priceIds.yearly[tier.name] || '';
-                            period = '/rok';
+                            period = t.pricing.perYear;
                         } else {
                             displayPrice = prices.lifetime[tier.name] || 0;
                             priceId = priceIds.lifetime[tier.name] || '';
@@ -225,7 +227,7 @@ export function PricingSection({
                                             </h3>
                                             {billingCycle === 'lifetime' && (
                                                 <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 mt-0.5">
-                                                    🔥 Licencia navždy
+                                                    🔥 {t.pricing.lifetimeLicense}
                                                 </p>
                                             )}
                                         </div>
@@ -240,23 +242,23 @@ export function PricingSection({
                                             </span>
                                             {period && <span className="text-sm text-gray-500">{period}</span>}
                                             {billingCycle === 'lifetime' && (
-                                                <span className="text-sm text-gray-500 ml-1">jednorazovo</span>
+                                                <span className="text-sm text-gray-500 ml-1">{t.pricing.oneTime}</span>
                                             )}
                                         </div>
                                         {billingCycle === 'lifetime' ? (
                                             <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold mt-1">
-                                                ⚡ Platíte raz, používate navždy
+                                                ⚡ {t.pricing.payOnceUseForever}
                                             </p>
                                         ) : (
                                             <p className="text-xs text-gray-500 mt-1">
-                                                {tier.name === 'Free' && "Ideálne pre začiatok"}
-                                                {tier.name === 'Business' && "Pre rastúce firmy"}
-                                                {tier.name === 'Pro' && "Pre profesionálov"}
+                                                {tier.name === 'Free' && t.pricing.idealForStart}
+                                                {tier.name === 'Business' && t.pricing.forGrowingBusiness}
+                                                {tier.name === 'Pro' && t.pricing.forProfessionals}
                                             </p>
                                         )}
                                         {billingCycle === 'yearly' && (
                                             <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-1">
-                                                Ušetríte €{Math.round((prices.monthly[tier.name] * 12 - displayPrice) * 100) / 100} ročne
+                                                {t.pricing.saveYearly.replace('{{amount}}', String(Math.round((prices.monthly[tier.name] * 12 - displayPrice) * 100) / 100))}
                                             </p>
                                         )}
                                     </div>
@@ -291,7 +293,7 @@ export function PricingSection({
                                         />
                                     ) : (
                                         <div className="w-full py-2.5 text-center text-gray-400 text-sm">
-                                            Nedostupné
+                                            {t.pricing.unavailable}
                                         </div>
                                     )}
                                 </div>
