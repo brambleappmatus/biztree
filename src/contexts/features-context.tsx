@@ -13,10 +13,16 @@ interface FeaturesContextType {
 
 const FeaturesContext = createContext<FeaturesContextType | undefined>(undefined);
 
-export function FeaturesProvider({ children }: { children: React.ReactNode }) {
+interface FeaturesProviderProps {
+    children: React.ReactNode;
+    initialFeatures?: string[];
+}
+
+export function FeaturesProvider({ children, initialFeatures }: FeaturesProviderProps) {
     const { data: session } = useSession();
-    const [features, setFeatures] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // If initialFeatures provided, use them and skip loading state
+    const [features, setFeatures] = useState<string[]>(initialFeatures || []);
+    const [isLoading, setIsLoading] = useState(!initialFeatures);
     const [error, setError] = useState<string | null>(null);
 
     const fetchFeatures = async () => {
@@ -44,8 +50,11 @@ export function FeaturesProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        fetchFeatures();
-    }, [session]);
+        // Only fetch if no initial features were provided
+        if (!initialFeatures) {
+            fetchFeatures();
+        }
+    }, [session, initialFeatures]);
 
     const hasAccess = (featureKey: string) => {
         if (isLoading) return false;

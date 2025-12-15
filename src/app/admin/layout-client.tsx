@@ -16,11 +16,13 @@ const inter = Inter({ subsets: ["latin"] });
 interface AdminLayoutClientProps {
     children: React.ReactNode;
     subdomain: string | null;
+    initialFeatures?: string[];
 }
 
 export default function AdminLayoutClient({
     children,
     subdomain,
+    initialFeatures,
 }: AdminLayoutClientProps) {
     const pathname = usePathname();
 
@@ -57,7 +59,7 @@ export default function AdminLayoutClient({
     const profileUrl = getProfileUrl();
 
     return (
-        <FeaturesProvider>
+        <FeaturesProvider initialFeatures={initialFeatures}>
             <div className={cn("min-h-screen bg-gray-50 flex flex-col md:flex-row", inter.className)}>
                 {/* Mobile Header - Only visible on mobile */}
                 <header className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
