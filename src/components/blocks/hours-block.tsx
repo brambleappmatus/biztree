@@ -13,11 +13,17 @@ interface HoursBlockProps {
     themeColor?: string;
 }
 
-const DAYS = ["Nedeľa", "Pondelok", "Utorok", "Streda", "Štvrtok", "Piatok", "Sobota"];
+const DAYS_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
 export default function HoursBlock({ profile, lang, bgImage, themeColor }: HoursBlockProps) {
     const t = getTranslation(lang);
     const blockBgClass = getBlockBgClass(bgImage);
+
+    // Get translated day names
+    const getDayName = (dayOfWeek: number): string => {
+        const key = DAYS_KEYS[dayOfWeek];
+        return t.days[key] || key;
+    };
 
     if (!profile.hours || profile.hours.length === 0) return null;
 
@@ -46,7 +52,7 @@ export default function HoursBlock({ profile, lang, bgImage, themeColor }: Hours
                             hour.isClosed && "opacity-50",
                             !isToday && "opacity-80"
                         )}>
-                            <span>{DAYS[hour.dayOfWeek]}</span>
+                            <span>{getDayName(hour.dayOfWeek)}</span>
                             <span>
                                 {hour.isClosed ? (
                                     <span>{t.common.closed}</span>
