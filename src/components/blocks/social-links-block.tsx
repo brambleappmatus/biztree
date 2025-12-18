@@ -31,7 +31,7 @@ export default function SocialLinksBlock({ profile, lang, bgImage, themeColor }:
 
     return (
         <div className={`${blockBgClass} p-4 rounded-2xl shadow-sm`} style={{ color: 'var(--card-text)' }}>
-            <h2 className="font-semibold mb-3 opacity-90" style={{ color: 'var(--card-text)' }}>Social Links</h2>
+            <h2 className="font-semibold mb-3 opacity-90" style={{ color: 'var(--card-text)' }}>{t.profile.socialLinks}</h2>
             <div className="flex gap-3 justify-center flex-wrap">
                 {profile.socialLinks.map((link) => {
                     return (

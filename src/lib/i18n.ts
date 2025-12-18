@@ -316,6 +316,7 @@ export const TRANSLATIONS = {
             nights: "noci",
             nightPer: "noc",
             people: "osôb",
+            socialLinks: "Sociálne siete",
         },
     },
     en: {
@@ -627,6 +628,7 @@ export const TRANSLATIONS = {
             nights: "nights",
             nightPer: "night",
             people: "people",
+            socialLinks: "Social Media",
         },
     },
     cs: {
@@ -938,9 +940,11 @@ export const TRANSLATIONS = {
             nights: "nocí",
             nightPer: "noc",
             people: "osob",
+            socialLinks: "Sociální sítě",
         },
     },
 } as const;
+
 
 export function getTranslation(lang: string) {
     const translations = TRANSLATIONS[lang as Language];
