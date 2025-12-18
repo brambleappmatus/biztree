@@ -202,7 +202,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                             <div className="flex-1 overflow-y-auto p-4">
                                 <div className="flex justify-between items-center mb-4">
                                     <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft size={20} /></button>
-                                    <span className="font-medium capitalize">{format(currentMonth, "MMMM yyyy", { locale: locales[lang] })}</span>
+                                    <span className="font-medium capitalize">{format(currentMonth, "LLLL yyyy", { locale: locales[lang] })}</span>
                                     <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full"><ChevronRight size={20} /></button>
                                 </div>
 
