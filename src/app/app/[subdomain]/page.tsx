@@ -14,7 +14,7 @@ import DocumentsBlock from "@/components/blocks/documents-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
 // Text color now controlled by CSS variable --card-text
-import { Language } from "@/lib/i18n";
+import { Language, getTranslation } from "@/lib/i18n";
 import { Metadata } from "next";
 
 import { getProfile } from "@/lib/data-profile";
@@ -119,7 +119,8 @@ export default async function ProfilePage({
     }
 
     // Extract language from profile - fallback to supported languages only
-    const lang = (profileData.language === "sk" || profileData.language === "en" ? profileData.language : "sk") as Language;
+    const lang = (["sk", "en", "cs"].includes(profileData.language) ? profileData.language : "sk") as Language;
+    const t = getTranslation(lang);
     // Text color now controlled by CSS variable --card-text set in layout
 
     // Helper function to convert day number to day name
@@ -166,7 +167,7 @@ export default async function ProfilePage({
         ...(profileData.services && profileData.services.length > 0 && {
             "hasOfferCatalog": {
                 "@type": "OfferCatalog",
-                "name": "Služby",
+                "name": t.profile.services,
                 "itemListElement": profileData.services.map(service => ({
                     "@type": "Offer",
                     "itemOffered": {
@@ -220,7 +221,7 @@ export default async function ProfilePage({
                 {/* Services */}
                 {profileData.services && profileData.services.length > 0 && hasFeatureAccess(profileData, 'page_services') && (
                     <div className="animate-fade-up delay-300">
-                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>Služby</h2>
+                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.services}</h2>
                         <ServicesBlock
                             profile={{
                                 ...profileData,
@@ -235,7 +236,7 @@ export default async function ProfilePage({
                 {/* Documents */}
                 {profileData.documents && profileData.documents.length > 0 && hasFeatureAccess(profileData, 'component_documents') && (
                     <div className="animate-fade-up delay-350 mb-4">
-                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>Dokumenty</h2>
+                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.documents}</h2>
                         <DocumentsBlock documents={profileData.documents} bgImage={effectiveBgImage} />
                     </div>
                 )}
@@ -243,8 +244,8 @@ export default async function ProfilePage({
                 {/* Gallery */}
                 {profileData.albums && profileData.albums.length > 0 && hasFeatureAccess(profileData, 'component_gallery') && (
                     <div className="animate-fade-up delay-375">
-                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>Galéria</h2>
-                        <GalleryBlock albums={profileData.albums} bgImage={effectiveBgImage} />
+                        <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.gallery}</h2>
+                        <GalleryBlock albums={profileData.albums} bgImage={effectiveBgImage} lang={lang} />
                     </div>
                 )}
 

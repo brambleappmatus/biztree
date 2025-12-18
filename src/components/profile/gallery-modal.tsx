@@ -5,13 +5,16 @@ import { createPortal } from "react-dom";
 import { GalleryAlbum, GalleryImage } from "@prisma/client";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Language, getTranslation } from "@/lib/i18n";
 
 interface GalleryModalProps {
     album: GalleryAlbum & { images: GalleryImage[] };
     onClose: () => void;
+    lang?: Language;
 }
 
-export default function GalleryModal({ album, onClose }: GalleryModalProps) {
+export default function GalleryModal({ album, onClose, lang = "sk" }: GalleryModalProps) {
+    const t = getTranslation(lang);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -80,7 +83,7 @@ export default function GalleryModal({ album, onClose }: GalleryModalProps) {
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{album.name}</h2>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                        {album.images.length} {album.images.length === 1 ? 'fotka' : 'fotiek'}
+                                        {album.images.length} {album.images.length === 1 ? t.profile.photoSingular : t.profile.photos}
                                     </p>
                                 </div>
                                 <button

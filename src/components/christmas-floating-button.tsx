@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Gift, Snowflake } from "lucide-react";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ChristmasFloatingButton() {
+    const { t } = useLanguage();
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
@@ -38,7 +40,7 @@ export default function ChristmasFloatingButton() {
             aria-label="Scroll to Christmas Deal"
         >
             <Snowflake className="w-4 h-4 animate-spin-slow" />
-            <span>Vianočná ponuka</span>
+            <span>{t.christmas.floatingButton}</span>
             <Gift className="w-4 h-4 group-hover:rotate-12 transition-transform" />
         </button>
     );

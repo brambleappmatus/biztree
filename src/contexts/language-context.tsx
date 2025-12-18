@@ -14,16 +14,33 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const STORAGE_KEY = "biztree_language";
 
+// Helper function to detect browser language and map to supported languages
+export function detectBrowserLanguage(): Language {
+    if (typeof navigator === "undefined") return "sk";
+
+    const browserLang = navigator.language?.toLowerCase().slice(0, 2) || "";
+
+    if (browserLang === "cs") return "cs";
+    if (browserLang === "en") return "en";
+    // Default to Slovak for Slovak browsers and all others
+    return "sk";
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>("sk");
     const [mounted, setMounted] = useState(false);
 
-    // Initialize from localStorage on client
+    // Initialize from localStorage on client, with browser language detection fallback
     useEffect(() => {
         setMounted(true);
         const stored = localStorage.getItem(STORAGE_KEY) as Language;
         if (stored && ["sk", "en", "cs"].includes(stored)) {
             setLanguageState(stored);
+        } else {
+            // Detect browser language as fallback
+            const browserLang = detectBrowserLanguage();
+            setLanguageState(browserLang);
+            localStorage.setItem(STORAGE_KEY, browserLang);
         }
     }, []);
 

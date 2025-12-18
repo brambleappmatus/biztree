@@ -5,15 +5,18 @@ import dynamic from "next/dynamic";
 import { GalleryAlbum, GalleryImage } from "@prisma/client";
 import { Folder, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Language, getTranslation } from "@/lib/i18n";
 // import GalleryModal from "@/components/profile/gallery-modal"; // Removed static import
 const GalleryModal = dynamic(() => import("@/components/profile/gallery-modal"), { ssr: false });
 
 interface GalleryBlockProps {
     albums: (GalleryAlbum & { images: GalleryImage[] })[];
     bgImage?: string | null;
+    lang?: Language;
 }
 
-export default function GalleryBlock({ albums, bgImage }: GalleryBlockProps) {
+export default function GalleryBlock({ albums, bgImage, lang = "sk" }: GalleryBlockProps) {
+    const t = getTranslation(lang);
     const [selectedAlbum, setSelectedAlbum] = useState<(GalleryAlbum & { images: GalleryImage[] }) | null>(null);
 
     if (!albums || albums.length === 0) return null;
@@ -57,7 +60,7 @@ export default function GalleryBlock({ albums, bgImage }: GalleryBlockProps) {
                             <h3 className="text-white font-bold text-lg leading-tight truncate">{album.name}</h3>
                             <div className="flex items-center gap-1.5 text-white/80 text-xs font-medium mt-1">
                                 <ImageIcon className="w-3 h-3" />
-                                <span>{album.images.length} fotiek</span>
+                                <span>{album.images.length} {album.images.length === 1 ? t.profile.photoSingular : t.profile.photos}</span>
                             </div>
                         </div>
                     </button>
@@ -68,6 +71,7 @@ export default function GalleryBlock({ albums, bgImage }: GalleryBlockProps) {
                 <GalleryModal
                     album={selectedAlbum}
                     onClose={() => setSelectedAlbum(null)}
+                    lang={lang}
                 />
             )}
         </>

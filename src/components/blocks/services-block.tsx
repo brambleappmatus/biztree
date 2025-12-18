@@ -42,8 +42,8 @@ export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockP
                                     {service.calendarType === "DAILY_RENTAL" && (
                                         <>
                                             {[
-                                                service.minimumDays && `Min. ${service.minimumDays} ${service.minimumDays === 1 ? 'noc' : 'noci'}`,
-                                                service.pricePerDay && Number(service.pricePerDay) > 0 && `${Number(service.pricePerDay)} ${service.currency} / noc`
+                                                service.minimumDays && `Min. ${service.minimumDays} ${service.minimumDays === 1 ? t.profile.night : t.profile.nights}`,
+                                                service.pricePerDay && Number(service.pricePerDay) > 0 && `${Number(service.pricePerDay)} ${service.currency} / ${t.profile.nightPer}`
                                             ].filter(Boolean).join(' • ')}
                                         </>
                                     )}
@@ -60,7 +60,7 @@ export default function ServicesBlock({ profile, lang, bgImage }: ServicesBlockP
                                         <>
                                             {[
                                                 service.duration > 0 && `${service.duration} min`,
-                                                service.maxCapacity && `Max. ${service.maxCapacity} osôb`
+                                                service.maxCapacity && `Max. ${service.maxCapacity} ${t.profile.people}`
                                             ].filter(Boolean).join(' • ')}
                                         </>
                                     )}

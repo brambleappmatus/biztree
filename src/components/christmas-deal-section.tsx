@@ -5,6 +5,7 @@ import { Sparkles, Gift, Star, Snowflake, Mail, ArrowRight, Check, CreditCard, L
 import ScrollAnimation from "@/components/scroll-animation";
 import MagneticButton from "@/components/magnetic-button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/language-context";
 
 interface ChristmasDealSectionProps {
     prices: {
@@ -22,6 +23,7 @@ interface ChristmasDealSectionProps {
 }
 
 export default function ChristmasDealSection({ prices, priceIds }: ChristmasDealSectionProps) {
+    const { t } = useLanguage();
     const [loading, setLoading] = useState<string | null>(null);
     const [snowflakes, setSnowflakes] = useState<Array<{ width: string; height: string; left: string; duration: string; delay: string }>>([]);
 
@@ -86,22 +88,21 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                     <div className="text-center mb-16">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-100 border border-red-200 text-red-700 text-sm font-medium mb-6">
                             <Snowflake className="w-4 h-4 animate-spin-slow text-red-500" />
-                            <span>Limitovaná Vianočná Ponuka</span>
+                            <span>{t.christmas.limitedOffer}</span>
                             <Snowflake className="w-4 h-4 animate-spin-slow text-red-500" />
                         </div>
 
                         <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 font-serif text-gray-900 tracking-tight">
-                            Potešte svojich blízkych <br className="hidden md:block" />
+                            {t.christmas.headline} <br className="hidden md:block" />
                             <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent drop-shadow-sm">
-                                stránkou navždy
+                                {t.christmas.headlineHighlight}
                             </span>
                         </h2>
 
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                            Darujte podnikanie, portfólio alebo blog bez mesačných poplatkov.
-                            Zaplatíte raz a web je váš navždy.
+                            {t.christmas.description}
                             <br />
-                            <span className="text-red-600 font-medium">Perfektný darček pod stromček! 🎄</span>
+                            <span className="text-red-600 font-medium">{t.christmas.perfectGift}</span>
                         </p>
                     </div>
                 </ScrollAnimation>
@@ -121,32 +122,32 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                                 <div className="flex items-center justify-center gap-1 mb-2">
                                     <span className="text-5xl font-bold text-gray-900">{prices.lifetime.Business}€</span>
                                 </div>
-                                <div className="text-gray-500 font-medium mb-8">jednorazová platba</div>
+                                <div className="text-gray-500 font-medium mb-8">{t.christmas.oneTimePayment}</div>
 
                                 <ul className="space-y-4 text-left mb-8 max-w-xs mx-auto flex-grow">
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-700">Všetky Business funkcie</span>
+                                        <span className="text-gray-700">{t.christmas.allBusinessFeatures}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-700">Vlastná doména v cene</span>
+                                        <span className="text-gray-700">{t.christmas.customDomainIncluded}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-700">Navždy bez poplatkov</span>
+                                        <span className="text-gray-700">{t.christmas.foreverNoFees}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-700">Darčekový poukaz e-mailom</span>
+                                        <span className="text-gray-700">{t.christmas.giftVoucherEmail}</span>
                                     </li>
                                 </ul>
 
@@ -161,14 +162,14 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                                         ) : (
                                             <CreditCard className="w-5 h-5" />
                                         )}
-                                        Kúpiť kartou
+                                        {t.christmas.buyWithCard}
                                     </MagneticButton>
 
                                     <a
-                                        href={`mailto:hello@biztree.bio?subject=Objednavka Vianocny Business Lifetime&body=Dobry den, mam zaujem o Vianocny Business Lifetime balik za ${prices.lifetime.Business} EUR.`}
+                                        href={`mailto:hello@biztree.bio?subject=${encodeURIComponent(t.christmas.emailSubjectBusiness)}&body=${encodeURIComponent(t.christmas.emailBody.replace('{{plan}}', 'Business').replace('{{price}}', String(prices.lifetime.Business)))}`}
                                         className="text-sm text-gray-400 hover:text-red-600 font-medium transition-colors py-2"
                                     >
-                                        Alebo objednať cez e-mail
+                                        {t.christmas.orOrderByEmail}
                                     </a>
                                 </div>
                             </div>
@@ -195,32 +196,32 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                                         {prices.lifetime.Pro}€
                                     </span>
                                 </div>
-                                <div className="text-gray-500 font-medium mb-8">jednorazová platba</div>
+                                <div className="text-gray-500 font-medium mb-8">{t.christmas.oneTimePayment}</div>
 
                                 <ul className="space-y-4 text-left mb-8 max-w-xs mx-auto flex-grow">
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-900 font-medium">Všetko z Business balíka</span>
+                                        <span className="text-gray-900 font-medium">{t.christmas.everythingFromBusiness}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-900 font-medium">Pokročilé Pro funkcie</span>
+                                        <span className="text-gray-900 font-medium">{t.christmas.advancedProFeatures}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-900 font-medium">Premium podpora</span>
+                                        <span className="text-gray-900 font-medium">{t.christmas.premiumSupport}</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0">
                                             <Check className="w-4 h-4 text-red-600" />
                                         </div>
-                                        <span className="text-gray-900 font-medium">Darčekový poukaz e-mailom</span>
+                                        <span className="text-gray-900 font-medium">{t.christmas.giftVoucherEmail}</span>
                                     </li>
                                 </ul>
 
@@ -235,14 +236,14 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                                         ) : (
                                             <CreditCard className="w-5 h-5" />
                                         )}
-                                        Kúpiť kartou
+                                        {t.christmas.buyWithCard}
                                     </MagneticButton>
 
                                     <a
-                                        href={`mailto:hello@biztree.bio?subject=Objednavka Vianocny Pro Lifetime&body=Dobry den, mam zaujem o Vianocny Pro Lifetime balik za ${prices.lifetime.Pro} EUR.`}
+                                        href={`mailto:hello@biztree.bio?subject=${encodeURIComponent(t.christmas.emailSubjectPro)}&body=${encodeURIComponent(t.christmas.emailBody.replace('{{plan}}', 'Pro').replace('{{price}}', String(prices.lifetime.Pro)))}`}
                                         className="text-sm text-gray-400 hover:text-red-600 font-medium transition-colors py-2"
                                     >
-                                        Alebo objednať cez e-mail
+                                        {t.christmas.orOrderByEmail}
                                     </a>
                                 </div>
                             </div>
@@ -253,7 +254,7 @@ export default function ChristmasDealSection({ prices, priceIds }: ChristmasDeal
                 <div className="mt-16 text-center">
                     <p className="inline-flex items-center justify-center gap-2 text-gray-500 bg-gray-50 px-6 py-3 rounded-full border border-gray-100">
                         <Mail className="w-4 h-4 text-gray-400" />
-                        <span>Po zaplatení nás prosím kontaktujte pre aktiváciu s údajmi, ktoré vám prídu na email.</span>
+                        <span>{t.christmas.afterPaymentContact}</span>
                     </p>
                 </div>
             </div>
