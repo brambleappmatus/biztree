@@ -207,7 +207,10 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                 </div>
 
                                 <div className="grid grid-cols-7 gap-1 text-center mb-2 text-xs text-gray-400 font-medium">
-                                    {["Po", "Ut", "St", "Št", "Pi", "So", "Ne"].map(d => <div key={d}>{d}</div>)}
+                                    {lang === 'en'
+                                        ? ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => <div key={d}>{d}</div>)
+                                        : ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].map(d => <div key={d}>{d}</div>)
+                                    }
                                 </div>
 
                                 <div className="grid grid-cols-7 gap-1">
@@ -272,7 +275,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                 <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                                     <label className="block text-sm font-medium mb-3 flex items-center gap-2">
                                         <Users size={18} />
-                                        Počet osôb
+                                        {getTranslation(lang).booking.numberOfGuests}
                                     </label>
                                     <div className="flex items-center gap-3">
                                         <button
@@ -420,21 +423,21 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                 <form id="booking-form" onSubmit={handleSubmit} className="space-y-4">
                                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl mb-6 text-sm">
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-gray-500">Dátum:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.date}:</span>
                                             <span className="font-medium">{date && format(date, "d. MMMM yyyy", { locale: locales[lang] })}</span>
                                         </div>
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-gray-500">Čas:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.time}:</span>
                                             <span className="font-medium">{time}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">Počet osôb:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.numberOfGuests}:</span>
                                             <span className="font-medium">{numberOfPeople}</span>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Meno a Priezvisko</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.name}</label>
                                         <input
                                             required
                                             type="text"
@@ -444,7 +447,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Email</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.email}</label>
                                         <input
                                             required
                                             type="email"
@@ -454,7 +457,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Telefón</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.phone}</label>
                                         <input
                                             required
                                             type="tel"
@@ -464,7 +467,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Poznámka (voliteľné)</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.note}</label>
                                         <textarea
                                             rows={3}
                                             className="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
@@ -486,7 +489,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                         className="mt-1 w-4 h-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
                                     />
                                     <label htmlFor="terms" className="text-xs text-gray-500">
-                                        Súhlasím s <a href="/legal/terms" target="_blank" className="text-[var(--primary)] hover:underline">obchodnými podmienkami</a> a so <a href="/legal/privacy" target="_blank" className="text-[var(--primary)] hover:underline">spracovaním osobných údajov</a>.
+                                        {getTranslation(lang).booking.termsAgree} <a href="/legal/terms" target="_blank" className="text-[var(--primary)] hover:underline">{getTranslation(lang).booking.termsLink}</a> {getTranslation(lang).booking.termsAnd} <a href="/legal/privacy" target="_blank" className="text-[var(--primary)] hover:underline">{getTranslation(lang).booking.privacyLink}</a>.
                                     </label>
                                 </div>
                                 <button
@@ -496,7 +499,7 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                                     className="w-full py-3 bg-[var(--primary)] text-white rounded-xl font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                 >
                                     {submitting && <Loader2 className="animate-spin" size={20} />}
-                                    {submitting ? "Rezervujem..." : "Potvrdiť rezerváciu"}
+                                    {submitting ? getTranslation(lang).booking.booking : getTranslation(lang).booking.confirm}
                                 </button>
                             </div>
                         </motion.div>
@@ -512,18 +515,21 @@ export default function TableFlow({ service, profile, onClose, lang }: TableFlow
                             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
                                 <CheckCircle size={40} />
                             </div>
-                            <h2 className="text-2xl font-bold mb-2">Rezervácia potvrdená!</h2>
+                            <h2 className="text-2xl font-bold mb-2">{getTranslation(lang).booking.successTitle}</h2>
                             <p className="text-gray-500 mb-4 max-w-xs mx-auto">
-                                Ďakujeme, {formData.name}. Potvrdenie sme poslali na váš email.
+                                {getTranslation(lang).booking.successMsg}
                             </p>
                             <p className="text-sm text-gray-400 mb-8">
-                                Stôl pre {numberOfPeople} {numberOfPeople === 1 ? 'osobu' : numberOfPeople < 5 ? 'osoby' : 'osôb'}
+                                {lang === 'en'
+                                    ? `Table for ${numberOfPeople} ${numberOfPeople === 1 ? 'person' : 'people'}`
+                                    : `Stôl pre ${numberOfPeople} ${numberOfPeople === 1 ? 'osobu' : numberOfPeople < 5 ? 'osoby' : 'osôb'}`
+                                }
                             </p>
                             <button
                                 onClick={onClose}
                                 className="text-gray-500 hover:text-gray-700 font-medium transition-colors"
                             >
-                                Zavrieť
+                                {getTranslation(lang).booking.close}
                             </button>
                         </motion.div>
                     )}

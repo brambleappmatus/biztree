@@ -223,7 +223,10 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                 </div>
 
                                 <div className="grid grid-cols-7 gap-1 text-center mb-2 text-xs text-gray-400 font-medium">
-                                    {["Po", "Ut", "St", "Št", "Pi", "So", "Ne"].map(d => <div key={d}>{d}</div>)}
+                                    {lang === 'en'
+                                        ? ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => <div key={d}>{d}</div>)
+                                        : ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].map(d => <div key={d}>{d}</div>)
+                                    }
                                 </div>
 
                                 <div className="grid grid-cols-7 gap-1">
@@ -320,10 +323,10 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                             <div className="flex-1 overflow-y-auto p-4">
                                 <div className="flex items-center gap-2 mb-6">
                                     <button onClick={() => setStep("time")} className="text-sm text-[var(--primary)] flex items-center">
-                                        <ChevronLeft size={16} /> Späť
+                                        <ChevronLeft size={16} /> {getTranslation(lang).booking.back}
                                     </button>
                                     <span className="font-medium flex-1 text-center pr-12">
-                                        Vyberte pracovníka
+                                        {getTranslation(lang).booking.selectWorker}
                                     </span>
                                 </div>
 
@@ -370,15 +373,15 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                                     <User size={24} className="text-gray-400" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="font-medium text-base">Bez preferencie</h3>
-                                                    <p className="text-sm text-gray-500 mt-0.5">Akýkoľvek dostupný pracovník</p>
+                                                    <h3 className="font-medium text-base">{getTranslation(lang).booking.noPreference}</h3>
+                                                    <p className="text-sm text-gray-500 mt-0.5">{getTranslation(lang).booking.anyWorker}</p>
                                                 </div>
                                             </button>
                                         )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-12 text-gray-500">
-                                        Žiadni pracovníci nie sú k dispozícii
+                                        {getTranslation(lang).booking.noWorkersAvailable}
                                     </div>
                                 )}
                             </div>
@@ -409,27 +412,27 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                 <form id="booking-form" onSubmit={handleSubmit} className="space-y-4">
                                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl mb-6 text-sm">
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-gray-500">Služba:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.service}:</span>
                                             <span className="font-medium">{service.name}</span>
                                         </div>
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-gray-500">Dátum:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.date}:</span>
                                             <span className="font-medium">{date && format(date, "d. MMMM yyyy", { locale: locales[lang] })}</span>
                                         </div>
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-gray-500">Čas:</span>
+                                            <span className="text-gray-500">{getTranslation(lang).booking.time}:</span>
                                             <span className="font-medium">{time}</span>
                                         </div>
                                         {selectedWorker && (
                                             <div className="flex justify-between">
-                                                <span className="text-gray-500">Pracovník:</span>
+                                                <span className="text-gray-500">{getTranslation(lang).booking.worker}:</span>
                                                 <span className="font-medium">{selectedWorker.name}</span>
                                             </div>
                                         )}
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Meno a Priezvisko</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.name}</label>
                                         <input
                                             required
                                             type="text"
@@ -439,7 +442,7 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Email</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.email}</label>
                                         <input
                                             required
                                             type="email"
@@ -449,7 +452,7 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Telefón</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">{getTranslation(lang).booking.phone}</label>
                                         <input
                                             required
                                             type="tel"
@@ -471,7 +474,7 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                         className="mt-1 w-4 h-4 rounded border-gray-300 text-[var(--primary)] focus:ring-[var(--primary)]"
                                     />
                                     <label htmlFor="terms" className="text-xs text-gray-500">
-                                        Súhlasím s <a href="/legal/terms" target="_blank" className="text-[var(--primary)] hover:underline">obchodnými podmienkami</a> a so <a href="/legal/privacy" target="_blank" className="text-[var(--primary)] hover:underline">spracovaním osobných údajov</a>.
+                                        {getTranslation(lang).booking.termsAgree} <a href="/legal/terms" target="_blank" className="text-[var(--primary)] hover:underline">{getTranslation(lang).booking.termsLink}</a> {getTranslation(lang).booking.termsAnd} <a href="/legal/privacy" target="_blank" className="text-[var(--primary)] hover:underline">{getTranslation(lang).booking.privacyLink}</a>.
                                     </label>
                                 </div>
                                 <button
@@ -481,7 +484,7 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                     className="w-full py-3 bg-[var(--primary)] text-white rounded-xl font-bold hover:bg-[var(--primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                 >
                                     {submitting && <Loader2 className="animate-spin" size={20} />}
-                                    {submitting ? "Rezervujem..." : "Potvrdiť rezerváciu"}
+                                    {submitting ? getTranslation(lang).booking.booking : getTranslation(lang).booking.confirm}
                                 </button>
                             </div>
                         </motion.div>
@@ -499,22 +502,22 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                     <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
                                         <CheckCircle size={40} />
                                     </div>
-                                    <h2 className="text-2xl font-bold mb-2">Rezervácia potvrdená!</h2>
+                                    <h2 className="text-2xl font-bold mb-2">{getTranslation(lang).booking.successTitle}</h2>
                                     <p className="text-gray-500 mb-4 max-w-xs mx-auto">
-                                        Ďakujeme, {formData.name}. Potvrdenie sme poslali na váš email.
+                                        {getTranslation(lang).booking.successMsg.replace('Ďakujeme', `Ďakujeme, ${formData.name}`)}
                                     </p>
 
                                     {service.locationType === 'google_meet' && (
                                         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl max-w-xs mx-auto">
-                                            <p className="text-sm text-green-800 font-medium mb-1">💻 Online stretnutie</p>
+                                            <p className="text-sm text-green-800 font-medium mb-1">💻 {getTranslation(lang).booking.onlineMeeting}</p>
                                             <p className="text-xs text-green-600">
-                                                Google Meet link nájdete v potvrdzovacom emaili a vo vašom kalendári.
+                                                {getTranslation(lang).booking.meetLinkInfo}
                                             </p>
                                         </div>
                                     )}
 
                                     <div className="w-full mb-8">
-                                        <p className="text-sm font-medium text-gray-500 mb-3">Pridať do kalendára</p>
+                                        <p className="text-sm font-medium text-gray-500 mb-3">{getTranslation(lang).booking.addToCalendar}</p>
                                         <div className="flex flex-row gap-3">
                                             <button
                                                 onClick={() => {
@@ -614,7 +617,7 @@ export default function HourlyFlow({ service, profile, onClose, lang }: HourlyFl
                                         onClick={onClose}
                                         className="text-gray-500 hover:text-gray-700 font-medium transition-colors"
                                     >
-                                        Zavrieť
+                                        {getTranslation(lang).booking.close}
                                     </button>
                                 </div>
                             </div>
