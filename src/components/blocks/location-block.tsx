@@ -37,7 +37,7 @@ export default function LocationBlock({ profile, lang, bgImage, themeColor }: Lo
                     className="w-full py-3 rounded-xl flex items-center justify-center gap-2 font-medium transition-colors bg-current/10 hover:bg-current/15"
                     style={themeColor ? { backgroundColor: `${themeColor}20`, color: themeColor } : undefined}
                 >
-                    <span>Navigovať</span>
+                    <span>{t.common.navigate}</span>
                 </a>
             ) : null}
         </div>
