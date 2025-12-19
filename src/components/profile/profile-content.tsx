@@ -106,8 +106,8 @@ export default function ProfileContent({
                 </div>
             )}
 
-            {/* Products - shown for all users with products */}
-            {profileData.products && profileData.products.length > 0 && (
+            {/* Products - shown only if there are available products */}
+            {profileData.products && profileData.products.some(p => p.isAvailable) && (
                 <div className="animate-fade-up delay-360">
                     <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.products}</h2>
                     <ProductsBlock
