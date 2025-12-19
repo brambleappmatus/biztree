@@ -14,6 +14,7 @@ interface ProductType {
     currency: string;
     imageUrl: string | null;
     isAvailable: boolean;
+    order: number;
 }
 
 interface CatalogModalProps {
