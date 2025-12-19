@@ -12,6 +12,7 @@ import LinksBlock from "@/components/blocks/links-block";
 import LocationBlock from "@/components/blocks/location-block";
 import GalleryBlock from "@/components/blocks/gallery-block";
 import DocumentsBlock from "@/components/blocks/documents-block";
+import ProductsBlock from "@/components/blocks/products-block";
 import FooterBlock from "@/components/blocks/footer-block";
 import { ProfileCore } from "@/types";
 import { getPlanLimits } from "@/lib/subscription-limits";
@@ -30,6 +31,7 @@ interface ProfileContentProps {
         component_hours: boolean;
         component_social_links: boolean;
         component_map: boolean;
+        component_products: boolean;
         disable_branding: boolean;
     };
 }
@@ -101,6 +103,18 @@ export default function ProfileContent({
                 <div className="animate-fade-up delay-350 mb-4">
                     <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.documents}</h2>
                     <DocumentsBlock documents={profileData.documents} bgImage={effectiveBgImage} />
+                </div>
+            )}
+
+            {/* Products - shown for all users with products */}
+            {profileData.products && profileData.products.length > 0 && (
+                <div className="animate-fade-up delay-360">
+                    <h2 className="text-xl font-bold mb-3 px-1" style={{ color: 'var(--header-text)' }}>{t.profile.products}</h2>
+                    <ProductsBlock
+                        products={profileData.products.map(p => ({ ...p, price: Number(p.price) }))}
+                        bgImage={effectiveBgImage}
+                        lang={lang}
+                    />
                 </div>
             )}
 

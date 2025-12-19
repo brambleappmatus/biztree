@@ -11,8 +11,8 @@ import {
     LogOut,
     Lock,
     Crown,
-    Briefcase,
-    LayoutGrid
+    LayoutGrid,
+    ShoppingBag
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Dock, DockIcon, DockItem, DockLabel } from "@/components/motion-primitives/dock";
@@ -138,15 +138,15 @@ export default function DockMenu() {
             featureKey: "page_dashboard"
         },
         {
-            label: "Služby",
-            icon: Users,
+            label: "Služby a produkty",
+            icon: ShoppingBag,
             href: "/admin/services",
             badge: 0,
             featureKey: "page_services"
         },
         {
             label: "Pracovníci",
-            icon: Briefcase,
+            icon: Users,
             href: "/admin/workers",
             badge: 0,
             featureKey: "calendar_worker_management"

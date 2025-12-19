@@ -14,6 +14,17 @@ interface LinksBlockProps {
     bgImage: string | null;
 }
 
+// Ensure URL has a proper protocol (http:// or https://)
+function ensureProtocol(url: string): string {
+    if (!url) return url;
+    // If URL already has a protocol, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+    }
+    // Add https:// to URLs without protocol
+    return `https://${url}`;
+}
+
 export default function LinksBlock({ links, bgImage }: LinksBlockProps) {
     const blockBgClass = getBlockBgClass(bgImage);
 
@@ -27,7 +38,7 @@ export default function LinksBlock({ links, bgImage }: LinksBlockProps) {
             {sortedLinks.map((link) => (
                 <a
                     key={link.id}
-                    href={link.url}
+                    href={ensureProtocol(link.url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`${blockBgClass} p-4 rounded-2xl shadow-sm flex items-center justify-between group hover:scale-[1.02] transition-transform`}

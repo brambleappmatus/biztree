@@ -119,6 +119,7 @@ export default async function ProfilePage({
         component_hours: hasFeatureAccess(profileData, 'component_hours'),
         component_social_links: hasFeatureAccess(profileData, 'component_social_links'),
         component_map: hasFeatureAccess(profileData, 'component_map'),
+        component_products: hasFeatureAccess(profileData, 'component_products'),
         disable_branding: hasFeatureAccess(profileData, 'disable_branding'),
     };
 

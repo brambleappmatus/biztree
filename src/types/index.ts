@@ -13,6 +13,7 @@ export type ProfileCore = Prisma.ProfileGetPayload<{
             };
         };
         documents: true;
+        products: true;
         tier: {
             include: {
                 features: {

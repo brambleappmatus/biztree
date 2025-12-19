@@ -40,7 +40,7 @@ export function PricingSection({
     redirectUrl,
     trialEndsAt
 }: PricingSectionProps) {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     // Detect the user's current billing cycle from their subscription
     const detectBillingCycle = (): 'monthly' | 'yearly' | 'lifetime' => {
         if (!activeSubscription?.stripePriceId) return 'monthly';
@@ -269,6 +269,7 @@ export function PricingSection({
                                             tierFeatures={tier.features}
                                             tierName={tier.name}
                                             allTiers={tiers}
+                                            language={language}
                                         />
                                     </div>
                                 </div>

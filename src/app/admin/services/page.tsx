@@ -1,6 +1,6 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import ServicesManager from "@/components/admin/services-manager";
+import ServicesProductsTabs from "@/components/admin/services-products-tabs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -37,6 +37,9 @@ export default async function ServicesPage() {
                             }
                         }
                     },
+                    products: {
+                        orderBy: { order: "asc" }
+                    },
                     workers: true
                 }
             }
@@ -54,16 +57,20 @@ export default async function ServicesPage() {
         <LockedFeatureGuard featureKey="page_services">
             <div>
                 <PageHeader
-                    title="Správa služieb"
-                    description="Spravujte svoje služby a ich nastavenia."
+                    title="Služby a produkty"
+                    description="Spravujte svoje služby a produkty."
                 />
-                <ServicesManager
+                <ServicesProductsTabs
                     profileId={profile.id}
                     services={profile.services.map(service => ({
                         ...service,
                         price: service.price ? Number(service.price) : 0,
                         minimumValue: service.minimumValue ? Number(service.minimumValue) : 0,
                         pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : 0,
+                    }))}
+                    products={profile.products.map(product => ({
+                        ...product,
+                        price: product.price ? Number(product.price) : 0,
                     }))}
                     workers={profile.workers}
                     isGoogleConnected={!!(profile.googleAccessToken && profile.googleRefreshToken)}

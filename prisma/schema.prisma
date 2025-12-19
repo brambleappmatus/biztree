@@ -125,6 +125,7 @@ model Profile {
   workers       Worker[]
   tables        Table[]
   floorPlan     FloorPlan?
+  products      Product[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -618,4 +619,24 @@ model BlogCategory {
   updatedAt   DateTime @updatedAt
   
   @@index([slug])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal
+  currency    String   @default("EUR")
+  imageUrl    String?  // Optional product image
+  isAvailable Boolean  @default(true)
+  order       Int      @default(0)
+  
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([profileId])
+  @@index([order])
 }

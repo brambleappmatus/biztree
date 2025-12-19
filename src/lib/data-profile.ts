@@ -22,6 +22,9 @@ export const getProfile = cache(async (subdomain: string) => {
             documents: {
                 orderBy: { order: 'asc' }
             },
+            products: {
+                orderBy: { order: 'asc' }
+            },
             tier: {
                 include: {
                     features: {
@@ -49,6 +52,10 @@ export const getProfile = cache(async (subdomain: string) => {
             price: service.price ? Number(service.price) : null,
             minimumValue: service.minimumValue ? Number(service.minimumValue) : null,
             pricePerDay: service.pricePerDay ? Number(service.pricePerDay) : null,
+        })),
+        products: profile.products.map(product => ({
+            ...product,
+            price: product.price ? Number(product.price) : 0,
         })),
         tier: profile.tier ? {
             ...profile.tier,

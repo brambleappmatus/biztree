@@ -5,6 +5,7 @@ export type PlanTier = 'Free' | 'Business' | 'Pro';
 export interface PlanLimits {
     maxServices: number;
     maxWorkers: number;
+    maxProducts: number;
     allowedCalendarTypes: CalendarType[];
     features: {
         googleCalendar: boolean;
@@ -20,6 +21,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     Free: {
         maxServices: 3,
         maxWorkers: 0,
+        maxProducts: 5,
         allowedCalendarTypes: ['HOURLY_SERVICE'],
         features: {
             googleCalendar: false,
@@ -33,6 +35,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     Business: {
         maxServices: 1000, // Effectively unlimited
         maxWorkers: 3,
+        maxProducts: 20,
         allowedCalendarTypes: ['HOURLY_SERVICE', 'DAILY_RENTAL'],
         features: {
             googleCalendar: true,
@@ -46,6 +49,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     Pro: {
         maxServices: 1000,
         maxWorkers: 1000,
+        maxProducts: 50,
         allowedCalendarTypes: ['HOURLY_SERVICE', 'DAILY_RENTAL', 'TABLE_RESERVATION'],
         features: {
             googleCalendar: true,
@@ -72,6 +76,11 @@ export function checkServiceLimit(tierName: string | null | undefined, currentCo
 export function checkWorkerLimit(tierName: string | null | undefined, currentCount: number): boolean {
     const limits = getPlanLimits(tierName);
     return currentCount < limits.maxWorkers;
+}
+
+export function checkProductLimit(tierName: string | null | undefined, currentCount: number): boolean {
+    const limits = getPlanLimits(tierName);
+    return currentCount < limits.maxProducts;
 }
 
 export function isFeatureAllowed(
